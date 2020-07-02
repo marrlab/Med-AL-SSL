@@ -1,6 +1,7 @@
 import os
 import torch
 import shutil
+from torch.utils.data import DataLoader, SubsetRandomSampler
 
 
 def save_checkpoint(args, state, is_best, filename='checkpoint.pth.tar'):
@@ -48,3 +49,24 @@ def accuracy(output, target, topk=(1,)):
         correct_k = correct[:k].view(-1).float().sum(0)
         res.append(correct_k.mul_(100.0 / batch_size))
     return res
+
+
+def create_loaders(args, base_dataset, test_dataset, labeled_idx, unlabeled_idx, kwargs):
+    labeled_loader = DataLoader(dataset=base_dataset,
+                                batch_size=args.batch_size,
+                                shuffle=False,
+                                sampler=SubsetRandomSampler(labeled_idx),
+                                **kwargs)
+
+    unlabeled_loader = DataLoader(dataset=base_dataset,
+                                  batch_size=args.batch_size,
+                                  shuffle=False,
+                                  sampler=SubsetRandomSampler(unlabeled_idx),
+                                  **kwargs)
+
+    val_loader = torch.utils.data.DataLoader(dataset=test_dataset,
+                                             batch_size=args.batch_size,
+                                             shuffle=True,
+                                             **kwargs)
+
+    return labeled_loader, unlabeled_loader, val_loader

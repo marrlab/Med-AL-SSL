@@ -2,6 +2,8 @@ import argparse
 import os
 import time
 
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -9,9 +11,12 @@ import torch.backends.cudnn as cudnn
 import torch.optim
 import torch.utils.data
 
+import numpy as np
+
 from model.wideresnet import WideResNet
 from data.matek_dataset import MatekDataset
-from utils import save_checkpoint, AverageMeter, accuracy
+from utils import save_checkpoint, AverageMeter, accuracy, create_loaders
+from active_learning.uncertainty_sampling import UncertaintySampling
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
 parser.add_argument('--epochs', default=100, type=int,
@@ -30,9 +35,9 @@ parser.add_argument('--print-freq', '-p', default=10, type=int,
                     help='print frequency (default: 10)')
 parser.add_argument('--layers', default=28, type=int,
                     help='total number of layers (default: 28)')
-parser.add_argument('--widen-factor', default=10, type=int,
-                    help='widen factor (default: 10)')
-parser.add_argument('--drop-rate', default=0, type=float,
+parser.add_argument('--widen-factor', default=2, type=int,
+                    help='widen factor (default: 2)')
+parser.add_argument('--drop-rate', default=0.2, type=float,
                     help='dropout probability (default: 0.0)')
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentation (default: True)')
@@ -40,6 +45,13 @@ parser.add_argument('--resume', default='', type=str,
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--name', default='WideResNet-28-10', type=str,
                     help='name of experiment')
+parser.add_argument('--add-labeled-epochs', default=5, type=int,
+                    help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
+parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
+                    help='what percentage of labeled data to be added')
+parser.add_argument('--labeled-ratio', default=0.05, type=int,
+                    help='what percentage of labeled data to start the training with')
+
 parser.set_defaults(augment=True)
 
 best_prec1 = 0
@@ -49,14 +61,23 @@ args = parser.parse_args()
 def main():
     global args, best_prec1
 
-    dataset_class = MatekDataset('/home/qasima/datasets/thesis/stratified/', labeled_ratio=0.035)
-    labeled_dataset, unlabeled_dataset, test_dataset = dataset_class.get_dataset()
+    dataset_class = MatekDataset('/home/qasima/datasets/thesis/stratified/',
+                                 labeled_ratio=args.labeled_ratio,
+                                 add_labeled_ratio=args.add_labeled_ratio)
+
+    base_dataset, labeled_idx, unlabeled_idx, test_dataset = dataset_class.get_dataset()
 
     kwargs = {'num_workers': 1, 'pin_memory': True}
-    train_loader = torch.utils.data.DataLoader(labeled_dataset, batch_size=args.batch_size, shuffle=True, **kwargs)
-    val_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args.batch_size, shuffle=True, **kwargs)
+    train_loader, unlabeled_loader, val_loader = create_loaders(args, base_dataset, test_dataset, labeled_idx,
+                                                                unlabeled_idx, kwargs)
 
-    model = WideResNet(args.layers, dataset_class.num_classes, args.widen_factor, drop_rate=args.drop_rate)
+    uncertainty_sampler = UncertaintySampling(verbose=True)
+
+    model = WideResNet(args.layers,
+                       num_classes=dataset_class.num_classes,
+                       widen_factor=args.widen_factor,
+                       drop_rate=args.drop_rate,
+                       input_size=dataset_class.input_size)
 
     print('Number of model parameters: {}'.format(
         sum([p.data.nelement() for p in model.parameters()])))
@@ -87,11 +108,32 @@ def main():
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, len(train_loader) * args.epochs, eta_min=0)
 
+    last_best_epochs = 0
+    current_labeled_ratio = args.labeled_ratio
+
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, scheduler, epoch)
         prec1 = validate(val_loader, model, criterion)
 
         is_best = prec1 > best_prec1
+        last_best_epochs = 0 if is_best else last_best_epochs + 1
+
+        if last_best_epochs == args.add_labeled_epochs:
+            samples_idx = uncertainty_sampler.get_samples(epoch, args, model,
+                                                          unlabeled_loader,
+                                                          uncertainty_sampler.least_confidence,
+                                                          number=dataset_class.add_labeled_num)
+            unlabeled_mask = torch.ones(size=(len(unlabeled_idx), ), dtype=torch.bool)
+            unlabeled_mask[samples_idx] = 0
+            labeled_idx = np.hstack([labeled_idx, unlabeled_idx[~unlabeled_mask]])
+            unlabeled_idx = unlabeled_idx[unlabeled_mask]
+
+            train_loader, unlabeled_loader, val_loader = create_loaders(args, base_dataset, test_dataset, labeled_idx,
+                                                                        unlabeled_idx, kwargs)
+
+            current_labeled_ratio += args.add_labeled_ratio
+            last_best_epochs = 0
+
         best_prec1 = max(prec1, best_prec1)
         save_checkpoint(args, {
             'epoch': epoch + 1,

@@ -55,7 +55,7 @@ class NetworkBlock(nn.Module):
 
 
 class WideResNet(nn.Module):
-    def __init__(self, depth, num_classes, widen_factor=1, drop_rate=0.0):
+    def __init__(self, depth, num_classes, widen_factor=1, drop_rate=0.0, input_size=64):
         super(WideResNet, self).__init__()
         nChannels = [16, 16 * widen_factor, 32 * widen_factor, 64 * widen_factor]
         assert ((depth - 4) % 6 == 0)
@@ -75,6 +75,7 @@ class WideResNet(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.fc = nn.Linear(nChannels[3], num_classes)
         self.nChannels = nChannels[3]
+        self.avg_pool2d_kernel = int(input_size / 4)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -91,6 +92,6 @@ class WideResNet(nn.Module):
         out = self.block2(out)
         out = self.block3(out)
         out = self.relu(self.bn1(out))
-        out = F.avg_pool2d(out, 8)
+        out = F.avg_pool2d(out, self.avg_pool2d_kernel)
         out = out.view(-1, self.nChannels)
         return self.fc(out)
