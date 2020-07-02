@@ -43,7 +43,7 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentation (default: True)')
 parser.add_argument('--resume', default='', type=str,
                     help='path to latest checkpoint (default: none)')
-parser.add_argument('--name', default='WideResNet-28-10', type=str,
+parser.add_argument('--name', default='WideResNet-28-margin', type=str,
                     help='name of experiment')
 parser.add_argument('--add-labeled-epochs', default=5, type=int,
                     help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
@@ -119,9 +119,10 @@ def main():
         last_best_epochs = 0 if is_best else last_best_epochs + 1
 
         if last_best_epochs == args.add_labeled_epochs:
+        # if True:
             samples_idx = uncertainty_sampler.get_samples(epoch, args, model,
                                                           unlabeled_loader,
-                                                          uncertainty_sampler.least_confidence,
+                                                          uncertainty_sampler.margin_confidence,
                                                           number=dataset_class.add_labeled_num)
             unlabeled_mask = torch.ones(size=(len(unlabeled_idx), ), dtype=torch.bool)
             unlabeled_mask[samples_idx] = 0
