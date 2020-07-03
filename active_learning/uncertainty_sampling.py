@@ -1,5 +1,4 @@
 import torch
-import math
 import torch.nn.functional as F
 from utils import AverageMeter
 import time
@@ -39,7 +38,7 @@ class UncertaintySampling:
     @staticmethod
     def entropy_based(probs):
         log_probs = torch.log(probs)
-        entropy = torch.sum(-probs * log_probs)
+        entropy = torch.sum(-probs * log_probs, dim=1)
 
         return entropy
 
@@ -69,4 +68,7 @@ class UncertaintySampling:
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                       .format(self.uncertainty_sampling_method, epoch, i, len(unlabeled_loader), batch_time=batch_time))
 
-        return samples.argsort()[:number]
+        if self.uncertainty_sampling_method == 'entropy_based':
+            return samples.argsort(descending=True)[:number]
+        else:
+            return samples.argsort()[:number]

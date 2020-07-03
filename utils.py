@@ -2,6 +2,8 @@ import os
 import torch
 import shutil
 from torch.utils.data import DataLoader, SubsetRandomSampler
+from sklearn.model_selection import train_test_split
+import numpy as np
 
 
 def save_checkpoint(args, state, is_best, filename='checkpoint.pth.tar'):
@@ -70,3 +72,14 @@ def create_loaders(args, base_dataset, test_dataset, labeled_idx, unlabeled_idx,
                                              **kwargs)
 
     return labeled_loader, unlabeled_loader, val_loader
+
+
+def stratified_random_sampling(base_dataset, unlabeled_idx, number):
+    ratio = (number / unlabeled_idx.shape[0])
+
+    _, samples_idx = train_test_split(
+                        np.arange(unlabeled_idx.shape[0]),
+                        test_size=ratio,
+                        shuffle=True,
+                        stratify=[base_dataset.targets[x] for x in unlabeled_idx])
+    return samples_idx

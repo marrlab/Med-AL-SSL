@@ -16,8 +16,9 @@ import numpy as np
 from model.wideresnet import WideResNet
 from model.densenet import DenseNet
 from data.matek_dataset import MatekDataset
-from utils import save_checkpoint, AverageMeter, accuracy, create_loaders
+from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, stratified_random_sampling
 from active_learning.uncertainty_sampling import UncertaintySampling
+from semi_supervised.pseudo_labeling import PseudoLabeling
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
 parser.add_argument('--epochs', default=200, type=int,
@@ -38,15 +39,15 @@ parser.add_argument('--layers', default=28, type=int,
                     help='total number of layers (default: 28)')
 parser.add_argument('--widen-factor', default=2, type=int,
                     help='widen factor (default: 2)')
-parser.add_argument('--drop-rate', default=0.2, type=float,
-                    help='dropout probability (default: 0.0)')
+parser.add_argument('--drop-rate', default=0, type=float,
+                    help='dropout probability (default: 0)')
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentation (default: True)')
 parser.add_argument('--resume', default='', type=str,
                     help='path to latest checkpoint (default: none)')
 parser.add_argument('--name', default='densenet-least-confidence', type=str,
                     help='name of experiment')
-parser.add_argument('--add-labeled-epochs', default=5, type=int,
+parser.add_argument('--add-labeled-epochs', default=10, type=int,
                     help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
 parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
                     help='what percentage of labeled data to be added')
@@ -56,11 +57,19 @@ parser.add_argument('--labeled-ratio-stop', default=0.35, type=int,
                     help='what percentage of labeled data to stop the training process at')
 parser.add_argument('--arch', default='densenet', type=str, choices=['wideresnet', 'densenet'],
                     help='arch name')
-parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
+parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based'],
                     help='the uncertainty sampling method to use')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
+parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
+                    choices=['active_learning', 'semi_supervised'],
+                    help='the weakly supervised strategy to use')
+parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
+                    choices=['pseudo_labeling'],
+                    help='the semi supervised method to use')
+parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
+                    help='the threshold for considering the pseudo label as the actual label')
 
 parser.set_defaults(augment=True)
 
@@ -70,7 +79,9 @@ args = parser.parse_args()
 
 def main():
     global args, best_prec1
-    args.name = f"{args.arch}@{args.uncertainty_sampling_method}"
+    args.name = f"{args.arch}@{args.semi_supervised_method}" \
+        if args.weak_supervision_strategy == 'semi_supervised' \
+        else f"{args.arch}@{args.uncertainty_sampling_method}"
 
     dataset_class = MatekDataset(root=args.root,
                                  labeled_ratio=args.labeled_ratio_start,
@@ -84,6 +95,7 @@ def main():
 
     uncertainty_sampler = UncertaintySampling(verbose=True,
                                               uncertainty_sampling_method=args.uncertainty_sampling_method)
+    pseudo_labeler = PseudoLabeling()
 
     if args.arch == 'wideresnet':
         model = WideResNet(args.layers,
@@ -141,16 +153,33 @@ def main():
 
         if last_best_epochs == args.add_labeled_epochs:
             acc_ratio.update({current_labeled_ratio: best_prec1})
-            samples_idx = uncertainty_sampler.get_samples(epoch, args, model,
-                                                          unlabeled_loader,
-                                                          number=dataset_class.add_labeled_num)
-            unlabeled_mask = torch.ones(size=(len(unlabeled_idx), ), dtype=torch.bool)
-            unlabeled_mask[samples_idx] = 0
-            labeled_idx = np.hstack([labeled_idx, unlabeled_idx[~unlabeled_mask]])
-            unlabeled_idx = unlabeled_idx[unlabeled_mask]
+            if args.weak_supervision_strategy == 'active_learning':
+                samples_idx = uncertainty_sampler.get_samples(epoch, args, model,
+                                                              unlabeled_loader,
+                                                              number=dataset_class.add_labeled_num)
+                unlabeled_mask = torch.ones(size=(len(unlabeled_idx), ), dtype=torch.bool)
+                unlabeled_mask[samples_idx] = 0
+                labeled_idx = np.hstack([labeled_idx, unlabeled_idx[~unlabeled_mask]])
+                unlabeled_idx = unlabeled_idx[unlabeled_mask]
 
-            train_loader, unlabeled_loader, val_loader = create_loaders(args, base_dataset, test_dataset, labeled_idx,
-                                                                        unlabeled_idx, kwargs)
+                train_loader, unlabeled_loader, val_loader = create_loaders(args, base_dataset, test_dataset,
+                                                                            labeled_idx, unlabeled_idx, kwargs)
+
+                print('Finished active learning sampling, current labeled ratio: ', current_labeled_ratio)
+            else:
+                samples_idx, samples_targets = pseudo_labeler.get_samples(epoch, args, model,
+                                                                          unlabeled_loader,
+                                                                          number=dataset_class.add_labeled_num)
+                for i, j in enumerate(samples_idx):
+                    base_dataset.targets[j] = samples_targets[i]
+
+                unlabeled_mask = torch.ones(size=(len(unlabeled_idx), ), dtype=torch.bool)
+                unlabeled_mask[samples_idx] = 0
+                labeled_idx = np.hstack([labeled_idx, unlabeled_idx[~unlabeled_mask]])
+                unlabeled_idx = unlabeled_idx[unlabeled_mask]
+
+                train_loader, unlabeled_loader, val_loader = create_loaders(args, base_dataset, test_dataset,
+                                                                            labeled_idx, unlabeled_idx, kwargs)
 
             current_labeled_ratio += args.add_labeled_ratio
             last_best_epochs = 0
@@ -163,7 +192,7 @@ def main():
         }, is_best)
 
         if current_labeled_ratio > args.labeled_ratio_stop:
-            continue
+            break
 
     for k, v in acc_ratio.items():
         print(f'Ratio: {int(k*100)}%\t'
