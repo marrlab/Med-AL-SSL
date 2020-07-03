@@ -14,12 +14,13 @@ import torch.utils.data
 import numpy as np
 
 from model.wideresnet import WideResNet
+from model.densenet import DenseNet
 from data.matek_dataset import MatekDataset
 from utils import save_checkpoint, AverageMeter, accuracy, create_loaders
 from active_learning.uncertainty_sampling import UncertaintySampling
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
-parser.add_argument('--epochs', default=100, type=int,
+parser.add_argument('--epochs', default=200, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
@@ -43,14 +44,18 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentation (default: True)')
 parser.add_argument('--resume', default='', type=str,
                     help='path to latest checkpoint (default: none)')
-parser.add_argument('--name', default='WideResNet-28-margin', type=str,
+parser.add_argument('--name', default='densenet-least-confidence', type=str,
                     help='name of experiment')
 parser.add_argument('--add-labeled-epochs', default=5, type=int,
                     help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
 parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
                     help='what percentage of labeled data to be added')
-parser.add_argument('--labeled-ratio', default=0.05, type=int,
+parser.add_argument('--labeled-ratio-start', default=0.05, type=int,
                     help='what percentage of labeled data to start the training with')
+parser.add_argument('--labeled-ratio-stop', default=0.35, type=int,
+                    help='what percentage of labeled data to stop the training process at')
+parser.add_argument('--arch', default='densenet', type=str, choices=['wideresnet', 'densenet'],
+                    help='arch name')
 
 parser.set_defaults(augment=True)
 
@@ -62,7 +67,7 @@ def main():
     global args, best_prec1
 
     dataset_class = MatekDataset('/home/qasima/datasets/thesis/stratified/',
-                                 labeled_ratio=args.labeled_ratio,
+                                 labeled_ratio=args.labeled_ratio_start,
                                  add_labeled_ratio=args.add_labeled_ratio)
 
     base_dataset, labeled_idx, unlabeled_idx, test_dataset = dataset_class.get_dataset()
@@ -73,11 +78,19 @@ def main():
 
     uncertainty_sampler = UncertaintySampling(verbose=True)
 
-    model = WideResNet(args.layers,
-                       num_classes=dataset_class.num_classes,
-                       widen_factor=args.widen_factor,
-                       drop_rate=args.drop_rate,
-                       input_size=dataset_class.input_size)
+    if args.arch == 'wideresnet':
+        model = WideResNet(args.layers,
+                           num_classes=dataset_class.num_classes,
+                           widen_factor=args.widen_factor,
+                           drop_rate=args.drop_rate,
+                           input_size=dataset_class.input_size)
+    elif args.arch == 'densenet':
+        model = DenseNet(num_classes=dataset_class.num_classes, growth_rate=32,
+                         block_config=(6, 12, 24, 16),
+                         num_init_features=64,
+                         drop_rate=args.drop_rate)
+    else:
+        raise NotImplementedError
 
     print('Number of model parameters: {}'.format(
         sum([p.data.nelement() for p in model.parameters()])))
@@ -109,7 +122,7 @@ def main():
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, len(train_loader) * args.epochs, eta_min=0)
 
     last_best_epochs = 0
-    current_labeled_ratio = args.labeled_ratio
+    current_labeled_ratio = args.labeled_ratio_start
 
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, scheduler, epoch)
@@ -119,7 +132,6 @@ def main():
         last_best_epochs = 0 if is_best else last_best_epochs + 1
 
         if last_best_epochs == args.add_labeled_epochs:
-        # if True:
             samples_idx = uncertainty_sampler.get_samples(epoch, args, model,
                                                           unlabeled_loader,
                                                           uncertainty_sampler.margin_confidence,
@@ -141,6 +153,10 @@ def main():
             'state_dict': model.state_dict(),
             'best_prec1': best_prec1,
         }, is_best)
+
+        if current_labeled_ratio == args.labeled_ratio_stop:
+            continue
+
     print('Best accuracy: ', best_prec1)
 
 
