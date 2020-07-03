@@ -24,8 +24,8 @@ parser.add_argument('--epochs', default=200, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=128, type=int,
-                    help='mini-batch size (default: 128)')
+parser.add_argument('-b', '--batch-size', default=512, type=int,
+                    help='mini-batch size (default: 512)')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
@@ -56,6 +56,11 @@ parser.add_argument('--labeled-ratio-stop', default=0.35, type=int,
                     help='what percentage of labeled data to stop the training process at')
 parser.add_argument('--arch', default='densenet', type=str, choices=['wideresnet', 'densenet'],
                     help='arch name')
+parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
+                    choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based'],
+                    help='the uncertainty sampling method to use')
+parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
+                    help='the root path for the datasets')
 
 parser.set_defaults(augment=True)
 
@@ -65,18 +70,20 @@ args = parser.parse_args()
 
 def main():
     global args, best_prec1
+    args.name = f"{args.arch}@{args.uncertainty_sampling_method}"
 
-    dataset_class = MatekDataset('/home/qasima/datasets/thesis/stratified/',
+    dataset_class = MatekDataset(root=args.root,
                                  labeled_ratio=args.labeled_ratio_start,
                                  add_labeled_ratio=args.add_labeled_ratio)
 
     base_dataset, labeled_idx, unlabeled_idx, test_dataset = dataset_class.get_dataset()
 
-    kwargs = {'num_workers': 1, 'pin_memory': True}
+    kwargs = {'num_workers': 2, 'pin_memory': False}
     train_loader, unlabeled_loader, val_loader = create_loaders(args, base_dataset, test_dataset, labeled_idx,
                                                                 unlabeled_idx, kwargs)
 
-    uncertainty_sampler = UncertaintySampling(verbose=True)
+    uncertainty_sampler = UncertaintySampling(verbose=True,
+                                              uncertainty_sampling_method=args.uncertainty_sampling_method)
 
     if args.arch == 'wideresnet':
         model = WideResNet(args.layers,
@@ -123,6 +130,7 @@ def main():
 
     last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start
+    acc_ratio = {}
 
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, scheduler, epoch)
@@ -132,9 +140,9 @@ def main():
         last_best_epochs = 0 if is_best else last_best_epochs + 1
 
         if last_best_epochs == args.add_labeled_epochs:
+            acc_ratio.update({current_labeled_ratio: best_prec1})
             samples_idx = uncertainty_sampler.get_samples(epoch, args, model,
                                                           unlabeled_loader,
-                                                          uncertainty_sampler.margin_confidence,
                                                           number=dataset_class.add_labeled_num)
             unlabeled_mask = torch.ones(size=(len(unlabeled_idx), ), dtype=torch.bool)
             unlabeled_mask[samples_idx] = 0
@@ -154,9 +162,12 @@ def main():
             'best_prec1': best_prec1,
         }, is_best)
 
-        if current_labeled_ratio == args.labeled_ratio_stop:
+        if current_labeled_ratio > args.labeled_ratio_stop:
             continue
 
+    for k, v in acc_ratio.items():
+        print(f'Ratio: {int(k*100)}%\t'
+              f'Accuracy: {v}')
     print('Best accuracy: ', best_prec1)
 
 

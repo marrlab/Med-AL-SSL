@@ -11,7 +11,9 @@ class UncertaintySampling:
     Credits to: https://github.com/rmunro/pytorch_active_learning
     """
 
-    def __init__(self, verbose=False):
+    def __init__(self, uncertainty_sampling_method, verbose=False):
+        self.uncertainty_sampling_method = uncertainty_sampling_method
+        self.method = getattr(self, self.uncertainty_sampling_method)
         self.verbose = verbose
 
     @staticmethod
@@ -41,8 +43,7 @@ class UncertaintySampling:
 
         return entropy
 
-    @staticmethod
-    def get_samples(epoch, args, model, unlabeled_loader, method, number):
+    def get_samples(self, epoch, args, model, unlabeled_loader, number):
         batch_time = AverageMeter()
         samples = None
 
@@ -55,7 +56,7 @@ class UncertaintySampling:
 
             with torch.no_grad():
                 output = model(data_x)
-            score = method(F.softmax(output, dim=1))
+            score = self.method(F.softmax(output, dim=1))
 
             samples = score if samples is None else torch.cat([samples, score])
 
@@ -63,9 +64,9 @@ class UncertaintySampling:
             end = time.time()
 
             if i % args.print_freq == 0:
-                print('Uncertainty Sampling\t'
-                      'Epoch: [{0}][{1}/{2}]\t'
+                print('{0}\t'
+                      'Epoch: [{1}][{2}/{3}]\t'
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                      .format(epoch, i, len(unlabeled_loader), batch_time=batch_time))
+                      .format(self.uncertainty_sampling_method, epoch, i, len(unlabeled_loader), batch_time=batch_time))
 
         return samples.argsort()[:number]
