@@ -57,12 +57,12 @@ parser.add_argument('--labeled-ratio-stop', default=0.35, type=int,
                     help='what percentage of labeled data to stop the training process at')
 parser.add_argument('--arch', default='densenet', type=str, choices=['wideresnet', 'densenet'],
                     help='arch name')
-parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
+parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based'],
                     help='the uncertainty sampling method to use')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
-parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
+parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
                     choices=['active_learning', 'semi_supervised'],
                     help='the weakly supervised strategy to use')
 parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
@@ -70,6 +70,7 @@ parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=
                     help='the semi supervised method to use')
 parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
+parser.add_argument('--weighted', action='store_false')
 
 parser.set_defaults(augment=True)
 
@@ -133,7 +134,13 @@ def main():
 
     cudnn.benchmark = True
 
-    criterion = nn.CrossEntropyLoss().cuda()
+    if args.weighted:
+        classes_targets = torch.FloatTensor(base_dataset.targets)
+        classes_samples = torch.FloatTensor([torch.sum(classes_targets == i) for i in range(dataset_class.num_classes)])
+        classes_weights = np.log(len(base_dataset)) - torch.log(classes_samples)
+        criterion = nn.CrossEntropyLoss(weight=classes_weights).cuda()
+    else:
+        criterion = nn.CrossEntropyLoss().cuda()
     optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                 momentum=args.momentum, nesterov=args.nesterov,
                                 weight_decay=args.weight_decay)
@@ -165,13 +172,19 @@ def main():
                 train_loader, unlabeled_loader, val_loader = create_loaders(args, base_dataset, test_dataset,
                                                                             labeled_idx, unlabeled_idx, kwargs)
 
-                print('Finished active learning sampling, current labeled ratio: ', current_labeled_ratio)
+                print(f'Uncertainty Sampling\t '
+                      f'Current labeled ratio: {current_labeled_ratio}\t')
             else:
                 samples_idx, samples_targets = pseudo_labeler.get_samples(epoch, args, model,
                                                                           unlabeled_loader,
                                                                           number=dataset_class.add_labeled_num)
+
+                pseudo_labels_acc = np.zeros(samples_idx.shape[0])
                 for i, j in enumerate(samples_idx):
-                    base_dataset.targets[j] = samples_targets[i]
+                    if base_dataset.targets[j] == samples_targets[i]:
+                        pseudo_labels_acc[i] = 1
+                    else:
+                        base_dataset.targets[j] = samples_targets[i]
 
                 unlabeled_mask = torch.ones(size=(len(unlabeled_idx), ), dtype=torch.bool)
                 unlabeled_mask[samples_idx] = 0
@@ -180,6 +193,10 @@ def main():
 
                 train_loader, unlabeled_loader, val_loader = create_loaders(args, base_dataset, test_dataset,
                                                                             labeled_idx, unlabeled_idx, kwargs)
+
+                print(f'Pseudo labeling\t '
+                      f'Current labeled ratio: {current_labeled_ratio}\t'
+                      f'Pseudo labeled accuracy: {np.sum(pseudo_labels_acc == 1) / samples_idx.shape[0]}')
 
             current_labeled_ratio += args.add_labeled_ratio
             last_best_epochs = 0

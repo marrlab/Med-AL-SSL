@@ -38,7 +38,7 @@ class PseudoLabeling:
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                       .format('Pseudo Labeling', epoch, i, len(unlabeled_loader), batch_time=batch_time))
 
-        samples_idx = samples.argsort()[:number]
+        samples_idx = samples.argsort(descending=True)[:number]
         samples_targets = samples_targets[samples_idx]
 
         return samples_idx, samples_targets
