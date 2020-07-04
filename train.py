@@ -2,7 +2,7 @@ import argparse
 import os
 import time
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '4'
 
 import torch
 import torch.nn as nn
@@ -12,6 +12,7 @@ import torch.optim
 import torch.utils.data
 
 import numpy as np
+from sklearn.metrics import classification_report
 
 from model.wideresnet import WideResNet
 from model.densenet import DenseNet
@@ -62,7 +63,7 @@ parser.add_argument('--uncertainty-sampling-method', default='least_confidence',
                     help='the uncertainty sampling method to use')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
-parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
+parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
                     choices=['active_learning', 'semi_supervised'],
                     help='the weakly supervised strategy to use')
 parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
@@ -211,10 +212,13 @@ def main():
         if current_labeled_ratio > args.labeled_ratio_stop:
             break
 
+    report = evaluate(val_loader, model)
+
     for k, v in acc_ratio.items():
         print(f'Ratio: {int(k*100)}%\t'
               f'Accuracy: {v}')
     print('Best accuracy: ', best_prec1)
+    print(report)
 
 
 def train(train_loader, model, criterion, optimizer, scheduler, epoch):
@@ -285,6 +289,23 @@ def validate(val_loader, model, criterion):
     print(' * Prec@1 {top1.avg:.3f}'.format(top1=top1))
 
     return top1.avg
+
+
+def evaluate(val_loader, model):
+    model.eval()
+
+    outputs = []
+    targets = []
+    for i, (data_x, target) in enumerate(val_loader):
+        target = target.cuda(non_blocking=True)
+        data_x = data_x.cuda(non_blocking=True)
+
+        with torch.no_grad():
+            output = model(data_x)
+        outputs.extend(torch.argmax(output, dim=1).tolist())
+        targets.extend(target.tolist())
+
+    return classification_report(targets, outputs)
 
 
 if __name__ == '__main__':
