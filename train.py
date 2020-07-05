@@ -2,6 +2,8 @@ import argparse
 import os
 import time
 
+from torchvision.datasets import ImageFolder
+
 os.environ['CUDA_VISIBLE_DEVICES'] = '4'
 
 import torch
@@ -17,7 +19,7 @@ from sklearn.metrics import classification_report
 from model.wideresnet import WideResNet
 from model.densenet import DenseNet
 from data.matek_dataset import MatekDataset
-from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, stratified_random_sampling
+from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args
 from active_learning.uncertainty_sampling import UncertaintySampling
 from semi_supervised.pseudo_labeling import PseudoLabeling
 
@@ -71,7 +73,8 @@ parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=
                     help='the semi supervised method to use')
 parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
-parser.add_argument('--weighted', action='store_false')
+parser.add_argument('--weighted', action='store_false', help='to use weighted loss or not')
+parser.add_argument('--eval', action='store_true', help='only perform  evaluation and exit')
 
 parser.set_defaults(augment=True)
 
@@ -151,6 +154,16 @@ def main():
     last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start
     acc_ratio = {}
+
+    print_args(args)
+
+    if args.eval:
+        print('Starting evaluation..')
+        report = evaluate(val_loader, model)
+        print(report)
+        exit(1)
+    else:
+        print('Starting training..')
 
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, scheduler, epoch)

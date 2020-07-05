@@ -83,3 +83,15 @@ def stratified_random_sampling(base_dataset, unlabeled_idx, number):
                         shuffle=True,
                         stratify=[base_dataset.targets[x] for x in unlabeled_idx])
     return samples_idx
+
+
+def print_args(args):
+    print('Arguments:\n'
+          f'Model name: {args.name}\t'
+          f'Epochs: {args.epoch}\t'
+          f'Batch Size: {args.batch_size}\n'
+          f'Architecture: {args.arch}\t'
+          f'Weak Supervision Strategy: {args.weak_supervision_strategy}\n'
+          f'Uncertainty Sampling Method" {args.uncertainty_sampling_method}\t'
+          f'Semi Supervised Method: {args.semi_supervised_method}\n'
+          f'Dataset root: {args.root}')
