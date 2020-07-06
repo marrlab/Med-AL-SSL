@@ -1,17 +1,19 @@
 from torch.utils.data import Dataset
-from torchvision import datasets
+import numpy as np
 
 
-class ActiveDataset(Dataset):
-    def __init__(self, root, indexes, transform=None):
+class WeaklySupervisedDataset(Dataset):
+    def __init__(self, dataset, indices, transform=None):
         self.transform = transform
-        self.indexes = indexes
-        self.dataset = datasets.ImageFolder(root, transform=self.transform)
+        self.indices = indices
+        self.dataset = dataset
+        self.targets = np.array(dataset.targets)
 
     def __len__(self):
-        return len(self.indexes)
+        return len(self.indices)
 
     def __getitem__(self, index):
-        img, target = self.dataset[self.indexes[index]]
+        img, target = self.dataset[self.indices[index]]
+        img = self.transform(img) if self.transform is not None else img
 
         return img, target

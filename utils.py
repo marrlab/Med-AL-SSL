@@ -53,45 +53,44 @@ def accuracy(output, target, topk=(1,)):
     return res
 
 
-def create_loaders(args, base_dataset, test_dataset, labeled_idx, unlabeled_idx, kwargs):
-    labeled_loader = DataLoader(dataset=base_dataset,
-                                batch_size=args.batch_size,
-                                shuffle=False,
-                                sampler=SubsetRandomSampler(labeled_idx),
-                                **kwargs)
+def create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset, labeled_indices, unlabeled_indices, kwargs):
+    labeled_dataset.indices = labeled_indices
+    unlabeled_dataset.indices = unlabeled_indices
 
-    unlabeled_loader = DataLoader(dataset=base_dataset,
-                                  batch_size=args.batch_size,
-                                  shuffle=False,
-                                  sampler=SubsetRandomSampler(unlabeled_idx),
-                                  **kwargs)
-
-    val_loader = torch.utils.data.DataLoader(dataset=test_dataset,
-                                             batch_size=args.batch_size,
-                                             shuffle=True,
-                                             **kwargs)
+    labeled_loader = DataLoader(dataset=labeled_dataset, batch_size=args.batch_size, shuffle=True, **kwargs)
+    unlabeled_loader = DataLoader(dataset=unlabeled_dataset, batch_size=args.batch_size, shuffle=True, **kwargs)
+    val_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=True, **kwargs)
 
     return labeled_loader, unlabeled_loader, val_loader
 
 
-def stratified_random_sampling(base_dataset, unlabeled_idx, number):
-    ratio = (number / unlabeled_idx.shape[0])
+def stratified_random_sampling(base_dataset, unlabeled_indices, number):
+    ratio = (number / unlabeled_indices.shape[0])
 
-    _, samples_idx = train_test_split(
-                        np.arange(unlabeled_idx.shape[0]),
+    _, samples_indices = train_test_split(
+                        np.arange(unlabeled_indices.shape[0]),
                         test_size=ratio,
                         shuffle=True,
-                        stratify=[base_dataset.targets[x] for x in unlabeled_idx])
-    return samples_idx
+                        stratify=[base_dataset.targets[x] for x in unlabeled_indices])
+    return samples_indices
+
+
+def postprocess_indices(labeled_indices, unlabeled_indices, samples_indices):
+    unlabeled_mask = torch.ones(size=(len(unlabeled_indices),), dtype=torch.bool)
+    unlabeled_mask[samples_indices] = 0
+    labeled_indices = np.hstack([labeled_indices, unlabeled_indices[~unlabeled_mask]])
+    unlabeled_indices = unlabeled_indices[unlabeled_mask]
+
+    return labeled_indices, unlabeled_indices
 
 
 def print_args(args):
     print('Arguments:\n'
           f'Model name: {args.name}\t'
-          f'Epochs: {args.epoch}\t'
+          f'Epochs: {args.epochs}\t'
           f'Batch Size: {args.batch_size}\n'
           f'Architecture: {args.arch}\t'
           f'Weak Supervision Strategy: {args.weak_supervision_strategy}\n'
-          f'Uncertainty Sampling Method" {args.uncertainty_sampling_method}\t'
+          f'Uncertainty Sampling Method: {args.uncertainty_sampling_method}\t'
           f'Semi Supervised Method: {args.semi_supervised_method}\n'
           f'Dataset root: {args.root}')

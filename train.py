@@ -19,7 +19,8 @@ from sklearn.metrics import classification_report
 from model.wideresnet import WideResNet
 from model.densenet import DenseNet
 from data.matek_dataset import MatekDataset
-from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args
+from data.cifar10_dataset import CifarDataset
+from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, postprocess_indices
 from active_learning.uncertainty_sampling import UncertaintySampling
 from semi_supervised.pseudo_labeling import PseudoLabeling
 
@@ -73,30 +74,35 @@ parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=
                     help='the semi supervised method to use')
 parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
-parser.add_argument('--weighted', action='store_false', help='to use weighted loss or not')
+parser.add_argument('--weighted', action='store_true', help='to use weighted loss or not')
 parser.add_argument('--eval', action='store_true', help='only perform  evaluation and exit')
+parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek'],
+                    help='the dataset to train on')
 
 parser.set_defaults(augment=True)
 
 best_prec1 = 0
 args = parser.parse_args()
+datasets = {'matek': MatekDataset, 'cifar10': CifarDataset}
 
 
 def main():
     global args, best_prec1
-    args.name = f"{args.arch}@{args.semi_supervised_method}" \
+    args.name = f"{args.dataset}@{args.arch}@{args.semi_supervised_method}" \
         if args.weak_supervision_strategy == 'semi_supervised' \
-        else f"{args.arch}@{args.uncertainty_sampling_method}"
+        else f"{args.dataset}@{args.arch}@{args.uncertainty_sampling_method}"
 
-    dataset_class = MatekDataset(root=args.root,
-                                 labeled_ratio=args.labeled_ratio_start,
-                                 add_labeled_ratio=args.add_labeled_ratio)
+    print(args)
 
-    base_dataset, labeled_idx, unlabeled_idx, test_dataset = dataset_class.get_dataset()
+    dataset_class = datasets[args.dataset](root=args.root,
+                                           labeled_ratio=args.labeled_ratio_start,
+                                           add_labeled_ratio=args.add_labeled_ratio)
+
+    labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = dataset_class.get_dataset()
 
     kwargs = {'num_workers': 2, 'pin_memory': False}
-    train_loader, unlabeled_loader, val_loader = create_loaders(args, base_dataset, test_dataset, labeled_idx,
-                                                                unlabeled_idx, kwargs)
+    train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset,
+                                                                labeled_indices, unlabeled_indices, kwargs)
 
     uncertainty_sampler = UncertaintySampling(verbose=True,
                                               uncertainty_sampling_method=args.uncertainty_sampling_method)
@@ -139,9 +145,9 @@ def main():
     cudnn.benchmark = True
 
     if args.weighted:
-        classes_targets = torch.FloatTensor(base_dataset.targets)
+        classes_targets = torch.FloatTensor(labeled_dataset.targets[labeled_indices])
         classes_samples = torch.FloatTensor([torch.sum(classes_targets == i) for i in range(dataset_class.num_classes)])
-        classes_weights = np.log(len(base_dataset)) - torch.log(classes_samples)
+        classes_weights = np.log(len(labeled_dataset)) - torch.log(classes_samples)
         criterion = nn.CrossEntropyLoss(weight=classes_weights).cuda()
     else:
         criterion = nn.CrossEntropyLoss().cuda()
@@ -154,6 +160,7 @@ def main():
     last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start
     acc_ratio = {}
+    best_model = model
 
     print_args(args)
 
@@ -171,46 +178,46 @@ def main():
 
         is_best = prec1 > best_prec1
         last_best_epochs = 0 if is_best else last_best_epochs + 1
+        best_model = model if is_best else best_model
 
         if last_best_epochs == args.add_labeled_epochs:
             acc_ratio.update({current_labeled_ratio: best_prec1})
             if args.weak_supervision_strategy == 'active_learning':
-                samples_idx = uncertainty_sampler.get_samples(epoch, args, model,
-                                                              unlabeled_loader,
-                                                              number=dataset_class.add_labeled_num)
-                unlabeled_mask = torch.ones(size=(len(unlabeled_idx), ), dtype=torch.bool)
-                unlabeled_mask[samples_idx] = 0
-                labeled_idx = np.hstack([labeled_idx, unlabeled_idx[~unlabeled_mask]])
-                unlabeled_idx = unlabeled_idx[unlabeled_mask]
+                samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
+                                                                  unlabeled_loader,
+                                                                  number=dataset_class.add_labeled_num)
 
-                train_loader, unlabeled_loader, val_loader = create_loaders(args, base_dataset, test_dataset,
-                                                                            labeled_idx, unlabeled_idx, kwargs)
+                labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
+                                                                         samples_indices)
+
+                train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset,
+                                                                            test_dataset, labeled_indices,
+                                                                            unlabeled_indices, kwargs)
 
                 print(f'Uncertainty Sampling\t '
                       f'Current labeled ratio: {current_labeled_ratio}\t')
             else:
-                samples_idx, samples_targets = pseudo_labeler.get_samples(epoch, args, model,
-                                                                          unlabeled_loader,
-                                                                          number=dataset_class.add_labeled_num)
+                samples_indices, samples_targets = pseudo_labeler.get_samples(epoch, args, best_model,
+                                                                              unlabeled_loader,
+                                                                              number=dataset_class.add_labeled_num)
 
-                pseudo_labels_acc = np.zeros(samples_idx.shape[0])
-                for i, j in enumerate(samples_idx):
-                    if base_dataset.targets[j] == samples_targets[i]:
+                labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
+                                                                         samples_indices)
+
+                pseudo_labels_acc = np.zeros(samples_indices.shape[0])
+                for i, j in enumerate(samples_indices):
+                    if labeled_dataset.targets[j] == samples_targets[i]:
                         pseudo_labels_acc[i] = 1
                     else:
-                        base_dataset.targets[j] = samples_targets[i]
+                        labeled_dataset.targets[j] = samples_targets[i]
 
-                unlabeled_mask = torch.ones(size=(len(unlabeled_idx), ), dtype=torch.bool)
-                unlabeled_mask[samples_idx] = 0
-                labeled_idx = np.hstack([labeled_idx, unlabeled_idx[~unlabeled_mask]])
-                unlabeled_idx = unlabeled_idx[unlabeled_mask]
-
-                train_loader, unlabeled_loader, val_loader = create_loaders(args, base_dataset, test_dataset,
-                                                                            labeled_idx, unlabeled_idx, kwargs)
+                train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset,
+                                                                            test_dataset, labeled_indices,
+                                                                            unlabeled_indices, kwargs)
 
                 print(f'Pseudo labeling\t '
                       f'Current labeled ratio: {current_labeled_ratio}\t'
-                      f'Pseudo labeled accuracy: {np.sum(pseudo_labels_acc == 1) / samples_idx.shape[0]}')
+                      f'Pseudo labeled accuracy: {np.sum(pseudo_labels_acc == 1) / samples_indices.shape[0]}')
 
             current_labeled_ratio += args.add_labeled_ratio
             last_best_epochs = 0
@@ -225,7 +232,7 @@ def main():
         if current_labeled_ratio > args.labeled_ratio_stop:
             break
 
-    report = evaluate(val_loader, model)
+    report = evaluate(val_loader, best_model)
 
     for k, v in acc_ratio.items():
         print(f'Ratio: {int(k*100)}%\t'
@@ -318,7 +325,7 @@ def evaluate(val_loader, model):
         outputs.extend(torch.argmax(output, dim=1).tolist())
         targets.extend(target.tolist())
 
-    return classification_report(targets, outputs)
+    return classification_report(targets, outputs, zero_division=1)
 
 
 if __name__ == '__main__':
