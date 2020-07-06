@@ -15,6 +15,9 @@ class CifarDataset:
         self.transform_train = transforms.Compose([
             transforms.RandomCrop(self.input_size, padding=4),
             transforms.RandomHorizontalFlip(),
+            # transforms.RandomVerticalFlip(),
+            # transforms.RandomGrayscale(),
+            # transforms.RandomRotation(degrees=180),
             transforms.ToTensor(),
             transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
         ])
@@ -28,7 +31,7 @@ class CifarDataset:
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.CIFAR10(root=self.root, train=True,
-                                                    download=True, transform=self.transform_train)
+                                                    download=True, transform=None)
 
         self.add_labeled_num = int(len(base_dataset) * self.add_labeled_ratio)
 

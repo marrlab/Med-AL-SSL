@@ -1,6 +1,7 @@
 import argparse
 import os
 import time
+from copy import deepcopy
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '4'
 
@@ -15,7 +16,7 @@ import numpy as np
 from sklearn.metrics import classification_report
 
 from model.wideresnet import WideResNet
-from model.densenet import DenseNet
+from model.densenet import densenet121
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import CifarDataset
 from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, postprocess_indices, stratified_random_sampling
@@ -27,12 +28,12 @@ parser.add_argument('--epochs', default=200, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=512, type=int,
+parser.add_argument('-b', '--batch-size', default=128, type=int,
                     help='mini-batch size (default: 512)')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
-parser.add_argument('--nesterov', default=True, type=bool, help='nesterov momentum')
+parser.add_argument('--nesterov', default=False, type=bool, help='nesterov momentum')
 parser.add_argument('--weight-decay', '--wd', default=5e-4, type=float,
                     help='weight decay (default: 5e-4)')
 parser.add_argument('--print-freq', '-p', default=10, type=int,
@@ -41,7 +42,7 @@ parser.add_argument('--layers', default=28, type=int,
                     help='total number of layers (default: 28)')
 parser.add_argument('--widen-factor', default=2, type=int,
                     help='widen factor (default: 2)')
-parser.add_argument('--drop-rate', default=0.2, type=float,
+parser.add_argument('--drop-rate', default=0, type=float,
                     help='dropout probability (default: 0.2)')
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentation (default: True)')
@@ -51,15 +52,15 @@ parser.add_argument('--name', default='densenet-least-confidence', type=str,
                     help='name of experiment')
 parser.add_argument('--add-labeled-epochs', default=10, type=int,
                     help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
-parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
+parser.add_argument('--add-labeled-ratio', default=0.1, type=int,
                     help='what percentage of labeled data to be added')
-parser.add_argument('--labeled-ratio-start', default=0.05, type=int,
+parser.add_argument('--labeled-ratio-start', default=0.1, type=int,
                     help='what percentage of labeled data to start the training with')
-parser.add_argument('--labeled-ratio-stop', default=0.35, type=int,
+parser.add_argument('--labeled-ratio-stop', default=0.4, type=int,
                     help='what percentage of labeled data to stop the training process at')
 parser.add_argument('--arch', default='densenet', type=str, choices=['wideresnet', 'densenet'],
                     help='arch name')
-parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
+parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based'],
                     help='the uncertainty sampling method to use')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
@@ -74,7 +75,7 @@ parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
 parser.add_argument('--weighted', action='store_false', help='to use weighted loss or not')
 parser.add_argument('--eval', action='store_true', help='only perform  evaluation and exit')
-parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek'],
+parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek'],
                     help='the dataset to train on')
 
 parser.set_defaults(augment=True)
@@ -113,10 +114,7 @@ def main():
                            drop_rate=args.drop_rate,
                            input_size=dataset_class.input_size)
     elif args.arch == 'densenet':
-        model = DenseNet(num_classes=dataset_class.num_classes, growth_rate=32,
-                         block_config=(6, 12, 24, 16),
-                         num_init_features=64,
-                         drop_rate=args.drop_rate)
+        model = densenet121()
     else:
         raise NotImplementedError
 
@@ -149,18 +147,19 @@ def main():
         criterion = nn.CrossEntropyLoss(weight=classes_weights).cuda()
     else:
         criterion = nn.CrossEntropyLoss().cuda()
+
     optimizer = torch.optim.SGD(model.parameters(), args.lr,
                                 momentum=args.momentum, nesterov=args.nesterov,
                                 weight_decay=args.weight_decay)
 
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
-                                                           (len(train_loader) + len(unlabeled_loader)) * args.epochs,
-                                                           eta_min=0)
+    # optimizer = torch.optim.Adam(model.parameters())
+
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=150, gamma=0.1)
 
     last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start
     acc_ratio = {}
-    best_model = model
+    best_model = deepcopy(model)
 
     print_args(args)
 
@@ -175,10 +174,11 @@ def main():
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, scheduler, epoch, last_best_epochs)
         prec1 = validate(val_loader, model, criterion, last_best_epochs)
+        scheduler.step()
 
         is_best = prec1 > best_prec1
         last_best_epochs = 0 if is_best else last_best_epochs + 1
-        best_model = model if is_best else best_model
+        best_model = deepcopy(model) if is_best else best_model
 
         if last_best_epochs == args.add_labeled_epochs:
             acc_ratio.update({current_labeled_ratio: best_prec1})
@@ -266,6 +266,7 @@ def train(train_loader, model, criterion, optimizer, scheduler, epoch, last_best
         target = target.cuda(non_blocking=True)
         data_x = data_x.cuda(non_blocking=True)
 
+        optimizer.zero_grad()
         output = model(data_x)
         loss = criterion(output, target)
 
@@ -273,10 +274,8 @@ def train(train_loader, model, criterion, optimizer, scheduler, epoch, last_best
         losses.update(loss.data.item(), data_x.size(0))
         top1.update(prec1.item(), data_x.size(0))
 
-        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        scheduler.step()
 
         batch_time.update(time.time() - end)
         end = time.time()

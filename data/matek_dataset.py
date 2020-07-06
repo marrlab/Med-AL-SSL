@@ -21,9 +21,9 @@ class MatekDataset:
             # transforms.RandomCrop(size=self.input_size,
             #                      padding=int(32*0.125),
             #                      padding_mode='reflect'),
-            transforms.RandomVerticalFlip(),
-            transforms.RandomGrayscale(),
-            transforms.RandomRotation(degrees=180),
+            # transforms.RandomVerticalFlip(),
+            # transforms.RandomGrayscale(),
+            # transforms.RandomRotation(degrees=180),
             transforms.ToTensor(),
             transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
         ])
