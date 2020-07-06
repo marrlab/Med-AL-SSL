@@ -2,8 +2,6 @@ import argparse
 import os
 import time
 
-from torchvision.datasets import ImageFolder
-
 os.environ['CUDA_VISIBLE_DEVICES'] = '4'
 
 import torch
@@ -20,7 +18,7 @@ from model.wideresnet import WideResNet
 from model.densenet import DenseNet
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import CifarDataset
-from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, postprocess_indices
+from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, postprocess_indices, stratified_random_sampling
 from active_learning.uncertainty_sampling import UncertaintySampling
 from semi_supervised.pseudo_labeling import PseudoLabeling
 
@@ -43,8 +41,8 @@ parser.add_argument('--layers', default=28, type=int,
                     help='total number of layers (default: 28)')
 parser.add_argument('--widen-factor', default=2, type=int,
                     help='widen factor (default: 2)')
-parser.add_argument('--drop-rate', default=0, type=float,
-                    help='dropout probability (default: 0)')
+parser.add_argument('--drop-rate', default=0.2, type=float,
+                    help='dropout probability (default: 0.2)')
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentation (default: True)')
 parser.add_argument('--resume', default='', type=str,
@@ -66,15 +64,15 @@ parser.add_argument('--uncertainty-sampling-method', default='least_confidence',
                     help='the uncertainty sampling method to use')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
-parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
-                    choices=['active_learning', 'semi_supervised'],
+parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
+                    choices=['active_learning', 'semi_supervised', 'random_sampling'],
                     help='the weakly supervised strategy to use')
 parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
                     choices=['pseudo_labeling'],
                     help='the semi supervised method to use')
 parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
-parser.add_argument('--weighted', action='store_true', help='to use weighted loss or not')
+parser.add_argument('--weighted', action='store_false', help='to use weighted loss or not')
 parser.add_argument('--eval', action='store_true', help='only perform  evaluation and exit')
 parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek'],
                     help='the dataset to train on')
@@ -145,9 +143,9 @@ def main():
     cudnn.benchmark = True
 
     if args.weighted:
-        classes_targets = torch.FloatTensor(labeled_dataset.targets[labeled_indices])
+        classes_targets = torch.FloatTensor(unlabeled_dataset.targets[unlabeled_indices])
         classes_samples = torch.FloatTensor([torch.sum(classes_targets == i) for i in range(dataset_class.num_classes)])
-        classes_weights = np.log(len(labeled_dataset)) - torch.log(classes_samples)
+        classes_weights = np.log(len(unlabeled_dataset)) - torch.log(classes_samples)
         criterion = nn.CrossEntropyLoss(weight=classes_weights).cuda()
     else:
         criterion = nn.CrossEntropyLoss().cuda()
@@ -155,7 +153,9 @@ def main():
                                 momentum=args.momentum, nesterov=args.nesterov,
                                 weight_decay=args.weight_decay)
 
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, len(train_loader) * args.epochs, eta_min=0)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,
+                                                           (len(train_loader) + len(unlabeled_loader)) * args.epochs,
+                                                           eta_min=0)
 
     last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start
@@ -173,8 +173,8 @@ def main():
         print('Starting training..')
 
     for epoch in range(args.start_epoch, args.epochs):
-        train(train_loader, model, criterion, optimizer, scheduler, epoch)
-        prec1 = validate(val_loader, model, criterion)
+        train(train_loader, model, criterion, optimizer, scheduler, epoch, last_best_epochs)
+        prec1 = validate(val_loader, model, criterion, last_best_epochs)
 
         is_best = prec1 > best_prec1
         last_best_epochs = 0 if is_best else last_best_epochs + 1
@@ -196,7 +196,7 @@ def main():
 
                 print(f'Uncertainty Sampling\t '
                       f'Current labeled ratio: {current_labeled_ratio}\t')
-            else:
+            elif args.weak_supervision_strategy == 'semi_supervised':
                 samples_indices, samples_targets = pseudo_labeler.get_samples(epoch, args, best_model,
                                                                               unlabeled_loader,
                                                                               number=dataset_class.add_labeled_num)
@@ -218,6 +218,19 @@ def main():
                 print(f'Pseudo labeling\t '
                       f'Current labeled ratio: {current_labeled_ratio}\t'
                       f'Pseudo labeled accuracy: {np.sum(pseudo_labels_acc == 1) / samples_indices.shape[0]}')
+
+            else:
+                samples_indices = stratified_random_sampling(unlabeled_indices, number=dataset_class.add_labeled_num)
+
+                labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
+                                                                         samples_indices)
+
+                train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset,
+                                                                            test_dataset, labeled_indices,
+                                                                            unlabeled_indices, kwargs)
+
+                print(f'Random Sampling\t '
+                      f'Current labeled ratio: {current_labeled_ratio}\t')
 
             current_labeled_ratio += args.add_labeled_ratio
             last_best_epochs = 0
@@ -241,7 +254,7 @@ def main():
     print(report)
 
 
-def train(train_loader, model, criterion, optimizer, scheduler, epoch):
+def train(train_loader, model, criterion, optimizer, scheduler, epoch, last_best_epochs):
     batch_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
@@ -272,11 +285,13 @@ def train(train_loader, model, criterion, optimizer, scheduler, epoch):
             print('Epoch: [{0}][{1}/{2}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'
-                  .format(epoch, i, len(train_loader), batch_time=batch_time, loss=losses, top1=top1))
+                  'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                  'Last best epoch {last_best_epoch}'
+                  .format(epoch, i, len(train_loader), batch_time=batch_time, loss=losses, top1=top1,
+                          last_best_epoch=last_best_epochs))
 
 
-def validate(val_loader, model, criterion):
+def validate(val_loader, model, criterion, last_best_epochs):
     batch_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
@@ -303,8 +318,10 @@ def validate(val_loader, model, criterion):
             print('Test: [{0}/{1}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Prec@1 {top1.val:.3f} ({top1.avg:.3f})'
-                  .format(i, len(val_loader), batch_time=batch_time, loss=losses, top1=top1))
+                  'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                  'Last best epoch {last_best_epoch}'
+                  .format(i, len(val_loader), batch_time=batch_time, loss=losses, top1=top1,
+                          last_best_epoch=last_best_epochs))
 
     print(' * Prec@1 {top1.avg:.3f}'.format(top1=top1))
 

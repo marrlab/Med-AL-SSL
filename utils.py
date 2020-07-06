@@ -1,8 +1,8 @@
 import os
 import torch
 import shutil
-from torch.utils.data import DataLoader, SubsetRandomSampler
-from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader
+from numpy.random import default_rng
 import numpy as np
 
 
@@ -17,8 +17,6 @@ def save_checkpoint(args, state, is_best, filename='checkpoint.pth.tar'):
 
 
 class AverageMeter(object):
-    """Computes and stores the average and current value"""
-
     def __init__(self):
         self.val = 0
         self.avg = 0
@@ -64,14 +62,10 @@ def create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset, label
     return labeled_loader, unlabeled_loader, val_loader
 
 
-def stratified_random_sampling(base_dataset, unlabeled_indices, number):
-    ratio = (number / unlabeled_indices.shape[0])
+def stratified_random_sampling(unlabeled_indices, number):
+    rng = default_rng()
+    samples_indices = rng.choice(unlabeled_indices.shape[0], size=number, replace=False)
 
-    _, samples_indices = train_test_split(
-                        np.arange(unlabeled_indices.shape[0]),
-                        test_size=ratio,
-                        shuffle=True,
-                        stratify=[base_dataset.targets[x] for x in unlabeled_indices])
     return samples_indices
 
 
