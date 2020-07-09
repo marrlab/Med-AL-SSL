@@ -4,16 +4,18 @@ import shutil
 from torch.utils.data import DataLoader
 from numpy.random import default_rng
 import numpy as np
+from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import classification_report
 
 
-def save_checkpoint(args, state, is_best, filename='checkpoint.pth.tar'):
-    directory = "runs/%s/" % args.name
+def save_checkpoint(args, state, is_best, filename='checkpoint.pth.tar', best_model_filename='model_best.pth.tar'):
+    directory = os.path.join(args.checkpoint_path, args.name)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    filename = directory + filename
+    filename = os.path.join(directory, filename)
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, 'runs/%s/' % args.name + 'model_best.pth.tar')
+        shutil.copyfile(filename, os.path.join(directory, best_model_filename))
 
 
 class AverageMeter(object):
@@ -76,6 +78,22 @@ def postprocess_indices(labeled_indices, unlabeled_indices, samples_indices):
     unlabeled_indices = unlabeled_indices[unlabeled_mask]
 
     return labeled_indices, unlabeled_indices
+
+
+class Metrics:
+    def __init__(self):
+        self.targets = []
+        self.outputs = []
+
+    def add_mini_batch(self, mini_targets, mini_outputs):
+        self.targets.extend(mini_targets.tolist())
+        self.outputs.extend(torch.argmax(mini_outputs, dim=1).tolist())
+
+    def get_metrics(self):
+        return precision_recall_fscore_support(self.targets, self.outputs, average='weighted')
+
+    def get_report(self):
+        return classification_report(self.targets, self.outputs)
 
 
 def print_args(args):
