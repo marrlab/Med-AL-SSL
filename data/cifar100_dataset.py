@@ -5,7 +5,7 @@ from torchvision import transforms
 from .dataset_utils import WeaklySupervisedDataset
 
 
-class CifarDataset:
+class Cifar100Dataset:
     def __init__(self, root, labeled_ratio, add_labeled_ratio):
         self.root = root
         self.labeled_ratio = labeled_ratio

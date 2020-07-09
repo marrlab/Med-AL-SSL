@@ -5,7 +5,7 @@ from torchvision import transforms
 from .dataset_utils import WeaklySupervisedDataset
 
 
-class CifarDataset:
+class Cifar10Dataset:
     def __init__(self, root, labeled_ratio, add_labeled_ratio):
         self.root = root
         self.labeled_ratio = labeled_ratio
@@ -19,11 +19,11 @@ class CifarDataset:
             # transforms.RandomGrayscale(),
             # transforms.RandomRotation(degrees=180),
             transforms.ToTensor(),
-            # transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
+            transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
         ])
         self.transform_test = transforms.Compose([
             transforms.ToTensor(),
-            # transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
+            transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
         ])
         self.num_classes = 10
         self.add_labeled_ratio = add_labeled_ratio

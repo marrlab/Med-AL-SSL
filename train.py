@@ -16,8 +16,10 @@ import numpy as np
 
 from model.wideresnet import WideResNet
 from model.densenet import densenet121
+from model.lenet import LeNet
 from data.matek_dataset import MatekDataset
-from data.cifar10_dataset import CifarDataset
+from data.cifar10_dataset import Cifar10Dataset
+from data.cifar100_dataset import Cifar100Dataset
 from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, postprocess_indices, stratified_random_sampling, Metrics
 from active_learning.uncertainty_sampling import UncertaintySampling
 from semi_supervised.pseudo_labeling import PseudoLabeling
@@ -41,7 +43,7 @@ parser.add_argument('--layers', default=28, type=int,
                     help='total number of layers (default: 28)')
 parser.add_argument('--widen-factor', default=2, type=int,
                     help='widen factor (default: 2)')
-parser.add_argument('--drop-rate', default=0, type=float,
+parser.add_argument('--drop-rate', default=0.2, type=float,
                     help='dropout probability (default: 0.2)')
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentation (default: True)')
@@ -50,13 +52,13 @@ parser.add_argument('--name', default='densenet-least-confidence', type=str,
                     help='name of experiment')
 parser.add_argument('--add-labeled-epochs', default=10, type=int,
                     help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
-parser.add_argument('--add-labeled-ratio', default=0.1, type=int,
+parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
                     help='what percentage of labeled data to be added')
 parser.add_argument('--labeled-ratio-start', default=0.1, type=int,
                     help='what percentage of labeled data to start the training with')
-parser.add_argument('--labeled-ratio-stop', default=0.5, type=int,
+parser.add_argument('--labeled-ratio-stop', default=0.25, type=int,
                     help='what percentage of labeled data to stop the training process at')
-parser.add_argument('--arch', default='densenet', type=str, choices=['wideresnet', 'densenet'],
+parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet'],
                     help='arch name')
 parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based'],
@@ -73,7 +75,7 @@ parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
 parser.add_argument('--weighted', action='store_false', help='to use weighted loss or not')
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
-parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek'],
+parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100'],
                     help='the dataset to train on')
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
@@ -84,7 +86,7 @@ best_acc1 = 0
 best_prec1 = 0
 best_recall1 = 0
 args = parser.parse_args()
-datasets = {'matek': MatekDataset, 'cifar10': CifarDataset}
+datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset}
 
 
 def main():
@@ -120,6 +122,8 @@ def main():
                            input_size=dataset_class.input_size)
     elif args.arch == 'densenet':
         model = densenet121(num_classes=dataset_class.num_classes)
+    elif args.arch == 'lenet':
+        model = LeNet(num_channels=3, num_classes=dataset_class.num_classes, droprate=args.drop_rate)
     else:
         raise NotImplementedError
 
@@ -179,7 +183,7 @@ def main():
     else:
         print('Starting training..')
 
-    sampling_order = [80, 90, 100, 110, 120]
+    sampling_order = [80, 90, 100, 110, 120, 130, 140]
 
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, epoch, last_best_epochs)
