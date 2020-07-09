@@ -50,7 +50,7 @@ class UncertaintySampling:
 
         model.eval()
 
-        for i, (data_x, _) in enumerate(unlabeled_loader):
+        for i, (data_x, data_y) in enumerate(unlabeled_loader):
             data_x = data_x.cuda(non_blocking=True)
 
             with torch.no_grad():

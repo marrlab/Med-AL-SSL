@@ -3,7 +3,7 @@ import os
 import time
 from copy import deepcopy
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '4'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
 import torch
 import torch.nn as nn
@@ -28,7 +28,7 @@ parser.add_argument('--epochs', default=200, type=int,
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('-b', '--batch-size', default=128, type=int,
-                    help='mini-batch size (default: 512)')
+                    help='mini-batch size (default: 128)')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
@@ -54,7 +54,7 @@ parser.add_argument('--add-labeled-ratio', default=0.1, type=int,
                     help='what percentage of labeled data to be added')
 parser.add_argument('--labeled-ratio-start', default=0.1, type=int,
                     help='what percentage of labeled data to start the training with')
-parser.add_argument('--labeled-ratio-stop', default=0.4, type=int,
+parser.add_argument('--labeled-ratio-stop', default=0.5, type=int,
                     help='what percentage of labeled data to stop the training process at')
 parser.add_argument('--arch', default='densenet', type=str, choices=['wideresnet', 'densenet'],
                     help='arch name')
@@ -63,7 +63,7 @@ parser.add_argument('--uncertainty-sampling-method', default='least_confidence',
                     help='the uncertainty sampling method to use')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
-parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
+parser.add_argument('--weak-supervision-strategy', default='random_sampling', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling'],
                     help='the weakly supervised strategy to use')
 parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
@@ -80,13 +80,15 @@ parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learni
 
 parser.set_defaults(augment=True)
 
+best_acc1 = 0
 best_prec1 = 0
+best_recall1 = 0
 args = parser.parse_args()
 datasets = {'matek': MatekDataset, 'cifar10': CifarDataset}
 
 
 def main():
-    global args, best_prec1
+    global args, best_acc1, best_prec1, best_recall1
     if args.weak_supervision_strategy == 'semi_supervised':
         args.name = f"{args.dataset}@{args.arch}@{args.semi_supervised_method}"
     elif args.weak_supervision_strategy == 'active_learning':
@@ -117,7 +119,7 @@ def main():
                            drop_rate=args.drop_rate,
                            input_size=dataset_class.input_size)
     elif args.arch == 'densenet':
-        model = densenet121()
+        model = densenet121(num_classes=dataset_class.num_classes)
     else:
         raise NotImplementedError
 
@@ -135,7 +137,7 @@ def main():
             print("=> loading checkpoint '{}'".format(file))
             checkpoint = torch.load(file)
             args.start_epoch = checkpoint['epoch']
-            best_prec1 = checkpoint['best_prec1']
+            best_acc1 = checkpoint['best_prec1']
             model.load_state_dict(checkpoint['state_dict'])
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
@@ -177,18 +179,20 @@ def main():
     else:
         print('Starting training..')
 
+    sampling_order = [80, 90, 100, 110, 120]
+
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, epoch, last_best_epochs)
-        prec1 = validate(val_loader, model, criterion, last_best_epochs)
+        acc, (prec, recall, f1, _) = validate(val_loader, model, criterion, last_best_epochs)
         scheduler.step(epoch=epoch)
 
-        is_best = prec1 > best_prec1
+        is_best = acc > best_acc1
         last_best_epochs = 0 if is_best else last_best_epochs + 1
         best_model = deepcopy(model) if is_best else best_model
 
         # if last_best_epochs == args.add_labeled_epochs:
-        if epoch % 15 == 14:
-            acc_ratio.update({current_labeled_ratio: best_prec1})
+        if epoch == sampling_order[0]:
+            acc_ratio.update({current_labeled_ratio: [best_acc1, best_prec1, best_recall1]})
             if args.weak_supervision_strategy == 'active_learning':
                 samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
                                                                   unlabeled_loader,
@@ -241,23 +245,28 @@ def main():
 
             current_labeled_ratio += args.add_labeled_ratio
             last_best_epochs = 0
+            sampling_order.pop(0)
 
-        best_prec1 = max(prec1, best_prec1)
+        best_acc1 = max(acc, best_acc1)
+        best_prec1 = max(prec, best_prec1)
+        best_recall1 = max(recall, best_recall1)
         save_checkpoint(args, {
             'epoch': epoch + 1,
             'state_dict': model.state_dict(),
-            'best_prec1': best_prec1,
+            'best_prec1': best_acc1,
         }, is_best)
 
-        if current_labeled_ratio > args.labeled_ratio_stop:
+        if current_labeled_ratio == args.labeled_ratio_stop:
             break
 
     metrics, report = evaluate(val_loader, best_model)
 
     for k, v in acc_ratio.items():
         print(f'Ratio: {int(k*100)}%\t'
-              f'Accuracy: {v}')
-    print('Best accuracy: ', best_prec1)
+              f'Accuracy: {v[0]}\t'
+              f'Precision: {v[1]}\t'
+              f'Recall: {v[2]}\t')
+    print('Best accuracy: ', best_acc1)
     print('Evaluation:\t'
           f'Precision: {metrics[0]}\t'
           f'Recall: {metrics[1]}\t'
@@ -281,9 +290,9 @@ def train(train_loader, model, criterion, optimizer, epoch, last_best_epochs):
         output = model(data_x)
         loss = criterion(output, target)
 
-        prec1 = accuracy(output.data, target, topk=(1,))[0]
+        acc = accuracy(output.data, target, topk=(1,))[0]
         losses.update(loss.data.item(), data_x.size(0))
-        top1.update(prec1.item(), data_x.size(0))
+        top1.update(acc.item(), data_x.size(0))
 
         loss.backward()
         optimizer.step()
@@ -295,7 +304,7 @@ def train(train_loader, model, criterion, optimizer, epoch, last_best_epochs):
             print('Epoch: [{0}][{1}/{2}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                  'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
                   'Last best epoch {last_best_epoch}'
                   .format(epoch, i, len(train_loader), batch_time=batch_time, loss=losses, top1=top1,
                           last_best_epoch=last_best_epochs))
@@ -305,6 +314,7 @@ def validate(val_loader, model, criterion, last_best_epochs):
     batch_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
+    metrics = Metrics()
 
     model.eval()
 
@@ -317,9 +327,10 @@ def validate(val_loader, model, criterion, last_best_epochs):
             output = model(data_x)
         loss = criterion(output, target)
 
-        prec1 = accuracy(output.data, target, topk=(1,))[0]
+        acc = accuracy(output.data, target, topk=(1,))[0]
         losses.update(loss.data.item(), data_x.size(0))
-        top1.update(prec1.item(), data_x.size(0))
+        top1.update(acc.item(), data_x.size(0))
+        metrics.add_mini_batch(target, output)
 
         batch_time.update(time.time() - end)
         end = time.time()
@@ -328,14 +339,15 @@ def validate(val_loader, model, criterion, last_best_epochs):
             print('Test: [{0}/{1}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                  'Prec@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                  'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
                   'Last best epoch {last_best_epoch}'
                   .format(i, len(val_loader), batch_time=batch_time, loss=losses, top1=top1,
                           last_best_epoch=last_best_epochs))
 
-    print(' * Prec@1 {top1.avg:.3f}'.format(top1=top1))
+    (prec, recall, f1, _) = metrics.get_metrics()
+    print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1}'.format(prec, recall, top1=top1))
 
-    return top1.avg
+    return top1.avg, (prec, recall, f1, _)
 
 
 def evaluate(val_loader, model):

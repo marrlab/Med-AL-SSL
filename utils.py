@@ -90,10 +90,10 @@ class Metrics:
         self.outputs.extend(torch.argmax(mini_outputs, dim=1).tolist())
 
     def get_metrics(self):
-        return precision_recall_fscore_support(self.targets, self.outputs, average='weighted')
+        return precision_recall_fscore_support(self.targets, self.outputs, average='macro', zero_division=1)
 
     def get_report(self):
-        return classification_report(self.targets, self.outputs)
+        return classification_report(self.targets, self.outputs, zero_division=1)
 
 
 def print_args(args):
