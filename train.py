@@ -3,9 +3,12 @@ import os
 import time
 from copy import deepcopy
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+import random
+
+os.environ['CUDA_VISIBLE_DEVICES'] = '4'
 
 import torch
+import torch.cuda
 import torch.nn as nn
 import torch.nn.parallel
 import torch.backends.cudnn as cudnn
@@ -13,6 +16,16 @@ import torch.optim
 import torch.utils.data
 
 import numpy as np
+
+manual_seed = 1
+
+random.seed(manual_seed)
+torch.manual_seed(manual_seed)
+np.random.seed(manual_seed)
+cudnn.deterministic = True
+cudnn.benchmark = False
+torch.cuda.manual_seed(manual_seed)
+# torch.cuda.set_rng_state(torch.manual_seed(0).get_state())
 
 from model.wideresnet import WideResNet
 from model.densenet import densenet121
@@ -29,7 +42,7 @@ parser.add_argument('--epochs', default=200, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=128, type=int,
+parser.add_argument('-b', '--batch-size', default=512, type=int,
                     help='mini-batch size (default: 128)')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     help='initial learning rate')
@@ -56,7 +69,7 @@ parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
                     help='what percentage of labeled data to be added')
 parser.add_argument('--labeled-ratio-start', default=0.1, type=int,
                     help='what percentage of labeled data to start the training with')
-parser.add_argument('--labeled-ratio-stop', default=0.25, type=int,
+parser.add_argument('--labeled-ratio-stop', default=0.35, type=int,
                     help='what percentage of labeled data to stop the training process at')
 parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet'],
                     help='arch name')
@@ -73,9 +86,9 @@ parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=
                     help='the semi supervised method to use')
 parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
-parser.add_argument('--weighted', action='store_false', help='to use weighted loss or not')
+parser.add_argument('--weighted', action='store_true', help='to use weighted loss or not')
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
-parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100'],
+parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100'],
                     help='the dataset to train on')
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
@@ -148,8 +161,6 @@ def main():
         else:
             print("=> no checkpoint found at '{}'".format(file))
 
-    cudnn.benchmark = True
-
     if args.weighted:
         classes_targets = torch.FloatTensor(unlabeled_dataset.targets[unlabeled_indices])
         classes_samples = torch.FloatTensor([torch.sum(classes_targets == i) for i in range(dataset_class.num_classes)])
@@ -183,7 +194,7 @@ def main():
     else:
         print('Starting training..')
 
-    sampling_order = [80, 90, 100, 110, 120, 130, 140]
+    sampling_order = [80, 100, 120, 140, 160, 180, 200]
 
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, epoch, last_best_epochs)

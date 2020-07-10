@@ -23,16 +23,17 @@ class MatekDataset:
             # transforms.RandomGrayscale(),
             # transforms.RandomRotation(degrees=180),
             transforms.ToTensor(),
-            # transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
+            transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
         ])
         self.transform_test = transforms.Compose([
             transforms.Resize(size=self.input_size),
             transforms.ToTensor(),
-            # transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
+            transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
         ])
         self.num_classes = 15
         self.add_labeled_ratio = add_labeled_ratio
         self.add_labeled_num = None
+        self.remove_classes = np.array([0, 1, 2, 3, 4, 6, 7, 9, 11, 13, 14])
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.ImageFolder(
@@ -45,11 +46,14 @@ class MatekDataset:
             np.arange(len(base_dataset)),
             test_size=(1 - self.labeled_ratio),
             shuffle=True,
-            stratify=base_dataset.targets)
+            stratify=None)
 
         test_dataset = torchvision.datasets.ImageFolder(
             self.test_path, transform=self.transform_test
         )
+
+        targets = np.array(base_dataset.targets)[labeled_indices]
+        labeled_indices = labeled_indices[~np.isin(targets, self.remove_classes)]
 
         labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=self.transform_train)
         unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_test)

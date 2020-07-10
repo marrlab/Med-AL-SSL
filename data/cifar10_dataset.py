@@ -35,11 +35,12 @@ class Cifar10Dataset:
 
         self.add_labeled_num = int(len(base_dataset) * self.add_labeled_ratio)
 
+        # TODO: Do unstratified sampling
         labeled_indices, unlabeled_indices = train_test_split(
             np.arange(len(base_dataset)),
             test_size=(1 - self.labeled_ratio),
             shuffle=True,
-            stratify=base_dataset.targets)
+            stratify=None)
 
         test_dataset = torchvision.datasets.CIFAR10(root=self.root, train=False,
                                                     download=True, transform=self.transform_test)

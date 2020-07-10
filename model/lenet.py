@@ -6,21 +6,21 @@ class LeNet(nn.Module):
         super(LeNet, self).__init__()
         self.features = nn.Sequential(
             nn.Conv2d(num_channels, 6, 3),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.MaxPool2d(2, 2),
             nn.Conv2d(6, 16, kernel_size=5, padding=2),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
             nn.MaxPool2d(2),
             nn.Flatten()
         )
 
         self.classifier = nn.Sequential(
             nn.Linear(784, 120),
-            nn.ReLU(inplace=True),
-            nn.Dropout(p=droprate),
+            nn.ReLU(),
+            nn.Dropout(p=droprate, inplace=True),
             nn.Linear(120, 84),
-            nn.ReLU(inplace=True),
-            nn.Dropout(p=droprate),
+            nn.ReLU(),
+            nn.Dropout(p=droprate, inplace=True),
             nn.Linear(84, num_classes)
         )
 
