@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import random
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '4'
+os.environ['CUDA_VISIBLE_DEVICES'] = '5'
 
 import torch
 import torch.cuda
@@ -16,16 +16,6 @@ import torch.optim
 import torch.utils.data
 
 import numpy as np
-
-manual_seed = 1
-
-random.seed(manual_seed)
-torch.manual_seed(manual_seed)
-np.random.seed(manual_seed)
-cudnn.deterministic = True
-cudnn.benchmark = False
-torch.cuda.manual_seed(manual_seed)
-# torch.cuda.set_rng_state(torch.manual_seed(0).get_state())
 
 from model.wideresnet import WideResNet
 from model.densenet import densenet121
@@ -63,14 +53,16 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true', help='flag to be set if an existed model is to be loaded')
 parser.add_argument('--name', default='densenet-least-confidence', type=str,
                     help='name of experiment')
-parser.add_argument('--add-labeled-epochs', default=10, type=int,
+parser.add_argument('--add-labeled-epochs', default=20, type=int,
                     help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
 parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
                     help='what percentage of labeled data to be added')
-parser.add_argument('--labeled-ratio-start', default=0.1, type=int,
+parser.add_argument('--labeled-ratio-start', default=0.01, type=int,
                     help='what percentage of labeled data to start the training with')
-parser.add_argument('--labeled-ratio-stop', default=0.35, type=int,
+parser.add_argument('--labeled-ratio-stop', default=0.7, type=int,
                     help='what percentage of labeled data to stop the training process at')
+parser.add_argument('--labeled-warmup_epochs', default=50, type=int,
+                    help='how many epochs to warmup for, without sampling or pseudo labeling')
 parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet'],
                     help='arch name')
 parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
@@ -78,7 +70,7 @@ parser.add_argument('--uncertainty-sampling-method', default='least_confidence',
                     help='the uncertainty sampling method to use')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
-parser.add_argument('--weak-supervision-strategy', default='random_sampling', type=str,
+parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling'],
                     help='the weakly supervised strategy to use')
 parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
@@ -92,18 +84,23 @@ parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 
                     help='the dataset to train on')
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
+parser.add_argument('--seed', default=0, type=int, choices=[0, 9999, 2323, 5555], help='the random seed to set')
 
 parser.set_defaults(augment=True)
 
-best_acc1 = 0
-best_prec1 = 0
-best_recall1 = 0
 args = parser.parse_args()
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset}
 
+random.seed(args.seed)
+torch.manual_seed(args.seed)
+np.random.seed(args.seed)
+cudnn.deterministic = True
+cudnn.benchmark = False
+torch.cuda.manual_seed(args.seed)
+
 
 def main():
-    global args, best_acc1, best_prec1, best_recall1
+    global args
     if args.weak_supervision_strategy == 'semi_supervised':
         args.name = f"{args.dataset}@{args.arch}@{args.semi_supervised_method}"
     elif args.weak_supervision_strategy == 'active_learning':
@@ -194,19 +191,21 @@ def main():
     else:
         print('Starting training..')
 
-    sampling_order = [80, 100, 120, 140, 160, 180, 200]
+    best_acc1 = 0
+    best_acc5 = 0
+    best_prec1 = 0
+    best_recall1 = 0
 
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, epoch, last_best_epochs)
-        acc, (prec, recall, f1, _) = validate(val_loader, model, criterion, last_best_epochs)
+        acc, acc5, (prec, recall, f1, _) = validate(val_loader, model, criterion, last_best_epochs)
         scheduler.step(epoch=epoch)
 
         is_best = acc > best_acc1
         last_best_epochs = 0 if is_best else last_best_epochs + 1
         best_model = deepcopy(model) if is_best else best_model
 
-        # if last_best_epochs == args.add_labeled_epochs:
-        if epoch == sampling_order[0]:
+        if epoch % args.add_labeled_epochs == 0:
             acc_ratio.update({current_labeled_ratio: [best_acc1, best_prec1, best_recall1]})
             if args.weak_supervision_strategy == 'active_learning':
                 samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
@@ -260,11 +259,11 @@ def main():
 
             current_labeled_ratio += args.add_labeled_ratio
             last_best_epochs = 0
-            sampling_order.pop(0)
 
         best_acc1 = max(acc, best_acc1)
         best_prec1 = max(prec, best_prec1)
         best_recall1 = max(recall, best_recall1)
+        best_acc5 = max(acc5, best_acc5)
         save_checkpoint(args, {
             'epoch': epoch + 1,
             'state_dict': model.state_dict(),
@@ -329,6 +328,7 @@ def validate(val_loader, model, criterion, last_best_epochs):
     batch_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
+    top5 = AverageMeter()
     metrics = Metrics()
 
     model.eval()
@@ -342,9 +342,10 @@ def validate(val_loader, model, criterion, last_best_epochs):
             output = model(data_x)
         loss = criterion(output, target)
 
-        acc = accuracy(output.data, target, topk=(1,))[0]
+        acc = accuracy(output.data, target, topk=(1, 5, ))[0]
         losses.update(loss.data.item(), data_x.size(0))
-        top1.update(acc.item(), data_x.size(0))
+        top1.update(acc[0].item(), data_x.size(0))
+        top5.update(acc[1].item(), data_x.size(0))
         metrics.add_mini_batch(target, output)
 
         batch_time.update(time.time() - end)
@@ -360,9 +361,10 @@ def validate(val_loader, model, criterion, last_best_epochs):
                           last_best_epoch=last_best_epochs))
 
     (prec, recall, f1, _) = metrics.get_metrics()
-    print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1}'.format(prec, recall, top1=top1))
+    print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t'
+          .format(prec, recall, top1=top1, top5=top5))
 
-    return top1.avg, (prec, recall, f1, _)
+    return top1.avg, top5.avg, (prec, recall, f1, _)
 
 
 def evaluate(val_loader, model):

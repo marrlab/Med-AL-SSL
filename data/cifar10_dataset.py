@@ -28,6 +28,7 @@ class Cifar10Dataset:
         self.num_classes = 10
         self.add_labeled_ratio = add_labeled_ratio
         self.add_labeled_num = None
+        self.remove_classes = np.array([0, 1, 2])
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.CIFAR10(root=self.root, train=True,
@@ -35,7 +36,6 @@ class Cifar10Dataset:
 
         self.add_labeled_num = int(len(base_dataset) * self.add_labeled_ratio)
 
-        # TODO: Do unstratified sampling
         labeled_indices, unlabeled_indices = train_test_split(
             np.arange(len(base_dataset)),
             test_size=(1 - self.labeled_ratio),
@@ -44,6 +44,9 @@ class Cifar10Dataset:
 
         test_dataset = torchvision.datasets.CIFAR10(root=self.root, train=False,
                                                     download=True, transform=self.transform_test)
+
+        targets = np.array(base_dataset.targets)[labeled_indices]
+        labeled_indices = labeled_indices[~np.isin(targets, self.remove_classes)]
 
         labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=self.transform_train)
         unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_test)
