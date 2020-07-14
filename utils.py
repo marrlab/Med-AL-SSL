@@ -6,6 +6,8 @@ from numpy.random import default_rng
 import numpy as np
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import classification_report
+import json
+from datetime import datetime
 
 
 def save_checkpoint(args, state, is_best, filename='checkpoint.pth.tar', best_model_filename='model_best.pth.tar'):
@@ -106,3 +108,38 @@ def print_args(args):
           f'Uncertainty Sampling Method: {args.uncertainty_sampling_method}\t'
           f'Semi Supervised Method: {args.semi_supervised_method}\n'
           f'Dataset root: {args.root}')
+
+
+def store_logs(args, acc_ratio):
+    filename = '{0}-{1}'.format(datetime.now().strftime("%d.%m.%Y"), args.name)
+    file = dict()
+    file.update({'name': args.name})
+    file.update({'time': datetime.now()})
+    file.update({'seed': args.seed})
+    file.update({'dataset': args.dataset})
+    file.update({'metrics': acc_ratio})
+
+    with open(os.path.join(args.log_path, filename), 'w') as fp:
+        json.dump(file, fp, indent=4, sort_keys=True)
+
+
+def print_metrics(name, log_path):
+    filenames = os.listdir(log_path)
+    metrics = {'acc1': [], 'acc5': [], 'prec': [], 'recall': []}
+
+    for filename in filenames:
+        with open(os.path.join(log_path, filename), 'r') as fp:
+            file = json.load(fp)
+        if file['name'] == name:
+            metrics['acc1'].append(file['metrics'][0])
+            metrics['acc5'].append(file['metrics'][1])
+            metrics['prec'].append(file['metrics'][2])
+            metrics['recall'].append(file['metrics'][3])
+        else:
+            continue
+
+    print('* Metrics:\t'
+          f'Accuracy@1: {np.mean(metrics["acc1"])}±{np.std(metrics["acc1"])}\t'
+          f'Accuracy@5: {np.mean(metrics["acc5"])}±{np.std(metrics["acc5"])}\t'
+          f'Precision: {np.mean(metrics["prec"])}±{np.std(metrics["prec"])}\t'
+          f'Recall: {np.mean(metrics["recall"])}±{np.std(metrics["recall"])}\t')

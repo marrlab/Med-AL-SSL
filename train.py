@@ -23,12 +23,13 @@ from model.lenet import LeNet
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.cifar100_dataset import Cifar100Dataset
-from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, postprocess_indices, stratified_random_sampling, Metrics
+from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, postprocess_indices
+from utils import stratified_random_sampling, Metrics, store_logs
 from active_learning.uncertainty_sampling import UncertaintySampling
 from semi_supervised.pseudo_labeling import PseudoLabeling
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
-parser.add_argument('--epochs', default=200, type=int,
+parser.add_argument('--epochs', default=500, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
@@ -80,11 +81,14 @@ parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
 parser.add_argument('--weighted', action='store_true', help='to use weighted loss or not')
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
-parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100'],
+parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100'],
                     help='the dataset to train on')
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
-parser.add_argument('--seed', default=0, type=int, choices=[0, 9999, 2323, 5555], help='the random seed to set')
+parser.add_argument('--seed', default=0, type=float, choices=[0, 9999, 2323, 5555], help='the random seed to set')
+parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
+                    help='the directory root for storing/retrieving the logs')
+parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
 
 parser.set_defaults(augment=True)
 
@@ -96,7 +100,7 @@ torch.manual_seed(args.seed)
 np.random.seed(args.seed)
 cudnn.deterministic = True
 cudnn.benchmark = False
-torch.cuda.manual_seed(args.seed)
+torch.manual_seed(args.seed)
 
 
 def main():
@@ -151,7 +155,6 @@ def main():
             print("=> loading checkpoint '{}'".format(file))
             checkpoint = torch.load(file)
             args.start_epoch = checkpoint['epoch']
-            best_acc1 = checkpoint['best_prec1']
             model.load_state_dict(checkpoint['state_dict'])
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
@@ -159,9 +162,9 @@ def main():
             print("=> no checkpoint found at '{}'".format(file))
 
     if args.weighted:
-        classes_targets = torch.FloatTensor(unlabeled_dataset.targets[unlabeled_indices])
-        classes_samples = torch.FloatTensor([torch.sum(classes_targets == i) for i in range(dataset_class.num_classes)])
-        classes_weights = np.log(len(unlabeled_dataset)) - torch.log(classes_samples)
+        classes_targets = unlabeled_dataset.targets[unlabeled_indices]
+        classes_samples = [torch.sum(classes_targets == i) for i in range(dataset_class.num_classes)]
+        classes_weights = np.log(len(unlabeled_dataset)) - np.log(classes_samples)
         criterion = nn.CrossEntropyLoss(weight=classes_weights).cuda()
     else:
         criterion = nn.CrossEntropyLoss().cuda()
@@ -205,8 +208,8 @@ def main():
         last_best_epochs = 0 if is_best else last_best_epochs + 1
         best_model = deepcopy(model) if is_best else best_model
 
-        if epoch % args.add_labeled_epochs == 0:
-            acc_ratio.update({current_labeled_ratio: [best_acc1, best_prec1, best_recall1]})
+        if epoch > args.labeled_warmup_epochs and epoch % args.add_labeled_epochs == 0:
+            acc_ratio.update({current_labeled_ratio: [best_acc1, best_acc5, best_prec1, best_recall1]})
             if args.weak_supervision_strategy == 'active_learning':
                 samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
                                                                   unlabeled_loader,
@@ -277,15 +280,19 @@ def main():
 
     for k, v in acc_ratio.items():
         print(f'Ratio: {int(k*100)}%\t'
-              f'Accuracy: {v[0]}\t'
-              f'Precision: {v[1]}\t'
-              f'Recall: {v[2]}\t')
-    print('Best accuracy: ', best_acc1)
+              f'Accuracy@1: {v[0]}\t'
+              f'Accuracy@5: {v[1]}\t'
+              f'Precision: {v[2]}\t'
+              f'Recall: {v[3]}\t')
+    print('Best acc@1: {0} \tacc@5: {1}'.format(best_acc1, best_acc5))
     print('Evaluation:\t'
           f'Precision: {metrics[0]}\t'
           f'Recall: {metrics[1]}\t'
           f'F1-score: {metrics[2]}\t')
     print(report)
+
+    if args.store_logs:
+        store_logs(args, acc_ratio)
 
 
 def train(train_loader, model, criterion, optimizer, epoch, last_best_epochs):
@@ -342,7 +349,7 @@ def validate(val_loader, model, criterion, last_best_epochs):
             output = model(data_x)
         loss = criterion(output, target)
 
-        acc = accuracy(output.data, target, topk=(1, 5, ))[0]
+        acc = accuracy(output.data, target, topk=(1, 5, ))
         losses.update(loss.data.item(), data_x.size(0))
         top1.update(acc[0].item(), data_x.size(0))
         top5.update(acc[1].item(), data_x.size(0))
