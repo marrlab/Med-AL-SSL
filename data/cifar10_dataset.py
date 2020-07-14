@@ -15,9 +15,6 @@ class Cifar10Dataset:
         self.transform_train = transforms.Compose([
             transforms.RandomCrop(self.input_size, padding=4),
             transforms.RandomHorizontalFlip(),
-            # transforms.RandomVerticalFlip(),
-            # transforms.RandomGrayscale(),
-            # transforms.RandomRotation(degrees=180),
             transforms.ToTensor(),
             transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
         ])

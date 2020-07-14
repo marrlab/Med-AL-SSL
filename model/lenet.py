@@ -1,5 +1,13 @@
 import torch.nn as nn
 
+"""
+Lenet implementation based on the paper: Gradient Based Learning Applied to Document Recognition
+Yann LeCun, Leon Bottou, Yoshua Bengio and Patrick Haffner 
+(http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf)
+
+Courtesy to: https://github.com/aliechoes/pytorch-multichannel-image-classification/blob/master/models/lenet.py
+"""
+
 
 class LeNet(nn.Module):
     def __init__(self, num_channels, num_classes, droprate=0.5):

@@ -60,7 +60,7 @@ parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
                     help='what percentage of labeled data to be added')
 parser.add_argument('--labeled-ratio-start', default=0.01, type=int,
                     help='what percentage of labeled data to start the training with')
-parser.add_argument('--labeled-ratio-stop', default=0.7, type=int,
+parser.add_argument('--labeled-ratio-stop', default=0.1, type=int,
                     help='what percentage of labeled data to stop the training process at')
 parser.add_argument('--labeled-warmup_epochs', default=50, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
@@ -75,7 +75,7 @@ parser.add_argument('--weak-supervision-strategy', default='semi_supervised', ty
                     choices=['active_learning', 'semi_supervised', 'random_sampling'],
                     help='the weakly supervised strategy to use')
 parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
-                    choices=['pseudo_labeling'],
+                    choices=['pseudo_labeling', 'auto_encoder'],
                     help='the semi supervised method to use')
 parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
@@ -273,7 +273,7 @@ def main():
             'best_prec1': best_acc1,
         }, is_best)
 
-        if current_labeled_ratio == args.labeled_ratio_stop:
+        if current_labeled_ratio > args.labeled_ratio_stop:
             break
 
     metrics, report = evaluate(val_loader, best_model)
