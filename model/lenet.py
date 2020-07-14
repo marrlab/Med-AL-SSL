@@ -33,6 +33,6 @@ class LeNet(nn.Module):
         )
 
     def forward(self, x):
-        x = self.features(x)
-        x = self.classifier(x)
-        return x
+        feat = self.features(x)
+        x = self.classifier(feat)
+        return x, feat

@@ -111,10 +111,10 @@ def print_args(args):
 
 
 def store_logs(args, acc_ratio):
-    filename = '{0}-{1}'.format(datetime.now().strftime("%d.%m.%Y"), args.name)
+    filename = '{0}-{1}-seed:{2}'.format(datetime.now().strftime("%d.%m.%Y"), args.name, args.seed)
     file = dict()
     file.update({'name': args.name})
-    file.update({'time': datetime.now()})
+    file.update({'time': str(datetime.now())})
     file.update({'seed': args.seed})
     file.update({'dataset': args.dataset})
     file.update({'metrics': acc_ratio})
@@ -131,10 +131,11 @@ def print_metrics(name, log_path):
         with open(os.path.join(log_path, filename), 'r') as fp:
             file = json.load(fp)
         if file['name'] == name:
-            metrics['acc1'].append(file['metrics'][0])
-            metrics['acc5'].append(file['metrics'][1])
-            metrics['prec'].append(file['metrics'][2])
-            metrics['recall'].append(file['metrics'][3])
+            for k, v in file['metrics']:
+                metrics['acc1'].append(v[0])
+                metrics['acc5'].append(v[1])
+                metrics['prec'].append(v[2])
+                metrics['recall'].append(v[3])
         else:
             continue
 

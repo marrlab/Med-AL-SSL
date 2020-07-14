@@ -67,7 +67,8 @@ parser.add_argument('--labeled-warmup_epochs', default=50, type=int,
 parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet'],
                     help='arch name')
 parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
-                    choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based'],
+                    choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
+                             'density weighted'],
                     help='the uncertainty sampling method to use')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
@@ -85,7 +86,7 @@ parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10'
                     help='the dataset to train on')
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
-parser.add_argument('--seed', default=0, type=float, choices=[0, 9999, 2323, 5555], help='the random seed to set')
+parser.add_argument('--seed', default=5555, type=float, choices=[0, 9999, 2323, 5555], help='the random seed to set')
 parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
@@ -308,7 +309,7 @@ def train(train_loader, model, criterion, optimizer, epoch, last_best_epochs):
         data_x = data_x.cuda(non_blocking=True)
 
         optimizer.zero_grad()
-        output = model(data_x)
+        output, _ = model(data_x)
         loss = criterion(output, target)
 
         acc = accuracy(output.data, target, topk=(1,))[0]
@@ -346,7 +347,7 @@ def validate(val_loader, model, criterion, last_best_epochs):
         data_x = data_x.cuda(non_blocking=True)
 
         with torch.no_grad():
-            output = model(data_x)
+            output, _ = model(data_x)
         loss = criterion(output, target)
 
         acc = accuracy(output.data, target, topk=(1, 5, ))
@@ -383,7 +384,7 @@ def evaluate(val_loader, model):
         data_x = data_x.cuda(non_blocking=True)
 
         with torch.no_grad():
-            output = model(data_x)
+            output, _ = model(data_x)
         metrics.add_mini_batch(target, output)
 
     return metrics.get_metrics(), metrics.get_report()

@@ -54,7 +54,7 @@ class UncertaintySampling:
             data_x = data_x.cuda(non_blocking=True)
 
             with torch.no_grad():
-                output = model(data_x)
+                output, _ = model(data_x)
             score = self.method(F.softmax(output, dim=1))
 
             samples = score if samples is None else torch.cat([samples, score])
