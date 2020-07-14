@@ -16,46 +16,65 @@ class UncertaintySampling:
         self.verbose = verbose
 
     @staticmethod
-    def least_confidence(probs):
+    def least_confidence(probs, _, __):
         simple_least_conf = torch.max(probs, dim=1)[0]  # most confident prediction
 
         return simple_least_conf
 
     @staticmethod
-    def margin_confidence(probs):
+    def margin_confidence(probs, _, __):
         probs = torch.sort(probs, dim=1)[0]
         diff = probs[:, -1] - probs[:, -2]
 
         return diff
 
     @staticmethod
-    def ratio_confidence(probs):
+    def ratio_confidence(probs, _, __):
         probs = torch.sort(probs, dim=1)[0]
         ratio = probs[:, -1]/probs[:, -2]
 
         return ratio
 
     @staticmethod
-    def entropy_based(probs):
+    def entropy_based(probs, _, __):
         log_probs = torch.log(probs)
         entropy = torch.sum(-probs * log_probs, dim=1)
 
         return entropy
 
-    def get_samples(self, epoch, args, model, unlabeled_loader, number):
+    @staticmethod
+    def density_weighted(probs, feat, feat_train):
+        simple_least_conf = torch.max(probs, dim=1)[0]
+        feat_norm = feat / feat.norm(dim=1)[:, None]
+        feat_train_norm = feat_train / feat_train.norm(dim=1)[:, None]
+
+        similarities = torch.mm(feat_norm, feat_train_norm.transpose(0, 1))
+
+        return simple_least_conf * (-torch.mean(similarities, dim=1)+1)
+
+    def get_samples(self, epoch, args, model, train_loader, unlabeled_loader, number):
         batch_time = AverageMeter()
         samples = None
+        feat_train = None
 
         end = time.time()
 
         model.eval()
 
+        for i, (data_x, data_y) in enumerate(train_loader):
+            data_x = data_x.cuda(non_blocking=True)
+
+            with torch.no_grad():
+                output, feat = model(data_x)
+
+            feat_train = feat if feat_train is None else torch.cat([feat_train, feat])
+
         for i, (data_x, data_y) in enumerate(unlabeled_loader):
             data_x = data_x.cuda(non_blocking=True)
 
             with torch.no_grad():
-                output, _ = model(data_x)
-            score = self.method(F.softmax(output, dim=1))
+                output, feat = model(data_x)
+            score = self.method(F.softmax(output, dim=1), feat, feat_train)
 
             samples = score if samples is None else torch.cat([samples, score])
 

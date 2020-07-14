@@ -62,17 +62,17 @@ parser.add_argument('--labeled-ratio-start', default=0.01, type=int,
                     help='what percentage of labeled data to start the training with')
 parser.add_argument('--labeled-ratio-stop', default=0.1, type=int,
                     help='what percentage of labeled data to stop the training process at')
-parser.add_argument('--labeled-warmup_epochs', default=50, type=int,
+parser.add_argument('--labeled-warmup_epochs', default=5, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
 parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet'],
                     help='arch name')
-parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
+parser.add_argument('--uncertainty-sampling-method', default='density_weighted', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
-                             'density weighted'],
+                             'density_weighted'],
                     help='the uncertainty sampling method to use')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
-parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
+parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling'],
                     help='the weakly supervised strategy to use')
 parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
@@ -213,6 +213,7 @@ def main():
             acc_ratio.update({current_labeled_ratio: [best_acc1, best_acc5, best_prec1, best_recall1]})
             if args.weak_supervision_strategy == 'active_learning':
                 samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
+                                                                  train_loader,
                                                                   unlabeled_loader,
                                                                   number=dataset_class.add_labeled_num)
 
@@ -304,15 +305,15 @@ def train(train_loader, model, criterion, optimizer, epoch, last_best_epochs):
     model.train()
 
     end = time.time()
-    for i, (data_x, target) in enumerate(train_loader):
-        target = target.cuda(non_blocking=True)
+    for i, (data_x, data_y) in enumerate(train_loader):
+        data_y = data_y.cuda(non_blocking=True)
         data_x = data_x.cuda(non_blocking=True)
 
         optimizer.zero_grad()
         output, _ = model(data_x)
-        loss = criterion(output, target)
+        loss = criterion(output, data_y)
 
-        acc = accuracy(output.data, target, topk=(1,))[0]
+        acc = accuracy(output.data, data_y, topk=(1,))[0]
         losses.update(loss.data.item(), data_x.size(0))
         top1.update(acc.item(), data_x.size(0))
 
@@ -342,19 +343,19 @@ def validate(val_loader, model, criterion, last_best_epochs):
     model.eval()
 
     end = time.time()
-    for i, (data_x, target) in enumerate(val_loader):
-        target = target.cuda(non_blocking=True)
+    for i, (data_x, data_y) in enumerate(val_loader):
+        data_y = data_y.cuda(non_blocking=True)
         data_x = data_x.cuda(non_blocking=True)
 
         with torch.no_grad():
             output, _ = model(data_x)
-        loss = criterion(output, target)
+        loss = criterion(output, data_y)
 
-        acc = accuracy(output.data, target, topk=(1, 5, ))
+        acc = accuracy(output.data, data_y, topk=(1, 5, ))
         losses.update(loss.data.item(), data_x.size(0))
         top1.update(acc[0].item(), data_x.size(0))
         top5.update(acc[1].item(), data_x.size(0))
-        metrics.add_mini_batch(target, output)
+        metrics.add_mini_batch(data_y, output)
 
         batch_time.update(time.time() - end)
         end = time.time()
@@ -379,13 +380,13 @@ def evaluate(val_loader, model):
     model.eval()
 
     metrics = Metrics()
-    for i, (data_x, target) in enumerate(val_loader):
-        target = target.cuda(non_blocking=True)
+    for i, (data_x, data_y) in enumerate(val_loader):
+        data_y = data_y.cuda(non_blocking=True)
         data_x = data_x.cuda(non_blocking=True)
 
         with torch.no_grad():
             output, _ = model(data_x)
-        metrics.add_mini_batch(target, output)
+        metrics.add_mini_batch(data_y, output)
 
     return metrics.get_metrics(), metrics.get_report()
 
