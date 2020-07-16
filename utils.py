@@ -125,22 +125,31 @@ def store_logs(args, acc_ratio):
 
 def print_metrics(name, log_path):
     filenames = os.listdir(log_path)
-    metrics = {'acc1': [], 'acc5': [], 'prec': [], 'recall': []}
+    metrics = {}
+    ratios = []
 
     for filename in filenames:
         with open(os.path.join(log_path, filename), 'r') as fp:
             file = json.load(fp)
         if file['name'] == name:
-            for k, v in file['metrics']:
-                metrics['acc1'].append(v[0])
-                metrics['acc5'].append(v[1])
-                metrics['prec'].append(v[2])
-                metrics['recall'].append(v[3])
+            for k, v in file['metrics'].items():
+                if k not in ratios:
+                    metrics['acc1_' + k] = [v[0]]
+                    metrics['acc5_' + k] = [v[1]]
+                    metrics['prec_' + k] = [v[2]]
+                    metrics['recall_' + k] = [v[3]]
+                    ratios.append(k)
+                else:
+                    metrics['acc1_' + k].append(v[0])
+                    metrics['acc5_' + k].append(v[1])
+                    metrics['prec_' + k].append(v[2])
+                    metrics['recall_' + k].append(v[3])
         else:
             continue
 
-    print('* Metrics:\t'
-          f'Accuracy@1: {np.mean(metrics["acc1"])}±{np.std(metrics["acc1"])}\t'
-          f'Accuracy@5: {np.mean(metrics["acc5"])}±{np.std(metrics["acc5"])}\t'
-          f'Precision: {np.mean(metrics["prec"])}±{np.std(metrics["prec"])}\t'
-          f'Recall: {np.mean(metrics["recall"])}±{np.std(metrics["recall"])}\t')
+    for ratio in ratios:
+        print(f'* Metrics for {ratio}:\n'
+              f'Accuracy@1: {np.mean(metrics["acc1_" + ratio])}±{np.std(metrics["acc1_" + ratio])}\n'
+              f'Accuracy@5: {np.mean(metrics["acc5_" + ratio])}±{np.std(metrics["acc5_" + ratio])}\n'
+              f'Precision: {np.mean(metrics["prec_" + ratio])}±{np.std(metrics["prec_" + ratio])}\n'
+              f'Recall: {np.mean(metrics["recall_" + ratio])}±{np.std(metrics["recall_" + ratio])}')

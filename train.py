@@ -66,7 +66,7 @@ parser.add_argument('--labeled-warmup_epochs', default=5, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
 parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet'],
                     help='arch name')
-parser.add_argument('--uncertainty-sampling-method', default='density_weighted', type=str,
+parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
                              'density_weighted'],
                     help='the uncertainty sampling method to use')
@@ -86,7 +86,7 @@ parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10'
                     help='the dataset to train on')
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
-parser.add_argument('--seed', default=5555, type=float, choices=[0, 9999, 2323, 5555], help='the random seed to set')
+parser.add_argument('--seed', default=9999, type=float, choices=[0, 9999, 2323, 5555], help='the random seed to set')
 parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
@@ -210,7 +210,8 @@ def main():
         best_model = deepcopy(model) if is_best else best_model
 
         if epoch > args.labeled_warmup_epochs and epoch % args.add_labeled_epochs == 0:
-            acc_ratio.update({current_labeled_ratio: [best_acc1, best_acc5, best_prec1, best_recall1]})
+            acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
+                                  [best_acc1, best_acc5, best_prec1, best_recall1]})
             if args.weak_supervision_strategy == 'active_learning':
                 samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
                                                                   train_loader,
