@@ -27,6 +27,7 @@ from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print
 from utils import stratified_random_sampling, Metrics, store_logs
 from active_learning.uncertainty_sampling import UncertaintySampling
 from semi_supervised.pseudo_labeling import PseudoLabeling
+from semi_supervised.auto_encoder import AutoEncoder
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
 parser.add_argument('--epochs', default=500, type=int,
@@ -72,10 +73,10 @@ parser.add_argument('--uncertainty-sampling-method', default='least_confidence',
                     help='the uncertainty sampling method to use')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
-parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
+parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling'],
                     help='the weakly supervised strategy to use')
-parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
+parser.add_argument('--semi-supervised-method', default='auto_encoder', type=str,
                     choices=['pseudo_labeling', 'auto_encoder'],
                     help='the semi supervised method to use')
 parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
@@ -113,7 +114,10 @@ def main():
     else:
         args.name = f"{args.dataset}@{args.arch}@{args.weak_supervision_strategy}"
 
-    print(args)
+    if args.semi_supervised_method == 'auto_encoder':
+        auto_encoder = AutoEncoder(args)
+        auto_encoder.train()
+        exit(1)
 
     dataset_class = datasets[args.dataset](root=args.root,
                                            labeled_ratio=args.labeled_ratio_start,

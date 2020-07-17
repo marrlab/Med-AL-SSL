@@ -59,3 +59,10 @@ class MatekDataset:
         unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_test)
 
         return labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset
+
+    def get_base_dataset(self):
+        base_dataset = torchvision.datasets.ImageFolder(
+            self.train_path, transform=self.transform_train
+        )
+
+        return base_dataset

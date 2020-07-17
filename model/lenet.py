@@ -23,7 +23,7 @@ class LeNet(nn.Module):
         )
 
         self.classifier = nn.Sequential(
-            nn.Linear(784, 120),
+            nn.Linear(16*7*7, 120),
             nn.ReLU(),
             nn.Dropout(p=droprate, inplace=True),
             nn.Linear(120, 84),
