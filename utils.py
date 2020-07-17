@@ -123,9 +123,11 @@ def store_logs(args, acc_ratio):
         json.dump(file, fp, indent=4, sort_keys=True)
 
 
+# noinspection PyTypeChecker
 def print_metrics(name, log_path):
     filenames = os.listdir(log_path)
-    metrics = {'acc1': [], 'acc5': [], 'prec': [], 'recall': []}
+    metrics = {'acc1': [[], []], 'acc5': [[], []], 'prec': [[], []], 'recall': [[], []],
+               'acc1_std': [], 'acc5_std': [], 'prec_std': [], 'recall_std': []}
     ratios = []
 
     for filename in filenames:
@@ -148,14 +150,22 @@ def print_metrics(name, log_path):
             continue
 
     for ratio in ratios:
-        metrics['acc1'].append(str(np.mean(metrics["acc1_" + ratio])) + '±' + str(np.std(metrics["acc1_" + ratio])))
-        metrics['acc5'].append(str(np.mean(metrics["acc5_" + ratio])) + '±' + str(np.std(metrics["acc5_" + ratio])))
-        metrics['prec'].append(str(np.mean(metrics["prec_" + ratio])) + '±' + str(np.std(metrics["prec_" + ratio])))
-        metrics['acc1'].append(str(np.mean(metrics["acc1_" + ratio])) + '±' + str(np.std(metrics["acc1_" + ratio])))
+        metrics['acc1'][0].append(np.mean(metrics["acc1_" + ratio]))
+        metrics['acc1'][1].append(np.std(metrics["acc1_" + ratio]))
+        metrics['acc5'][0].append(np.mean(metrics["acc5_" + ratio]))
+        metrics['acc5'][1].append(np.std(metrics["acc5_" + ratio]))
+        metrics['prec'][0].append(np.mean(metrics["prec_" + ratio]))
+        metrics['prec'][1].append(np.std(metrics["prec_" + ratio]))
+        metrics['recall'][0].append(np.mean(metrics["recall_" + ratio]))
+        metrics['recall'][1].append(np.std(metrics["recall_" + ratio]))
+        metrics['acc1_std'].append(str(np.mean(metrics["acc1_" + ratio])) + '±' + str(np.std(metrics["acc1_" + ratio])))
+        metrics['acc5_std'].append(str(np.mean(metrics["acc5_" + ratio])) + '±' + str(np.std(metrics["acc5_" + ratio])))
+        metrics['prec_std'].append(str(np.mean(metrics["prec_" + ratio])) + '±' + str(np.std(metrics["prec_" + ratio])))
+        metrics['acc1_std'].append(str(np.mean(metrics["acc1_" + ratio])) + '±' + str(np.std(metrics["acc1_" + ratio])))
 
     print(f'* Metrics: \n'
           f'* Ratios: {ratios}\n'
-          f'* Acc1: {metrics["acc1"]}\n'
-          f'* Acc5: {metrics["acc5"]}\n'
-          f'* Prec: {metrics["prec"]}\n'
-          f'* Recall: {metrics["recall"]}\n')
+          f'* Acc1: {metrics["acc1_std"]}\n'
+          f'* Acc5: {metrics["acc5_std"]}\n'
+          f'* Prec: {metrics["prec_std"]}\n'
+          f'* Recall: {metrics["recall_std"]}\n')
