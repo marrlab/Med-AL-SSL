@@ -125,7 +125,7 @@ def store_logs(args, acc_ratio):
 
 def print_metrics(name, log_path):
     filenames = os.listdir(log_path)
-    metrics = {}
+    metrics = {'acc1': [], 'acc5': [], 'prec': [], 'recall': []}
     ratios = []
 
     for filename in filenames:
@@ -148,8 +148,14 @@ def print_metrics(name, log_path):
             continue
 
     for ratio in ratios:
-        print(f'* Metrics for {ratio}:\n'
-              f'Accuracy@1: {np.mean(metrics["acc1_" + ratio])}±{np.std(metrics["acc1_" + ratio])}\n'
-              f'Accuracy@5: {np.mean(metrics["acc5_" + ratio])}±{np.std(metrics["acc5_" + ratio])}\n'
-              f'Precision: {np.mean(metrics["prec_" + ratio])}±{np.std(metrics["prec_" + ratio])}\n'
-              f'Recall: {np.mean(metrics["recall_" + ratio])}±{np.std(metrics["recall_" + ratio])}')
+        metrics['acc1'].append(str(np.mean(metrics["acc1_" + ratio])) + '±' + str(np.std(metrics["acc1_" + ratio])))
+        metrics['acc5'].append(str(np.mean(metrics["acc5_" + ratio])) + '±' + str(np.std(metrics["acc5_" + ratio])))
+        metrics['prec'].append(str(np.mean(metrics["prec_" + ratio])) + '±' + str(np.std(metrics["prec_" + ratio])))
+        metrics['acc1'].append(str(np.mean(metrics["acc1_" + ratio])) + '±' + str(np.std(metrics["acc1_" + ratio])))
+
+    print(f'* Metrics: \n'
+          f'* Ratios: {ratios}\n'
+          f'* Acc1: {metrics["acc1"]}\n'
+          f'* Acc5: {metrics["acc5"]}\n'
+          f'* Prec: {metrics["prec"]}\n'
+          f'* Recall: {metrics["recall"]}\n')

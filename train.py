@@ -60,9 +60,9 @@ parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
                     help='what percentage of labeled data to be added')
 parser.add_argument('--labeled-ratio-start', default=0.01, type=int,
                     help='what percentage of labeled data to start the training with')
-parser.add_argument('--labeled-ratio-stop', default=0.1, type=int,
+parser.add_argument('--labeled-ratio-stop', default=0.7, type=int,
                     help='what percentage of labeled data to stop the training process at')
-parser.add_argument('--labeled-warmup_epochs', default=5, type=int,
+parser.add_argument('--labeled-warmup_epochs', default=80, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
 parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet'],
                     help='arch name')
@@ -86,7 +86,7 @@ parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10'
                     help='the dataset to train on')
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
-parser.add_argument('--seed', default=9999, type=float, choices=[0, 9999, 2323, 5555], help='the random seed to set')
+parser.add_argument('--seed', default=9999, type=int, choices=[0, 9999, 2323, 5555], help='the random seed to set')
 parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
