@@ -123,7 +123,7 @@ def store_logs(args, acc_ratio):
         json.dump(file, fp, indent=4, sort_keys=True)
 
 
-# noinspection PyTypeChecker
+# noinspection PyTypeChecker,PyUnresolvedReferences
 def print_metrics(name, log_path):
     filenames = os.listdir(log_path)
     metrics = {'acc1': [[], []], 'acc5': [[], []], 'prec': [[], []], 'recall': [[], []],
@@ -135,6 +135,7 @@ def print_metrics(name, log_path):
             file = json.load(fp)
         if file['name'] == name:
             for k, v in file['metrics'].items():
+                v = np.round(v, decimals=2)
                 if k not in ratios:
                     metrics['acc1_' + k] = [v[0]]
                     metrics['acc5_' + k] = [v[1]]
@@ -150,22 +151,55 @@ def print_metrics(name, log_path):
             continue
 
     for ratio in ratios:
-        metrics['acc1'][0].append(np.mean(metrics["acc1_" + ratio]))
-        metrics['acc1'][1].append(np.std(metrics["acc1_" + ratio]))
-        metrics['acc5'][0].append(np.mean(metrics["acc5_" + ratio]))
-        metrics['acc5'][1].append(np.std(metrics["acc5_" + ratio]))
-        metrics['prec'][0].append(np.mean(metrics["prec_" + ratio]))
-        metrics['prec'][1].append(np.std(metrics["prec_" + ratio]))
-        metrics['recall'][0].append(np.mean(metrics["recall_" + ratio]))
-        metrics['recall'][1].append(np.std(metrics["recall_" + ratio]))
-        metrics['acc1_std'].append(str(np.mean(metrics["acc1_" + ratio])) + '±' + str(np.std(metrics["acc1_" + ratio])))
-        metrics['acc5_std'].append(str(np.mean(metrics["acc5_" + ratio])) + '±' + str(np.std(metrics["acc5_" + ratio])))
-        metrics['prec_std'].append(str(np.mean(metrics["prec_" + ratio])) + '±' + str(np.std(metrics["prec_" + ratio])))
-        metrics['acc1_std'].append(str(np.mean(metrics["acc1_" + ratio])) + '±' + str(np.std(metrics["acc1_" + ratio])))
+        acc1_m = np.round(np.mean(metrics["acc1_" + ratio]), decimals=2)
+        acc1_std = np.round(np.std(metrics["acc1_" + ratio]), decimals=2)
+        acc5_m = np.round(np.mean(metrics["acc5_" + ratio]), decimals=2)
+        acc5_std = np.round(np.std(metrics["acc5_" + ratio]), decimals=2)
+        prec_m = np.round(np.mean(metrics["prec_" + ratio]), decimals=2)
+        prec_std = np.round(np.std(metrics["prec_" + ratio]), decimals=2)
+        recall_m = np.round(np.mean(metrics["recall_" + ratio]), decimals=2)
+        recall_std = np.round(np.std(metrics["recall_" + ratio]), decimals=2)
+        metrics['acc1'][0].append(acc1_m)
+        metrics['acc1'][1].append(acc1_std)
+        metrics['acc5'][0].append(acc5_m)
+        metrics['acc5'][1].append(acc5_std)
+        metrics['prec'][0].append(prec_m)
+        metrics['prec'][1].append(prec_std)
+        metrics['recall'][0].append(recall_m)
+        metrics['recall'][1].append(recall_std)
+        metrics['acc1_std'].append(str(acc1_m) + '±' + str(acc1_std))
+        metrics['acc5_std'].append(str(acc5_m) + '±' + str(acc5_std))
+        metrics['prec_std'].append(str(prec_m) + '±' + str(prec_std))
+        metrics['recall_std'].append(str(recall_m) + '±' + str(recall_std))
 
-    print(f'* Metrics: \n'
+    metrics['acc1'][0] = np.array(metrics['acc1'][0])
+    metrics['acc1'][1] = np.array(metrics['acc1'][1])
+    metrics['acc5'][0] = np.array(metrics['acc5'][0])
+    metrics['acc5'][1] = np.array(metrics['acc5'][1])
+    metrics['prec'][0] = np.array(metrics['prec'][0])
+    metrics['prec'][1] = np.array(metrics['prec'][1])
+    metrics['recall'][0] = np.array(metrics['recall'][0])
+    metrics['recall'][1] = np.array(metrics['recall'][1])
+
+    print(f'* Name: {name}\n\n'
+          f'* Metrics: \n'
           f'* Ratios: {ratios}\n'
           f'* Acc1: {metrics["acc1_std"]}\n'
           f'* Acc5: {metrics["acc5_std"]}\n'
           f'* Prec: {metrics["prec_std"]}\n'
-          f'* Recall: {metrics["recall_std"]}\n')
+          f'* Recall: {metrics["recall_std"]}\n\n')
+
+    print(f'* Metrics for visualization:\n'
+          f'* Ratios: {[float(x) for x in ratios]}\n'
+          f'* Acc1 mean: {metrics["acc1"][0].tolist()}\n'
+          f'* Acc1 mean + std: {(metrics["acc1"][0] + metrics["acc1"][1]).tolist()}\n'
+          f'* Acc1 mean - std: {(metrics["acc1"][0] - metrics["acc1"][1]).tolist()}\n'
+          f'* Acc5 mean: {metrics["acc5"][0].tolist()}\n'
+          f'* Acc5 mean + std: {(metrics["acc5"][0] + metrics["acc5"][1]).tolist()}\n'
+          f'* Acc5 mean - std: {(metrics["acc5"][0] - metrics["acc5"][1]).tolist()}\n'
+          f'* Prec mean: {metrics["prec"][0].tolist()}\n'
+          f'* Prec mean + std: {(metrics["prec"][0] + metrics["prec"][1]).tolist()}\n'
+          f'* Prec mean - std: {(metrics["prec"][0] - metrics["prec"][1]).tolist()}\n'
+          f'* Recall mean: {metrics["recall"][0].tolist()}\n'
+          f'* Recall mean + std: {(metrics["recall"][0] + metrics["recall"][1]).tolist()}\n'
+          f'* Recall mean - std: {(metrics["recall"][0] - metrics["recall"][1]).tolist()}\n')

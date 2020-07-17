@@ -3,14 +3,15 @@ from utils import print_metrics
 
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
-parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
+parser.add_argument('--weak-supervision-strategy', default='random_sampling', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling'],
                     help='the weakly supervised strategy to use')
 parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
                     choices=['pseudo_labeling'],
                     help='the semi supervised method to use')
-parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
-                    choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based'],
+parser.add_argument('--uncertainty-sampling-method', default='density_weighted', type=str,
+                    choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
+                             'density_weighted'],
                     help='the uncertainty sampling method to use')
 parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100'],
                     help='the dataset to train on')
