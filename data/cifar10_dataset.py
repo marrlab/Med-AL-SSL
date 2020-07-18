@@ -22,6 +22,9 @@ class Cifar10Dataset:
             transforms.ToTensor(),
             transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
         ])
+        self.transform_base = transforms.Compose([
+            transforms.ToTensor(),
+         ])
         self.num_classes = 10
         self.add_labeled_ratio = add_labeled_ratio
         self.add_labeled_num = None

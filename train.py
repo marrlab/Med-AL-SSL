@@ -30,7 +30,7 @@ from semi_supervised.pseudo_labeling import PseudoLabeling
 from semi_supervised.auto_encoder import AutoEncoder
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
-parser.add_argument('--epochs', default=500, type=int,
+parser.add_argument('--epochs', default=100, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
@@ -117,6 +117,7 @@ def main():
     if args.semi_supervised_method == 'auto_encoder':
         auto_encoder = AutoEncoder(args)
         auto_encoder.train()
+        auto_encoder.train_validate_classifier()
         exit(1)
 
     dataset_class = datasets[args.dataset](root=args.root,
@@ -215,7 +216,7 @@ def main():
 
         if epoch > args.labeled_warmup_epochs and epoch % args.add_labeled_epochs == 0:
             acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
-                                  [best_acc1, best_acc5, best_prec1, best_recall1]})
+                             [best_acc1, best_acc5, best_prec1, best_recall1]})
             if args.weak_supervision_strategy == 'active_learning':
                 samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
                                                                   train_loader,

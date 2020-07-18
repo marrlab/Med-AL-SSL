@@ -1,5 +1,6 @@
 import os
 import torch
+import torch.nn as nn
 import shutil
 from torch.utils.data import DataLoader
 from numpy.random import default_rng
@@ -38,6 +39,26 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+
+
+class View(nn.Module):
+    def __init__(self, shape):
+        super(View, self).__init__()
+        self.shape = shape
+
+    def forward(self, x):
+        batch_size = x.shape[0]
+        x = x.view(batch_size, *self.shape)
+        return x
+
+
+class Flatten(nn.Module):
+    def __init__(self):
+        super(Flatten, self).__init__()
+
+    def forward(self, x):
+        batch_size = x.shape[0]
+        return x.view(batch_size, -1)
 
 
 def accuracy(output, target, topk=(1,)):
