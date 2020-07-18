@@ -2,6 +2,7 @@ from data.cifar10_dataset import Cifar10Dataset
 from data.matek_dataset import MatekDataset
 from data.cifar100_dataset import Cifar100Dataset
 from model.lenet_autoencoder import LenetAutoencoder
+from model.simple_autoencoder import SimpleAutoencoder
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
     stratified_random_sampling, postprocess_indices, store_logs
 import os
@@ -117,11 +118,10 @@ class AutoEncoder:
         else:
             criterion = nn.CrossEntropyLoss().cuda()
 
-        optimizer = torch.optim.SGD(model.parameters(), self.args.lr,
-                                    momentum=self.args.momentum, nesterov=self.args.nesterov,
-                                    weight_decay=self.args.weight_decay)
-
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=150, gamma=0.1)
+        optimizer = torch.optim.Adam(model.parameters())
+        # optimizer = torch.optim.SGD(model.parameters(), lr=self.args.lr,
+        #                            momentum=self.args.momentum, nesterov=self.args.nesterov,
+        #                            weight_decay=self.args.weight_decay)
 
         acc_ratio = {}
         best_acc1 = 0
@@ -151,18 +151,24 @@ class AutoEncoder:
                 print(f'Random Sampling\t '
                       f'Current labeled ratio: {current_labeled_ratio}\t')
 
-            scheduler.step(epoch=epoch)
+                current_labeled_ratio += self.args.add_labeled_ratio
+
             is_best = best_acc1 > acc
             best_acc1 = max(best_acc1, acc)
             best_prec1 = max(prec, best_prec1)
             best_recall1 = max(recall, best_recall1)
             best_acc5 = max(acc5, best_acc5)
 
+            '''
             save_checkpoint(self.args, {
                 'epoch': epoch + 1,
                 'state_dict': model.state_dict(),
                 'best_prec1': best_acc1,
             }, is_best)
+            '''
+
+            if current_labeled_ratio > self.args.labeled_ratio_stop:
+                break
 
         if self.args.store_logs:
             store_logs(self.args, acc_ratio)

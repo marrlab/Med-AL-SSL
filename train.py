@@ -32,13 +32,13 @@ from semi_supervised.auto_encoder import AutoEncoder
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
 parser.add_argument('--epochs', default=500, type=int,
                     help='number of total epochs to run')
-parser.add_argument('--autoencoder-train-epochs', default=100, type=int,
+parser.add_argument('--autoencoder-train-epochs', default=20, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('-b', '--batch-size', default=512, type=int,
                     help='mini-batch size (default: 128)')
-parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
                     help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
 parser.add_argument('--nesterov', default=False, type=bool, help='nesterov momentum')
@@ -116,7 +116,7 @@ def main():
     else:
         args.name = f"{args.dataset}@{args.arch}@{args.weak_supervision_strategy}"
 
-    if args.semi_supervised_method == 'auto_encoder':
+    if args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'auto_encoder':
         auto_encoder = AutoEncoder(args)
         auto_encoder.train()
         auto_encoder.train_validate_classifier()
@@ -177,11 +177,11 @@ def main():
     else:
         criterion = nn.CrossEntropyLoss().cuda()
 
-    optimizer = torch.optim.SGD(model.parameters(), args.lr,
-                                momentum=args.momentum, nesterov=args.nesterov,
-                                weight_decay=args.weight_decay)
+    # optimizer = torch.optim.SGD(model.parameters(), args.lr,
+    #                            momentum=args.momentum, nesterov=args.nesterov,
+    #                            weight_decay=args.weight_decay)
 
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=150, gamma=0.1)
+    optimizer = torch.optim.Adam(model.parameters())
 
     last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start
@@ -210,7 +210,6 @@ def main():
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, epoch, last_best_epochs)
         acc, acc5, (prec, recall, f1, _) = validate(val_loader, model, criterion, last_best_epochs)
-        scheduler.step(epoch=epoch)
 
         is_best = acc > best_acc1
         last_best_epochs = 0 if is_best else last_best_epochs + 1

@@ -23,9 +23,6 @@ class SimpleAutoencoder(nn.Module):
             nn.ReLU(True),
         )
         self.decoder = nn.Sequential(
-            nn.Linear(latent_dim, 48 * 4 * 4),
-            nn.ReLU(True),
-            View((48, 4, 4)),
             nn.ConvTranspose2d(48, 24, 4, stride=2, padding=1),
             nn.ReLU(),
             nn.ConvTranspose2d(24, 12, 4, stride=2, padding=1),
@@ -35,6 +32,8 @@ class SimpleAutoencoder(nn.Module):
         )
 
         self.classifier = nn.Sequential(
+            Flatten(),
+            nn.Linear(48 * 4 * 4, latent_dim),
             nn.Dropout(p=drop_rate, inplace=True),
             nn.Linear(latent_dim, 84),
             nn.ReLU(),

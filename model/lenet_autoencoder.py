@@ -19,7 +19,7 @@ class LenetAutoencoder(nn.Module):
             nn.Conv2d(6, 16, kernel_size=5, padding=2),
             nn.ReLU(),
             nn.MaxPool2d(2),
-            nn.Flatten(),
+            Flatten(),
             nn.Linear(16*7*7, latent_dim),
             nn.ReLU(True),
         )
