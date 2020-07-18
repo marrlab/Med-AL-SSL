@@ -1,6 +1,12 @@
 import torch.nn as nn
 from utils import Flatten, View
 
+"""
+A simple Autoencoder architecture.
+
+Courtesy to: https://github.com/jellycsc/PyTorch-CIFAR-10-autoencoder/blob/master/main.py
+"""
+
 
 class SimpleAutoencoder(nn.Module):
     def __init__(self, num_channels, num_classes, drop_rate, latent_dim=512):
@@ -41,10 +47,7 @@ class SimpleAutoencoder(nn.Module):
         decoded = self.decoder(encoded)
         return decoded
 
-    def embedding_generator(self, x):
-        x = self.encoder(x)
-        return x
-
     def forward_classifier(self, x):
+        x = self.encoder(x)
         x = self.classifier(x)
         return x

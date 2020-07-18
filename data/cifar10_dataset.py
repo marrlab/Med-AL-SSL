@@ -55,6 +55,6 @@ class Cifar10Dataset:
 
     def get_base_dataset(self):
         base_dataset = torchvision.datasets.CIFAR10(root=self.root, train=True,
-                                                    download=True, transform=self.transform_train)
+                                                    download=True, transform=self.transform_base)
 
         return base_dataset

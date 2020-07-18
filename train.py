@@ -30,7 +30,9 @@ from semi_supervised.pseudo_labeling import PseudoLabeling
 from semi_supervised.auto_encoder import AutoEncoder
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
-parser.add_argument('--epochs', default=100, type=int,
+parser.add_argument('--epochs', default=500, type=int,
+                    help='number of total epochs to run')
+parser.add_argument('--autoencoder-train-epochs', default=100, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')

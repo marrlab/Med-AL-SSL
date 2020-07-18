@@ -10,6 +10,8 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+torch.autograd.set_detect_anomaly(True)
+
 
 class AutoEncoder:
     def __init__(self, args, verbose=True):
@@ -48,12 +50,12 @@ class AutoEncoder:
             else:
                 print("=> no checkpoint found at '{}'".format(file))
 
-        criterion = nn.MSELoss().cuda()
+        criterion = nn.BCELoss().cuda()
         optimizer = torch.optim.Adam(model.parameters())
 
         best_loss = np.inf
 
-        for epoch in range(self.args.start_epoch, self.args.epochs):
+        for epoch in range(self.args.start_epoch, self.args.autoencoder_train_epochs):
             model.train()
             batch_time = AverageMeter()
             losses = AverageMeter()
@@ -115,7 +117,11 @@ class AutoEncoder:
         else:
             criterion = nn.CrossEntropyLoss().cuda()
 
-        optimizer = torch.optim.Adam(model.parameters())
+        optimizer = torch.optim.SGD(model.parameters(), self.args.lr,
+                                    momentum=self.args.momentum, nesterov=self.args.nesterov,
+                                    weight_decay=self.args.weight_decay)
+
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=150, gamma=0.1)
 
         acc_ratio = {}
         best_acc1 = 0
@@ -145,6 +151,7 @@ class AutoEncoder:
                 print(f'Random Sampling\t '
                       f'Current labeled ratio: {current_labeled_ratio}\t')
 
+            scheduler.step(epoch=epoch)
             is_best = best_acc1 > acc
             best_acc1 = max(best_acc1, acc)
             best_prec1 = max(prec, best_prec1)
@@ -175,8 +182,7 @@ class AutoEncoder:
             data_x = data_x.cuda(non_blocking=True)
             data_y = data_y.cuda(non_blocking=True)
 
-            embeddings = model.embedding_generator(data_x)
-            output = model.forward_classifier(embeddings)
+            output = model.forward_classifier(data_x)
 
             loss = criterion(output, data_y)
 
@@ -212,8 +218,7 @@ class AutoEncoder:
             data_y = data_y.cuda(non_blocking=True)
 
             with torch.no_grad():
-                embeddings = model.embedding_generator(data_x)
-                output = model.forward_classifier(embeddings)
+                output = model.forward_classifier(data_x)
 
             loss = criterion(output, data_y)
 
