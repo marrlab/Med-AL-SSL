@@ -9,7 +9,7 @@ parser.add_argument('--weak-supervision-strategy', default='semi_supervised', ty
 parser.add_argument('--semi-supervised-method', default='auto_encoder', type=str,
                     choices=['pseudo_labeling', 'auto_encoder'],
                     help='the semi supervised method to use')
-parser.add_argument('--uncertainty-sampling-method', default='density_weighted', type=str,
+parser.add_argument('--uncertainty-sampling-method', default='ratio_confidence', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
                              'density_weighted'],
                     help='the uncertainty sampling method to use')

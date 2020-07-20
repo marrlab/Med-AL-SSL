@@ -38,7 +38,7 @@ parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('-b', '--batch-size', default=512, type=int,
                     help='mini-batch size (default: 128)')
-parser.add_argument('--lr', '--learning-rate', default=0.01, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
 parser.add_argument('--nesterov', default=False, type=bool, help='nesterov momentum')
@@ -177,11 +177,12 @@ def main():
     else:
         criterion = nn.CrossEntropyLoss().cuda()
 
-    # optimizer = torch.optim.SGD(model.parameters(), args.lr,
-    #                            momentum=args.momentum, nesterov=args.nesterov,
-    #                            weight_decay=args.weight_decay)
+    # optimizer = torch.optim.Adam(model.parameters())
+    optimizer = torch.optim.SGD(model.parameters(), args.lr,
+                                momentum=args.momentum, nesterov=args.nesterov,
+                                weight_decay=args.weight_decay)
 
-    optimizer = torch.optim.Adam(model.parameters())
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=150, gamma=0.1)
 
     last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start
@@ -210,6 +211,7 @@ def main():
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, epoch, last_best_epochs)
         acc, acc5, (prec, recall, f1, _) = validate(val_loader, model, criterion, last_best_epochs)
+        scheduler.step(epoch=epoch)
 
         is_best = acc > best_acc1
         last_best_epochs = 0 if is_best else last_best_epochs + 1
