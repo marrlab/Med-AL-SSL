@@ -38,7 +38,7 @@ parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('-b', '--batch-size', default=512, type=int,
                     help='mini-batch size (default: 128)')
-parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.001, type=float,
                     help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
 parser.add_argument('--nesterov', default=False, type=bool, help='nesterov momentum')
@@ -57,13 +57,13 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true', help='flag to be set if an existed model is to be loaded')
 parser.add_argument('--name', default='densenet-least-confidence', type=str,
                     help='name of experiment')
-parser.add_argument('--add-labeled-epochs', default=20, type=int,
+parser.add_argument('--add-labeled-epochs', default=1000, type=int,
                     help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
 parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
                     help='what percentage of labeled data to be added')
-parser.add_argument('--labeled-ratio-start', default=0.01, type=int,
+parser.add_argument('--labeled-ratio-start', default=0.999, type=int,
                     help='what percentage of labeled data to start the training with')
-parser.add_argument('--labeled-ratio-stop', default=0.7, type=int,
+parser.add_argument('--labeled-ratio-stop', default=1.5, type=int,
                     help='what percentage of labeled data to stop the training process at')
 parser.add_argument('--labeled-warmup_epochs', default=80, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
@@ -75,8 +75,8 @@ parser.add_argument('--uncertainty-sampling-method', default='least_confidence',
                     help='the uncertainty sampling method to use')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
-parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
-                    choices=['active_learning', 'semi_supervised', 'random_sampling'],
+parser.add_argument('--weak-supervision-strategy', default='fully_supervised', type=str,
+                    choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
 parser.add_argument('--semi-supervised-method', default='auto_encoder', type=str,
                     choices=['pseudo_labeling', 'auto_encoder'],
@@ -93,22 +93,22 @@ parser.add_argument('--seed', default=9999, type=int, choices=[0, 9999, 2323, 55
 parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
+parser.add_argument('--run_batch', action='store_true', help='run all methods in batch mode')
 
 parser.set_defaults(augment=True)
 
-args = parser.parse_args()
+arguments = parser.parse_args()
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset}
 
-random.seed(args.seed)
-torch.manual_seed(args.seed)
-np.random.seed(args.seed)
-cudnn.deterministic = True
-cudnn.benchmark = False
-torch.manual_seed(args.seed)
 
+def main(args):
+    random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    cudnn.deterministic = True
+    cudnn.benchmark = False
+    torch.manual_seed(args.seed)
 
-def main():
-    global args
     if args.weak_supervision_strategy == 'semi_supervised':
         args.name = f"{args.dataset}@{args.arch}@{args.semi_supervised_method}"
     elif args.weak_supervision_strategy == 'active_learning':
@@ -177,12 +177,14 @@ def main():
     else:
         criterion = nn.CrossEntropyLoss().cuda()
 
-    # optimizer = torch.optim.Adam(model.parameters())
-    optimizer = torch.optim.SGD(model.parameters(), args.lr,
-                                momentum=args.momentum, nesterov=args.nesterov,
-                                weight_decay=args.weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    # optimizer = torch.optim.SGD(model.parameters(), args.lr,
+    #                            momentum=args.momentum, nesterov=args.nesterov,
+    #                            weight_decay=args.weight_decay)
 
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=150, gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5,
+                                                           patience=args.add_labeled_epochs, verbose=False,
+                                                           min_lr=0.0001)
 
     last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start
@@ -209,9 +211,9 @@ def main():
     best_recall1 = 0
 
     for epoch in range(args.start_epoch, args.epochs):
-        train(train_loader, model, criterion, optimizer, epoch, last_best_epochs)
-        acc, acc5, (prec, recall, f1, _) = validate(val_loader, model, criterion, last_best_epochs)
-        scheduler.step(epoch=epoch)
+        train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args)
+        acc, acc5, (prec, recall, f1, _) = validate(val_loader, model, criterion, last_best_epochs, args)
+        scheduler.step(metrics=acc, epoch=epoch)
 
         is_best = acc > best_acc1
         last_best_epochs = 0 if is_best else last_best_epochs + 1
@@ -306,7 +308,7 @@ def main():
         store_logs(args, acc_ratio)
 
 
-def train(train_loader, model, criterion, optimizer, epoch, last_best_epochs):
+def train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args):
     batch_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
@@ -342,7 +344,7 @@ def train(train_loader, model, criterion, optimizer, epoch, last_best_epochs):
                           last_best_epoch=last_best_epochs))
 
 
-def validate(val_loader, model, criterion, last_best_epochs):
+def validate(val_loader, model, criterion, last_best_epochs, args):
     batch_time = AverageMeter()
     losses = AverageMeter()
     top1 = AverageMeter()
@@ -401,4 +403,25 @@ def evaluate(val_loader, model):
 
 
 if __name__ == '__main__':
-    main()
+    if arguments.run_batch:
+        states = [('active_learning', 'least_confidence'), ('active_learning', 'margin_confidence'),
+                  ('active_learning', 'ratio_confidence'), ('active_learning', 'entropy_based'),
+                  ('active_learning', 'density_weighted'), ('semi_supervised', 'auto_encoder'),
+                  ('semi_supervised', 'pseudo_labeling'),  ('random_sampling', 'pseudo_labeling')]
+
+        seed = 0
+
+        for (m, s) in states:
+            arguments.weak_supervision_strategy = m
+            arguments.uncertainty_sampling_method = s
+            arguments.semi_supervised_method = s
+            arguments.seed = seed
+            random.seed(arguments.seed)
+            torch.manual_seed(arguments.seed)
+            np.random.seed(arguments.seed)
+            cudnn.deterministic = True
+            cudnn.benchmark = False
+            torch.manual_seed(arguments.seed)
+            main(args=arguments)
+    else:
+        main(args=arguments)

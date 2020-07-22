@@ -2,7 +2,7 @@ from data.cifar10_dataset import Cifar10Dataset
 from data.matek_dataset import MatekDataset
 from data.cifar100_dataset import Cifar100Dataset
 from model.lenet_autoencoder import LenetAutoencoder
-from model.simple_autoencoder import SimpleAutoencoder
+# from model.simple_autoencoder import SimpleAutoencoder
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
     stratified_random_sampling, postprocess_indices, store_logs
 import os
@@ -118,12 +118,14 @@ class AutoEncoder:
         else:
             criterion = nn.CrossEntropyLoss().cuda()
 
-        # optimizer = torch.optim.Adam(model.parameters())
-        optimizer = torch.optim.SGD(model.parameters(), lr=0.01,
-                                    momentum=self.args.momentum, nesterov=self.args.nesterov,
-                                    weight_decay=self.args.weight_decay)
+        optimizer = torch.optim.Adam(model.parameters())
+        # optimizer = torch.optim.SGD(model.parameters(), lr=0.01,
+        #                            momentum=self.args.momentum, nesterov=self.args.nesterov,
+        #                            weight_decay=self.args.weight_decay)
 
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=300, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5,
+                                                               patience=self.args.add_labeled_epochs, verbose=False,
+                                                               min_lr=0.0001)
 
         acc_ratio = {}
         best_acc1 = 0
@@ -136,7 +138,7 @@ class AutoEncoder:
         for epoch in range(self.args.start_epoch, self.args.epochs):
             self.train_classifier(train_loader, model, criterion, optimizer, epoch)
             acc, acc5, (prec, recall, f1, _) = self.validate_classifier(val_loader, model, criterion)
-            scheduler.step(epoch=epoch)
+            scheduler.step(metrics=acc, epoch=epoch)
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
                 acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
@@ -156,7 +158,7 @@ class AutoEncoder:
 
                 current_labeled_ratio += self.args.add_labeled_ratio
 
-            is_best = best_acc1 > acc
+            # is_best = best_acc1 > acc
             best_acc1 = max(best_acc1, acc)
             best_prec1 = max(prec, best_prec1)
             best_recall1 = max(recall, best_recall1)
