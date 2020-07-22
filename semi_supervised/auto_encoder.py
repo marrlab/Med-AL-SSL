@@ -118,13 +118,13 @@ class AutoEncoder:
         else:
             criterion = nn.CrossEntropyLoss().cuda()
 
-        optimizer = torch.optim.Adam(model.parameters())
-        # optimizer = torch.optim.SGD(model.parameters(), lr=0.01,
-        #                            momentum=self.args.momentum, nesterov=self.args.nesterov,
-        #                            weight_decay=self.args.weight_decay)
+        # optimizer = torch.optim.Adam(model.parameters())
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.01,
+                                    momentum=self.args.momentum, nesterov=self.args.nesterov,
+                                    weight_decay=self.args.weight_decay)
 
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5,
-                                                               patience=self.args.add_labeled_epochs, verbose=False,
+                                                               patience=10, verbose=True, cooldown=30, threshold=0.01,
                                                                min_lr=0.0001)
 
         acc_ratio = {}

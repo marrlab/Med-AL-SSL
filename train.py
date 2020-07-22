@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import random
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '5'
+os.environ['CUDA_VISIBLE_DEVICES'] = '4'
 
 import torch
 import torch.cuda
@@ -26,11 +26,12 @@ from data.cifar100_dataset import Cifar100Dataset
 from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, postprocess_indices
 from utils import stratified_random_sampling, Metrics, store_logs
 from active_learning.uncertainty_sampling import UncertaintySampling
+from active_learning import mc_dropout
 from semi_supervised.pseudo_labeling import PseudoLabeling
 from semi_supervised.auto_encoder import AutoEncoder
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
-parser.add_argument('--epochs', default=500, type=int,
+parser.add_argument('--epochs', default=1000, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--autoencoder-train-epochs', default=20, type=int,
                     help='number of total epochs to run')
@@ -38,12 +39,12 @@ parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
 parser.add_argument('-b', '--batch-size', default=512, type=int,
                     help='mini-batch size (default: 128)')
-parser.add_argument('--lr', '--learning-rate', default=0.001, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
-parser.add_argument('--nesterov', default=False, type=bool, help='nesterov momentum')
-parser.add_argument('--weight-decay', '--wd', default=5e-4, type=float,
-                    help='weight decay (default: 5e-4)')
+parser.add_argument('--nesterov', default=True, type=bool, help='nesterov momentum')
+parser.add_argument('--weight-decay', '--wd', default=0.0001, type=float,
+                    help='weight decay (default: 0.0001)')
 parser.add_argument('--print-freq', '-p', default=10, type=int,
                     help='print frequency (default: 10)')
 parser.add_argument('--layers', default=28, type=int,
@@ -57,22 +58,24 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true', help='flag to be set if an existed model is to be loaded')
 parser.add_argument('--name', default='densenet-least-confidence', type=str,
                     help='name of experiment')
-parser.add_argument('--add-labeled-epochs', default=1000, type=int,
+parser.add_argument('--add-labeled-epochs', default=30, type=int,
                     help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
 parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
                     help='what percentage of labeled data to be added')
-parser.add_argument('--labeled-ratio-start', default=0.999, type=int,
+parser.add_argument('--labeled-ratio-start', default=0.01, type=int,
                     help='what percentage of labeled data to start the training with')
-parser.add_argument('--labeled-ratio-stop', default=1.5, type=int,
+parser.add_argument('--labeled-ratio-stop', default=0.7, type=int,
                     help='what percentage of labeled data to stop the training process at')
 parser.add_argument('--labeled-warmup_epochs', default=80, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
 parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet'],
                     help='arch name')
-parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
+parser.add_argument('--uncertainty-sampling-method', default='mc_dropout', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
-                             'density_weighted'],
+                             'density_weighted', 'mc_dropout'],
                     help='the uncertainty sampling method to use')
+parser.add_argument('--mc-dropout-iterations', default=50, type=int,
+                    help='number of iterations for mc dropout')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
 parser.add_argument('--weak-supervision-strategy', default='fully_supervised', type=str,
@@ -177,13 +180,13 @@ def main(args):
     else:
         criterion = nn.CrossEntropyLoss().cuda()
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-    # optimizer = torch.optim.SGD(model.parameters(), args.lr,
-    #                            momentum=args.momentum, nesterov=args.nesterov,
-    #                            weight_decay=args.weight_decay)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = torch.optim.SGD(model.parameters(), args.lr,
+                                momentum=args.momentum, nesterov=args.nesterov,
+                                weight_decay=args.weight_decay)
 
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5,
-                                                           patience=args.add_labeled_epochs, verbose=False,
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.75,
+                                                           patience=10, verbose=True, cooldown=30, threshold=0.01,
                                                            min_lr=0.0001)
 
     last_best_epochs = 0
@@ -223,10 +226,14 @@ def main(args):
             acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
                              [best_acc1, best_acc5, best_prec1, best_recall1]})
             if args.weak_supervision_strategy == 'active_learning':
-                samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
-                                                                  train_loader,
-                                                                  unlabeled_loader,
-                                                                  number=dataset_class.add_labeled_num)
+                if args.uncertainty_sampling_method == 'mc_dropout':
+                    samples_indices = mc_dropout.get_samples(epoch, args, model,
+                                                             unlabeled_loader, number=dataset_class.add_labeled_num)
+                else:
+                    samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
+                                                                      train_loader,
+                                                                      unlabeled_loader,
+                                                                      number=dataset_class.add_labeled_num)
 
                 labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
                                                                          samples_indices)
@@ -292,7 +299,7 @@ def main(args):
     metrics, report = evaluate(val_loader, best_model)
 
     for k, v in acc_ratio.items():
-        print(f'Ratio: {int(k*100)}%\t'
+        print(f'Ratio: {int(k * 100)}%\t'
               f'Accuracy@1: {v[0]}\t'
               f'Accuracy@5: {v[1]}\t'
               f'Precision: {v[2]}\t'
@@ -362,7 +369,7 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
             output, _ = model(data_x)
         loss = criterion(output, data_y)
 
-        acc = accuracy(output.data, data_y, topk=(1, 5, ))
+        acc = accuracy(output.data, data_y, topk=(1, 5,))
         losses.update(loss.data.item(), data_x.size(0))
         top1.update(acc[0].item(), data_x.size(0))
         top5.update(acc[1].item(), data_x.size(0))
@@ -407,9 +414,9 @@ if __name__ == '__main__':
         states = [('active_learning', 'least_confidence'), ('active_learning', 'margin_confidence'),
                   ('active_learning', 'ratio_confidence'), ('active_learning', 'entropy_based'),
                   ('active_learning', 'density_weighted'), ('semi_supervised', 'auto_encoder'),
-                  ('semi_supervised', 'pseudo_labeling'),  ('random_sampling', 'pseudo_labeling')]
+                  ('semi_supervised', 'pseudo_labeling'), ('random_sampling', 'pseudo_labeling')]
 
-        seed = 0
+        seed = 9999
 
         for (m, s) in states:
             arguments.weak_supervision_strategy = m

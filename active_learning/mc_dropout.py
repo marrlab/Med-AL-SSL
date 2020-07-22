@@ -1,33 +1,38 @@
 from utils import AverageMeter
 import time
 import torch
-import torch.nn.functional as F
 
 
-def get_samples(self, epoch, args, model, unlabeled_loader, number):
+def get_samples(epoch, args, model, unlabeled_loader, number):
     batch_time = AverageMeter()
-    samples = None
+    all_samples = []
 
     end = time.time()
 
-    model.eval()
+    model.train()
 
-    for i, (data_x, data_y) in enumerate(unlabeled_loader):
-        data_x = data_x.cuda(non_blocking=True)
+    for j in range(args.mc_dropout_iterations):
+        sample = None
 
-        with torch.no_grad():
-            output, feat = model(data_x)
+        for i, (data_x, data_y) in enumerate(unlabeled_loader):
+            data_x = data_x.cuda(non_blocking=True)
 
-        batch_time.update(time.time() - end)
-        end = time.time()
+            with torch.no_grad():
+                output, feat = model(data_x)
 
-        if i % args.print_freq == 0:
-            print('{0}\t'
-                  'Epoch: [{1}][{2}/{3}]\t'
-                  'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                  .format(self.uncertainty_sampling_method, epoch, i, len(unlabeled_loader), batch_time=batch_time))
+            sample = output if sample is None else torch.cat([sample, output])
 
-    if self.uncertainty_sampling_method == 'entropy_based':
-        return samples.argsort(descending=True)[:number]
-    else:
-        return samples.argsort()[:number]
+            batch_time.update(time.time() - end)
+            end = time.time()
+
+            if i % args.print_freq == 0:
+                print('{0}\t'
+                      'Epoch: [{1}][{2}/{3}]\t'
+                      'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                      .format(args.uncertainty_sampling_method, epoch, i, len(unlabeled_loader), batch_time=batch_time))
+        print('\n MC dropout sample: ', j)
+        all_samples = output if all_samples is None else torch.cat([all_samples, sample], dim=1)
+
+    all_samples = torch.std(all_samples, dim=1)
+
+    return all_samples.argsort(descending=True)[:number]
