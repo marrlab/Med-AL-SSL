@@ -3,10 +3,10 @@ from utils import print_metrics
 
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
-parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
+parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling'],
                     help='the weakly supervised strategy to use')
-parser.add_argument('--semi-supervised-method', default='auto_encoder', type=str,
+parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
                     choices=['pseudo_labeling', 'auto_encoder'],
                     help='the semi supervised method to use')
 parser.add_argument('--uncertainty-sampling-method', default='density_weighted', type=str,
@@ -17,7 +17,7 @@ parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10'
                     help='the dataset to train on')
 parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet'],
                     help='arch name')
-parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
+parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs_curr/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.set_defaults(augment=True)

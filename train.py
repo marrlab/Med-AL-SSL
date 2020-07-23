@@ -92,11 +92,11 @@ parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10'
                     help='the dataset to train on')
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
-parser.add_argument('--seed', default=9999, type=int, choices=[0, 9999, 2323, 5555], help='the random seed to set')
+parser.add_argument('--seed', default=2323, type=int, choices=[6666, 9999, 2323, 5555], help='the random seed to set')
 parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
-parser.add_argument('--run_batch', action='store_true', help='run all methods in batch mode')
+parser.add_argument('--run_batch', action='store_false', help='run all methods in batch mode')
 
 parser.set_defaults(augment=True)
 
@@ -188,9 +188,10 @@ def main(args):
                                 momentum=args.momentum, nesterov=args.nesterov,
                                 weight_decay=args.weight_decay)
 
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.75,
-                                                           patience=10, verbose=True, cooldown=30, threshold=0.01,
-                                                           min_lr=0.0001)
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.75,
+    #                                                       patience=10, verbose=True, cooldown=30, threshold=0.01,
+    #                                                       min_lr=0.0001)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=75, gamma=0.5)
 
     last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start
@@ -219,7 +220,8 @@ def main(args):
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args)
         acc, acc5, (prec, recall, f1, _) = validate(val_loader, model, criterion, last_best_epochs, args)
-        scheduler.step(metrics=acc, epoch=epoch)
+        # scheduler.step(metrics=acc, epoch=epoch)
+        scheduler.step(epoch=epoch)
 
         is_best = acc > best_acc1
         last_best_epochs = 0 if is_best else last_best_epochs + 1
@@ -416,9 +418,9 @@ if __name__ == '__main__':
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
             # ('active_learning', 'entropy_based', 'pseudo_labeling'),
             # ('active_learning', 'density_weighted', 'pseudo_labeling'),
-            # ('semi_supervised', 'least_confidence', 'auto_encoder'),
             ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
-            ('random_sampling', 'least_confidence', 'pseudo_labeling')
+            ('random_sampling', 'least_confidence', 'pseudo_labeling'),
+            # ('semi_supervised', 'least_confidence', 'auto_encoder')
         ]
 
         seed = 5555
