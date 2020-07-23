@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import random
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '4'
+os.environ['CUDA_VISIBLE_DEVICES'] = '5'
 
 import torch
 import torch.cuda
@@ -26,7 +26,7 @@ from data.cifar100_dataset import Cifar100Dataset
 from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, postprocess_indices
 from utils import stratified_random_sampling, Metrics, store_logs
 from active_learning.uncertainty_sampling import UncertaintySampling
-from active_learning import mc_dropout
+from active_learning.mc_dropout import UncertaintySamplingMCDropout
 from semi_supervised.pseudo_labeling import PseudoLabeling
 from semi_supervised.auto_encoder import AutoEncoder
 
@@ -78,7 +78,7 @@ parser.add_argument('--mc-dropout-iterations', default=50, type=int,
                     help='number of iterations for mc dropout')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
-parser.add_argument('--weak-supervision-strategy', default='fully_supervised', type=str,
+parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
 parser.add_argument('--semi-supervised-method', default='auto_encoder', type=str,
@@ -135,8 +135,11 @@ def main(args):
     train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset,
                                                                 labeled_indices, unlabeled_indices, kwargs)
 
-    uncertainty_sampler = UncertaintySampling(verbose=True,
-                                              uncertainty_sampling_method=args.uncertainty_sampling_method)
+    if args.uncertainty_sampling_method == 'mc_dropout':
+        uncertainty_sampler = UncertaintySamplingMCDropout()
+    else:
+        uncertainty_sampler = UncertaintySampling(verbose=True,
+                                                  uncertainty_sampling_method=args.uncertainty_sampling_method)
     pseudo_labeler = PseudoLabeling()
 
     if args.arch == 'wideresnet':
@@ -226,14 +229,10 @@ def main(args):
             acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
                              [best_acc1, best_acc5, best_prec1, best_recall1]})
             if args.weak_supervision_strategy == 'active_learning':
-                if args.uncertainty_sampling_method == 'mc_dropout':
-                    samples_indices = mc_dropout.get_samples(epoch, args, model,
-                                                             unlabeled_loader, number=dataset_class.add_labeled_num)
-                else:
-                    samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
-                                                                      train_loader,
-                                                                      unlabeled_loader,
-                                                                      number=dataset_class.add_labeled_num)
+                samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
+                                                                  train_loader,
+                                                                  unlabeled_loader,
+                                                                  number=dataset_class.add_labeled_num)
 
                 labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
                                                                          samples_indices)
@@ -411,16 +410,22 @@ def evaluate(val_loader, model):
 
 if __name__ == '__main__':
     if arguments.run_batch:
-        states = [('active_learning', 'least_confidence'), ('active_learning', 'margin_confidence'),
-                  ('active_learning', 'ratio_confidence'), ('active_learning', 'entropy_based'),
-                  ('active_learning', 'density_weighted'), ('semi_supervised', 'auto_encoder'),
-                  ('semi_supervised', 'pseudo_labeling'), ('random_sampling', 'pseudo_labeling')]
+        states = [
+            # ('active_learning', 'least_confidence', 'pseudo_labeling'),
+            # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
+            # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
+            # ('active_learning', 'entropy_based', 'pseudo_labeling'),
+            # ('active_learning', 'density_weighted', 'pseudo_labeling'),
+            # ('semi_supervised', 'least_confidence', 'auto_encoder'),
+            ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
+            ('random_sampling', 'least_confidence', 'pseudo_labeling')
+        ]
 
-        seed = 9999
+        seed = 5555
 
-        for (m, s) in states:
+        for (m, u, s) in states:
             arguments.weak_supervision_strategy = m
-            arguments.uncertainty_sampling_method = s
+            arguments.uncertainty_sampling_method = u
             arguments.semi_supervised_method = s
             arguments.seed = seed
             random.seed(arguments.seed)
