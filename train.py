@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import random
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '5'
+os.environ['CUDA_VISIBLE_DEVICES'] = '6'
 
 import torch
 import torch.cuda
@@ -29,15 +29,16 @@ from active_learning.uncertainty_sampling import UncertaintySampling
 from active_learning.mc_dropout import UncertaintySamplingMCDropout
 from semi_supervised.pseudo_labeling import PseudoLabeling
 from semi_supervised.auto_encoder import AutoEncoder
+from semi_supervised.simclr import SimCLR
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
 parser.add_argument('--epochs', default=1000, type=int,
                     help='number of total epochs to run')
-parser.add_argument('--autoencoder-train-epochs', default=40, type=int,
+parser.add_argument('--autoencoder-train-epochs', default=20, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=512, type=int,
+parser.add_argument('-b', '--batch-size', default=1024, type=int,
                     help='mini-batch size (default: 128)')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     help='initial learning rate')
@@ -74,15 +75,15 @@ parser.add_argument('--uncertainty-sampling-method', default='least_confidence',
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
                              'density_weighted', 'mc_dropout'],
                     help='the uncertainty sampling method to use')
-parser.add_argument('--mc-dropout-iterations', default=30, type=int,
+parser.add_argument('--mc-dropout-iterations', default=20, type=int,
                     help='number of iterations for mc dropout')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
-parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
+parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
-parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
-                    choices=['pseudo_labeling', 'auto_encoder'],
+parser.add_argument('--semi-supervised-method', default='simclr', type=str,
+                    choices=['pseudo_labeling', 'auto_encoder', 'simclr'],
                     help='the semi supervised method to use')
 parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
@@ -124,8 +125,13 @@ def main(args):
     if args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'auto_encoder':
         auto_encoder = AutoEncoder(args)
         auto_encoder.train()
-        auto_encoder.train_validate_classifier()
-        exit(1)
+        best_acc = auto_encoder.train_validate_classifier()
+        return best_acc
+    elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'simclr':
+        simclr = SimCLR(args)
+        simclr.train()
+        best_acc = simclr.train_validate_classifier()
+        return best_acc
 
     dataset_class = datasets[args.dataset](root=args.root,
                                            labeled_ratio=args.labeled_ratio_start,

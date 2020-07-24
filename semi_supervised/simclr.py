@@ -49,7 +49,7 @@ class SimCLR:
             else:
                 print("=> no checkpoint found at '{}'".format(file))
 
-        criterion = NTXent(self.args.batch_size, self.args.simclr_temperature, torch.device("cuda"))
+        criterion = NTXent(self.args.simclr_temperature, torch.device("cuda"))
         optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
 
         best_loss = np.inf
@@ -67,7 +67,7 @@ class SimCLR:
                 h_i, z_i = model(data_x_i)
                 h_j, z_j = model(data_x_j)
 
-                loss = criterion(z_i, z_j)
+                loss = criterion(z_i, z_j, data_x_i.size(0))
 
                 losses.update(loss.data.item(), data_x_i.size(0))
 
@@ -186,7 +186,12 @@ class SimCLR:
             data_x = data_x.cuda(non_blocking=True)
             data_y = data_y.cuda(non_blocking=True)
 
-            output = model.forward_classifier(data_x)
+            model.eval()
+            with torch.no_grad():
+                h = model.forward_encoder(data_x)
+            model.train()
+
+            output = model.forward_classifier(h)
 
             loss = criterion(output, data_y)
 
@@ -222,7 +227,8 @@ class SimCLR:
             data_y = data_y.cuda(non_blocking=True)
 
             with torch.no_grad():
-                output = model.forward_classifier(data_x)
+                h = model.forward_encoder(data_x)
+                output = model.forward_classifier(h)
 
             loss = criterion(output, data_y)
 

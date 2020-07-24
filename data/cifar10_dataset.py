@@ -24,15 +24,14 @@ class Cifar10Dataset:
             transforms.ToTensor(),
             transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
         ])
-        self.transform_base = transforms.Compose([
-            transforms.RandomVerticalFlip(),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomGrayscale(),
-            transforms.ColorJitter(brightness=(0.1, 1.5), contrast=(0.75, 1.5), saturation=(0.5, 1.5)),
+        self.transform_autoencoder = transforms.Compose([
+            # transforms.RandomVerticalFlip(),
+            # transforms.RandomHorizontalFlip(),
+            # transforms.RandomGrayscale(),
+            # transforms.ColorJitter(brightness=(0.1, 1.5), contrast=(0.75, 1.5), saturation=(0.5, 1.5)),
             transforms.ToTensor(),
-            transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
          ])
-        self.transform_simclr = TransformsSimCLR
+        self.transform_simclr = TransformsSimCLR(size=32)
         self.num_classes = 10
         self.add_labeled_ratio = add_labeled_ratio
         self.add_labeled_num = None
@@ -61,9 +60,9 @@ class Cifar10Dataset:
 
         return labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset
 
-    def get_base_dataset(self):
+    def get_base_dataset_autoencoder(self):
         base_dataset = torchvision.datasets.CIFAR10(root=self.root, train=True,
-                                                    download=True, transform=self.transform_base)
+                                                    download=True, transform=self.transform_autoencoder)
 
         return base_dataset
 

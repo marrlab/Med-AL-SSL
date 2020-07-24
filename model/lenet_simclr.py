@@ -24,8 +24,8 @@ class LenetSimCLR(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(2),
             Flatten(),
-            nn.Linear(16 * 7 * 7, self.latent_dim),
-            nn.ReLU(True),
+            nn.Linear(16 * 7 * 7, latent_dim),
+            nn.ReLU(),
         )
 
         self.projector = nn.Sequential(
@@ -51,6 +51,9 @@ class LenetSimCLR(nn.Module):
         return h, z
 
     def forward_classifier(self, x):
-        x = self.encoder(x)
         x = self.classifier(x)
+        return x
+
+    def forward_encoder(self, x):
+        x = self.encoder(x)
         return x

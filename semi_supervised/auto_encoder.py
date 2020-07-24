@@ -26,7 +26,7 @@ class AutoEncoder:
                                                          labeled_ratio=self.args.labeled_ratio_start,
                                                          add_labeled_ratio=self.args.add_labeled_ratio)
 
-        base_dataset = dataset_class.get_base_dataset()
+        base_dataset = dataset_class.get_base_dataset_autoencoder()
 
         kwargs = {'num_workers': 2, 'pin_memory': False}
         train_loader = create_base_loader(self.args, base_dataset, kwargs)
@@ -48,7 +48,7 @@ class AutoEncoder:
             else:
                 print("=> no checkpoint found at '{}'".format(file))
 
-        criterion = nn.BCEWithLogitsLoss().cuda()
+        criterion = nn.BCELoss().cuda()
         optimizer = torch.optim.Adam(model.parameters())
 
         best_loss = np.inf
@@ -116,14 +116,6 @@ class AutoEncoder:
             criterion = nn.CrossEntropyLoss().cuda()
 
         optimizer = torch.optim.Adam(model.parameters())
-        # optimizer = torch.optim.SGD(model.parameters(), lr=0.01,
-        #                            momentum=self.args.momentum, nesterov=self.args.nesterov,
-        #                            weight_decay=self.args.weight_decay)
-
-        # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5,
-        #                                                       patience=10, verbose=True, cooldown=30, threshold=0.01,
-        #                                                       min_lr=0.0001)
-        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=150, gamma=0.5)
 
         acc_ratio = {}
         best_acc1 = 0
@@ -136,8 +128,6 @@ class AutoEncoder:
         for epoch in range(self.args.start_epoch, self.args.epochs):
             self.train_classifier(train_loader, model, criterion, optimizer, epoch)
             acc, acc5, (prec, recall, f1, _) = self.validate_classifier(val_loader, model, criterion)
-            # scheduler.step(metrics=acc, epoch=epoch)
-            # scheduler.step(epoch=epoch)
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
                 acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
