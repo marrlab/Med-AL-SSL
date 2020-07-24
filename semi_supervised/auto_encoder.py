@@ -118,15 +118,15 @@ class AutoEncoder:
         else:
             criterion = nn.CrossEntropyLoss().cuda()
 
-        # optimizer = torch.optim.Adam(model.parameters())
-        optimizer = torch.optim.SGD(model.parameters(), lr=0.01,
-                                    momentum=self.args.momentum, nesterov=self.args.nesterov,
-                                    weight_decay=self.args.weight_decay)
+        optimizer = torch.optim.Adam(model.parameters())
+        # optimizer = torch.optim.SGD(model.parameters(), lr=0.01,
+        #                            momentum=self.args.momentum, nesterov=self.args.nesterov,
+        #                            weight_decay=self.args.weight_decay)
 
         # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5,
         #                                                       patience=10, verbose=True, cooldown=30, threshold=0.01,
         #                                                       min_lr=0.0001)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=150, gamma=0.5)
+        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=150, gamma=0.5)
 
         acc_ratio = {}
         best_acc1 = 0
@@ -140,7 +140,7 @@ class AutoEncoder:
             self.train_classifier(train_loader, model, criterion, optimizer, epoch)
             acc, acc5, (prec, recall, f1, _) = self.validate_classifier(val_loader, model, criterion)
             # scheduler.step(metrics=acc, epoch=epoch)
-            scheduler.step(epoch=epoch)
+            # scheduler.step(epoch=epoch)
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
                 acc_ratio.update({np.round(current_labeled_ratio, decimals=2):

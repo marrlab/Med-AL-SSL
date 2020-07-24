@@ -3,6 +3,9 @@ import time
 import torch
 
 """
+Bayesian Active Learning by Disagreement (BALD) extension
+
+Implementation of:
 Deep Bayesian Active Learning with Image Data:
 https://arxiv.org/abs/1703.02910
 """
@@ -46,7 +49,8 @@ class UncertaintySamplingMCDropout:
                     print('{0}\t'
                           'Epoch: [{1}][{2}/{3}]\t'
                           'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                          .format(args.uncertainty_sampling_method, epoch, i, len(unlabeled_loader), batch_time=batch_time))
+                          .format(args.uncertainty_sampling_method, epoch, i, len(unlabeled_loader),
+                                  batch_time=batch_time))
             print('\n MC dropout sample: ', j+1)
 
             all_score = scores if all_score is None else all_score + scores

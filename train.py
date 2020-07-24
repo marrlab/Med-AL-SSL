@@ -51,8 +51,8 @@ parser.add_argument('--layers', default=28, type=int,
                     help='total number of layers (default: 28)')
 parser.add_argument('--widen-factor', default=2, type=int,
                     help='widen factor (default: 2)')
-parser.add_argument('--drop-rate', default=0.2, type=float,
-                    help='dropout probability (default: 0.2)')
+parser.add_argument('--drop-rate', default=0.1, type=float,
+                    help='dropout probability (default: 0.1)')
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentation (default: True)')
 parser.add_argument('--resume', action='store_true', help='flag to be set if an existed model is to be loaded')
@@ -70,18 +70,18 @@ parser.add_argument('--labeled-warmup_epochs', default=80, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
 parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet'],
                     help='arch name')
-parser.add_argument('--uncertainty-sampling-method', default='mc_dropout', type=str,
+parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
                              'density_weighted', 'mc_dropout'],
                     help='the uncertainty sampling method to use')
-parser.add_argument('--mc-dropout-iterations', default=50, type=int,
+parser.add_argument('--mc-dropout-iterations', default=30, type=int,
                     help='number of iterations for mc dropout')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
 parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
-parser.add_argument('--semi-supervised-method', default='auto_encoder', type=str,
+parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
                     choices=['pseudo_labeling', 'auto_encoder'],
                     help='the semi supervised method to use')
 parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
@@ -92,11 +92,11 @@ parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10'
                     help='the dataset to train on')
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
-parser.add_argument('--seed', default=2323, type=int, choices=[6666, 9999, 2323, 5555], help='the random seed to set')
+parser.add_argument('--seed', default=9999, type=int, choices=[6666, 9999, 2323, 5555], help='the random seed to set')
 parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
-parser.add_argument('--run_batch', action='store_false', help='run all methods in batch mode')
+parser.add_argument('--run_batch', action='store_true', help='run all methods in batch mode')
 
 parser.set_defaults(augment=True)
 
@@ -183,15 +183,16 @@ def main(args):
     else:
         criterion = nn.CrossEntropyLoss().cuda()
 
-    # optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-    optimizer = torch.optim.SGD(model.parameters(), args.lr,
-                                momentum=args.momentum, nesterov=args.nesterov,
-                                weight_decay=args.weight_decay)
+    optimizer = torch.optim.Adam(model.parameters())
+    # optimizer = torch.optim.SGD(model.parameters(), args.lr,
+    #                            momentum=args.momentum, nesterov=args.nesterov,
+    #                            weight_decay=args.weight_decay)
 
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.75,
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5,
     #                                                       patience=10, verbose=True, cooldown=30, threshold=0.01,
-    #                                                       min_lr=0.0001)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=75, gamma=0.5)
+    #                                                       min_lr=0.00005)
+    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=75, gamma=0.5)
+    # scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 10, 2)
 
     last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start
@@ -221,7 +222,7 @@ def main(args):
         train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args)
         acc, acc5, (prec, recall, f1, _) = validate(val_loader, model, criterion, last_best_epochs, args)
         # scheduler.step(metrics=acc, epoch=epoch)
-        scheduler.step(epoch=epoch)
+        # scheduler.step(epoch=epoch)
 
         is_best = acc > best_acc1
         last_best_epochs = 0 if is_best else last_best_epochs + 1
@@ -413,17 +414,17 @@ def evaluate(val_loader, model):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            # ('active_learning', 'least_confidence', 'pseudo_labeling'),
-            # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
-            # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
-            # ('active_learning', 'entropy_based', 'pseudo_labeling'),
-            # ('active_learning', 'density_weighted', 'pseudo_labeling'),
+            ('active_learning', 'least_confidence', 'pseudo_labeling'),
+            ('active_learning', 'margin_confidence', 'pseudo_labeling'),
+            ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
+            ('active_learning', 'entropy_based', 'pseudo_labeling'),
+            ('active_learning', 'density_weighted', 'pseudo_labeling'),
             ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
             ('random_sampling', 'least_confidence', 'pseudo_labeling'),
-            # ('semi_supervised', 'least_confidence', 'auto_encoder')
+            ('semi_supervised', 'least_confidence', 'auto_encoder')
         ]
 
-        seed = 5555
+        seed = 6666
 
         for (m, u, s) in states:
             arguments.weak_supervision_strategy = m

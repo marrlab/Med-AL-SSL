@@ -9,15 +9,15 @@ parser.add_argument('--weak-supervision-strategy', default='semi_supervised', ty
 parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
                     choices=['pseudo_labeling', 'auto_encoder'],
                     help='the semi supervised method to use')
-parser.add_argument('--uncertainty-sampling-method', default='density_weighted', type=str,
+parser.add_argument('--uncertainty-sampling-method', default='ratio_confidence', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
-                             'density_weighted'],
+                             'density_weighted', 'mc_dropout'],
                     help='the uncertainty sampling method to use')
 parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100'],
                     help='the dataset to train on')
 parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet'],
                     help='arch name')
-parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs_curr/', type=str,
+parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.set_defaults(augment=True)

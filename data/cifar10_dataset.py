@@ -13,7 +13,7 @@ class Cifar10Dataset:
         self.cifar_std = (0.2023, 0.1994, 0.2010)
         self.input_size = 32
         self.transform_train = transforms.Compose([
-            # transforms.RandomCrop(self.input_size, padding=4),
+            transforms.RandomCrop(self.input_size, padding=4),
             transforms.RandomHorizontalFlip(),
             transforms.RandomAffine(degrees=0, translate=(0.125, 0.125)),
             # transforms.RandomVerticalFlip(),
