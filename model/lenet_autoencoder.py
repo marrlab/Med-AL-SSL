@@ -10,7 +10,7 @@ https://github.com/afrozalm/AutoEncoder/blob/master/AutoEncoder.lua
 
 
 class LenetAutoencoder(nn.Module):
-    def __init__(self, num_channels, num_classes, drop_rate, latent_dim=512):
+    def __init__(self, num_channels, num_classes, drop_rate, latent_dim=128):
         super(LenetAutoencoder, self).__init__()
         self.encoder = nn.Sequential(
             nn.Conv2d(num_channels, 6, 3),

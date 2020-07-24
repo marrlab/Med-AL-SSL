@@ -1,5 +1,4 @@
 import os
-import torch
 import torch.nn as nn
 import shutil
 from torch.utils.data import DataLoader
@@ -121,6 +120,82 @@ class Metrics:
 
     def get_report(self):
         return classification_report(self.targets, self.outputs, zero_division=1)
+
+
+import torch
+import torch.nn as nn
+
+
+class NTXent(nn.Module):
+    def __init__(self, batch_size, temperature, device):
+        super(NTXent, self).__init__()
+        self.batch_size = batch_size
+        self.temperature = temperature
+        self.mask = self.mask_correlated_samples(batch_size)
+        self.device = device
+
+        self.criterion = nn.CrossEntropyLoss(reduction="sum")
+        self.similarity_f = nn.CosineSimilarity(dim=2)
+
+    @staticmethod
+    def mask_correlated_samples(batch_size):
+        # noinspection PyTypeChecker
+        mask = torch.ones((batch_size * 2, batch_size * 2), dtype=bool)
+        mask = mask.fill_diagonal_(0)
+        for i in range(batch_size):
+            mask[i, batch_size + i] = 0
+            mask[batch_size + i, i] = 0
+        return mask
+
+    def forward(self, z_i, z_j):
+        p1 = torch.cat((z_i, z_j), dim=0)
+        sim = self.similarity_f(p1.unsqueeze(1), p1.unsqueeze(0)) / self.temperature
+
+        sim_i_j = torch.diag(sim, self.batch_size)
+        sim_j_i = torch.diag(sim, -self.batch_size)
+
+        positive_samples = torch.cat((sim_i_j, sim_j_i), dim=0).reshape(
+            self.batch_size * 2, 1
+        )
+
+        negative_samples = sim[self.mask].reshape(self.batch_size * 2, -1)
+
+        labels = torch.zeros(self.batch_size * 2).to(self.device).long()
+        logits = torch.cat((positive_samples, negative_samples), dim=1)
+        loss = self.criterion(logits, labels)
+        loss /= 2 * self.batch_size
+
+        return loss
+
+
+import torchvision
+
+
+class TransformsSimCLR:
+    def __init__(self, size):
+        s = 1
+        color_jitter = torchvision.transforms.ColorJitter(
+            0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s
+        )
+        self.train_transform = torchvision.transforms.Compose(
+            [
+                torchvision.transforms.RandomResizedCrop(size=size),
+                torchvision.transforms.RandomHorizontalFlip(),
+                torchvision.transforms.RandomApply([color_jitter], p=0.8),
+                torchvision.transforms.RandomGrayscale(p=0.2),
+                torchvision.transforms.ToTensor(),
+            ]
+        )
+
+        self.test_transform = torchvision.transforms.Compose(
+            [
+                torchvision.transforms.Resize(size=(size, size)),
+                torchvision.transforms.ToTensor()
+            ]
+        )
+
+    def __call__(self, x):
+        return self.train_transform(x), self.train_transform(x)
 
 
 def print_args(args):

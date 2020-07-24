@@ -1,10 +1,9 @@
 from data.cifar10_dataset import Cifar10Dataset
 from data.matek_dataset import MatekDataset
 from data.cifar100_dataset import Cifar100Dataset
-from model.lenet_autoencoder import LenetAutoencoder
-# from model.simple_autoencoder import SimpleAutoencoder
+from model.lenet_simclr import LenetSimCLR
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
-    stratified_random_sampling, postprocess_indices, store_logs
+    stratified_random_sampling, postprocess_indices, store_logs, NTXent
 import os
 import time
 import torch
@@ -14,7 +13,7 @@ import numpy as np
 torch.autograd.set_detect_anomaly(True)
 
 
-class AutoEncoder:
+class SimCLR:
     def __init__(self, args, verbose=True):
         self.args = args
         self.verbose = verbose
@@ -26,12 +25,14 @@ class AutoEncoder:
                                                          labeled_ratio=self.args.labeled_ratio_start,
                                                          add_labeled_ratio=self.args.add_labeled_ratio)
 
-        base_dataset = dataset_class.get_base_dataset()
+        base_dataset = dataset_class.get_base_dataset_simclr()
 
         kwargs = {'num_workers': 2, 'pin_memory': False}
         train_loader = create_base_loader(self.args, base_dataset, kwargs)
 
-        model = LenetAutoencoder(num_channels=3, num_classes=dataset_class.num_classes, drop_rate=self.args.drop_rate)
+        model = LenetSimCLR(num_channels=3,
+                            num_classes=dataset_class.num_classes,
+                            drop_rate=self.args.drop_rate, normalize=True)
 
         model = model.cuda()
 
@@ -48,8 +49,8 @@ class AutoEncoder:
             else:
                 print("=> no checkpoint found at '{}'".format(file))
 
-        criterion = nn.BCEWithLogitsLoss().cuda()
-        optimizer = torch.optim.Adam(model.parameters())
+        criterion = NTXent(self.args.batch_size, self.args.simclr_temperature, torch.device("cuda"))
+        optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
 
         best_loss = np.inf
 
@@ -59,13 +60,16 @@ class AutoEncoder:
             losses = AverageMeter()
 
             end = time.time()
-            for i, (data_x, data_y) in enumerate(train_loader):
-                data_x = data_x.cuda(non_blocking=True)
+            for i, ((data_x_i, data_x_j), y) in enumerate(train_loader):
+                data_x_i = data_x_i.cuda(non_blocking=True)
+                data_x_j = data_x_j.cuda(non_blocking=True)
 
-                output = model(data_x)
-                loss = criterion(output, data_x)
+                h_i, z_i = model(data_x_i)
+                h_j, z_j = model(data_x_j)
 
-                losses.update(loss.data.item(), data_x.size(0))
+                loss = criterion(z_i, z_j)
+
+                losses.update(loss.data.item(), data_x_i.size(0))
 
                 optimizer.zero_grad()
                 loss.backward()
@@ -116,14 +120,6 @@ class AutoEncoder:
             criterion = nn.CrossEntropyLoss().cuda()
 
         optimizer = torch.optim.Adam(model.parameters())
-        # optimizer = torch.optim.SGD(model.parameters(), lr=0.01,
-        #                            momentum=self.args.momentum, nesterov=self.args.nesterov,
-        #                            weight_decay=self.args.weight_decay)
-
-        # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5,
-        #                                                       patience=10, verbose=True, cooldown=30, threshold=0.01,
-        #                                                       min_lr=0.0001)
-        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=150, gamma=0.5)
 
         acc_ratio = {}
         best_acc1 = 0
@@ -136,8 +132,6 @@ class AutoEncoder:
         for epoch in range(self.args.start_epoch, self.args.epochs):
             self.train_classifier(train_loader, model, criterion, optimizer, epoch)
             acc, acc5, (prec, recall, f1, _) = self.validate_classifier(val_loader, model, criterion)
-            # scheduler.step(metrics=acc, epoch=epoch)
-            # scheduler.step(epoch=epoch)
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
                 acc_ratio.update({np.round(current_labeled_ratio, decimals=2):

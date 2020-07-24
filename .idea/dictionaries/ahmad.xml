@@ -33,11 +33,13 @@
       <w>qasima</w>
       <w>relu</w>
       <w>sergey</w>
+      <w>simclr</w>
       <w>softmax</w>
       <w>topk</w>
       <w>torchscript</w>
       <w>warmup</w>
       <w>wideresnet</w>
+      <w>xent</w>
       <w>zagoruyko</w>
     </words>
   </dictionary>

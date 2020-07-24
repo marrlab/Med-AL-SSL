@@ -3,6 +3,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from torchvision import transforms
 from .dataset_utils import WeaklySupervisedDataset
+from utils import TransformsSimCLR
 
 
 class Cifar10Dataset:
@@ -16,10 +17,6 @@ class Cifar10Dataset:
             transforms.RandomCrop(self.input_size, padding=4),
             transforms.RandomHorizontalFlip(),
             transforms.RandomAffine(degrees=0, translate=(0.125, 0.125)),
-            # transforms.RandomVerticalFlip(),
-            # transforms.RandomGrayscale(),
-            # transforms.RandomRotation(degrees=180),
-            # transforms.ColorJitter(brightness=(0.1, 1.5), contrast=(0.75, 1.5), saturation=(0.5, 1.5)),
             transforms.ToTensor(),
             transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
         ])
@@ -28,8 +25,14 @@ class Cifar10Dataset:
             transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
         ])
         self.transform_base = transforms.Compose([
+            transforms.RandomVerticalFlip(),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomGrayscale(),
+            transforms.ColorJitter(brightness=(0.1, 1.5), contrast=(0.75, 1.5), saturation=(0.5, 1.5)),
             transforms.ToTensor(),
+            transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
          ])
+        self.transform_simclr = TransformsSimCLR
         self.num_classes = 10
         self.add_labeled_ratio = add_labeled_ratio
         self.add_labeled_num = None
@@ -61,5 +64,11 @@ class Cifar10Dataset:
     def get_base_dataset(self):
         base_dataset = torchvision.datasets.CIFAR10(root=self.root, train=True,
                                                     download=True, transform=self.transform_base)
+
+        return base_dataset
+
+    def get_base_dataset_simclr(self):
+        base_dataset = torchvision.datasets.CIFAR10(root=self.root, train=True,
+                                                    download=True, transform=self.transform_simclr)
 
         return base_dataset
