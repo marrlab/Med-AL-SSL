@@ -9,8 +9,15 @@ import time
 import torch
 import torch.nn as nn
 import numpy as np
+from torchlars import LARS
 
 torch.autograd.set_detect_anomaly(True)
+
+'''
+SimCLR implementation, adapted from:
+Courtesy to: https://github.com/Spijkervet/SimCLR
+LARS optimizer, courtesy to: https://github.com/kakaobrain/torchlars
+'''
 
 
 class SimCLR:
@@ -50,7 +57,18 @@ class SimCLR:
                 print("=> no checkpoint found at '{}'".format(file))
 
         criterion = NTXent(self.args.simclr_temperature, torch.device("cuda"))
-        optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
+
+        scheduler = None
+
+        if self.args.simclr_optimizer == 'adam':
+            optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
+        else:
+            self.args.simclr_base_lr = self.args.simclr_base_lr * (self.args.batch_size / 256)
+            base_optimizer = torch.optim.SGD(model.parameters(), lr=self.args.lr,
+                                             weight_decay=1e-6, momentum=self.args.momentum)
+            optimizer = LARS(base_optimizer, trust_coef=1e-3)
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, self.args.simclr_train_epochs,
+                                                                   eta_min=0, last_epoch=-1)
 
         best_loss = np.inf
 
@@ -92,6 +110,9 @@ class SimCLR:
                 'state_dict': model.state_dict(),
                 'best_prec1': best_loss,
             }, is_best)
+
+            if scheduler:
+                scheduler.step(epoch=epoch)
 
         self.model = model
         return model

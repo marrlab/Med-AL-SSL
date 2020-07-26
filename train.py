@@ -95,6 +95,9 @@ parser.add_argument('--simclr-batch-size', default=1024, type=int,
                     help='mini-batch size for simclr (default: 1024)')
 parser.add_argument('--simclr-arch', default='resnet', type=str, choices=['lenet', 'resnet'],
                     help='which encoder architecture to use for simclr')
+parser.add_argument('--simclr-base-lr', default=0.25, type=float, help='base learning rate, rescaled by batch_size/256')
+parser.add_argument('--simclr-optimizer', default='adam', type=str, choices=['adam', 'lars'],
+                    help='which optimizer to use for simclr')
 parser.add_argument('--weighted', action='store_true', help='to use weighted loss or not')
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
 parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100'],
