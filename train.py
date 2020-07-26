@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import random
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '6'
+os.environ['CUDA_VISIBLE_DEVICES'] = '5'
 
 import torch
 import torch.cuda
@@ -36,10 +36,12 @@ parser.add_argument('--epochs', default=1000, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--autoencoder-train-epochs', default=20, type=int,
                     help='number of total epochs to run')
+parser.add_argument('--simclr-train-epochs', default=30, type=int,
+                    help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=1024, type=int,
-                    help='mini-batch size (default: 128)')
+parser.add_argument('-b', '--batch-size', default=512, type=int,
+                    help='mini-batch size (default: 512)')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
@@ -52,8 +54,8 @@ parser.add_argument('--layers', default=28, type=int,
                     help='total number of layers (default: 28)')
 parser.add_argument('--widen-factor', default=2, type=int,
                     help='widen factor (default: 2)')
-parser.add_argument('--drop-rate', default=0.1, type=float,
-                    help='dropout probability (default: 0.1)')
+parser.add_argument('--drop-rate', default=0.2, type=float,
+                    help='dropout probability (default: 0.2)')
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentation (default: True)')
 parser.add_argument('--resume', action='store_true', help='flag to be set if an existed model is to be loaded')
@@ -75,7 +77,7 @@ parser.add_argument('--uncertainty-sampling-method', default='least_confidence',
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
                              'density_weighted', 'mc_dropout'],
                     help='the uncertainty sampling method to use')
-parser.add_argument('--mc-dropout-iterations', default=20, type=int,
+parser.add_argument('--mc-dropout-iterations', default=25, type=int,
                     help='number of iterations for mc dropout')
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
@@ -89,6 +91,8 @@ parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
 parser.add_argument('--simclr-temperature', default=0.5, type=float, help='the temperature term for simclr loss')
 parser.add_argument('--simclr-normalize', action='store_false', help='normalize the hidden feat vectors in simclr')
+parser.add_argument('--simclr-batch-size', default=1024, type=int,
+                    help='mini-batch size for simclr (default: 1024)')
 parser.add_argument('--weighted', action='store_true', help='to use weighted loss or not')
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
 parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100'],
@@ -99,7 +103,7 @@ parser.add_argument('--seed', default=9999, type=int, choices=[6666, 9999, 2323,
 parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
-parser.add_argument('--run_batch', action='store_true', help='run all methods in batch mode')
+parser.add_argument('--run_batch', action='store_false', help='run all methods in batch mode')
 
 parser.set_defaults(augment=True)
 
@@ -191,14 +195,14 @@ def main(args):
     else:
         criterion = nn.CrossEntropyLoss().cuda()
 
-    optimizer = torch.optim.Adam(model.parameters())
+    optimizer = torch.optim.Adam(model.parameters(), weight_decay=args.weight_decay)
     # optimizer = torch.optim.SGD(model.parameters(), args.lr,
     #                            momentum=args.momentum, nesterov=args.nesterov,
     #                            weight_decay=args.weight_decay)
 
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5,
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.75,
     #                                                       patience=10, verbose=True, cooldown=30, threshold=0.01,
-    #                                                       min_lr=0.00005)
+    #                                                       min_lr=0.0001)
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=75, gamma=0.5)
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 10, 2)
 
@@ -429,16 +433,15 @@ if __name__ == '__main__':
             ('active_learning', 'density_weighted', 'pseudo_labeling'),
             ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
             ('random_sampling', 'least_confidence', 'pseudo_labeling'),
-            ('semi_supervised', 'least_confidence', 'auto_encoder')
+            ('semi_supervised', 'least_confidence', 'auto_encoder'),
+            ('semi_supervised', 'least_confidence', 'simclr'),
+            ('active_learning', 'mc_dropout', 'pseudo_labeling')
         ]
-
-        seed = 6666
 
         for (m, u, s) in states:
             arguments.weak_supervision_strategy = m
             arguments.uncertainty_sampling_method = u
             arguments.semi_supervised_method = s
-            arguments.seed = seed
             random.seed(arguments.seed)
             torch.manual_seed(arguments.seed)
             np.random.seed(arguments.seed)

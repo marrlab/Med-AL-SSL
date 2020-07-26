@@ -86,8 +86,8 @@ def create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset, label
     return labeled_loader, unlabeled_loader, val_loader
 
 
-def create_base_loader(args, base_dataset, kwargs):
-    return DataLoader(dataset=base_dataset, batch_size=args.batch_size, shuffle=True, **kwargs)
+def create_base_loader(args, base_dataset, kwargs, batch_size):
+    return DataLoader(dataset=base_dataset, batch_size=batch_size, shuffle=True, **kwargs)
 
 
 def stratified_random_sampling(unlabeled_indices, number):

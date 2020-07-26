@@ -28,7 +28,7 @@ class SimCLR:
         base_dataset = dataset_class.get_base_dataset_simclr()
 
         kwargs = {'num_workers': 2, 'pin_memory': False}
-        train_loader = create_base_loader(self.args, base_dataset, kwargs)
+        train_loader = create_base_loader(self.args, base_dataset, kwargs, self.args.simclr_batch_size)
 
         model = LenetSimCLR(num_channels=3,
                             num_classes=dataset_class.num_classes,
@@ -54,7 +54,7 @@ class SimCLR:
 
         best_loss = np.inf
 
-        for epoch in range(self.args.start_epoch, self.args.autoencoder_train_epochs):
+        for epoch in range(self.args.start_epoch, self.args.simclr_train_epochs):
             model.train()
             batch_time = AverageMeter()
             losses = AverageMeter()
@@ -186,10 +186,10 @@ class SimCLR:
             data_x = data_x.cuda(non_blocking=True)
             data_y = data_y.cuda(non_blocking=True)
 
-            model.eval()
-            with torch.no_grad():
-                h = model.forward_encoder(data_x)
-            model.train()
+            # model.eval()
+            # with torch.no_grad():
+            h = model.forward_encoder(data_x)
+            # model.train()
 
             output = model.forward_classifier(h)
 
