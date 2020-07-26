@@ -36,7 +36,7 @@ parser.add_argument('--epochs', default=1000, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--autoencoder-train-epochs', default=20, type=int,
                     help='number of total epochs to run')
-parser.add_argument('--simclr-train-epochs', default=30, type=int,
+parser.add_argument('--simclr-train-epochs', default=100, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
@@ -61,9 +61,9 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true', help='flag to be set if an existed model is to be loaded')
 parser.add_argument('--name', default='densenet-least-confidence', type=str,
                     help='name of experiment')
-parser.add_argument('--add-labeled-epochs', default=10, type=int,
+parser.add_argument('--add-labeled-epochs', default=30, type=int,
                     help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
-parser.add_argument('--add-labeled-ratio', default=0.015, type=int,
+parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
                     help='what percentage of labeled data to be added')
 parser.add_argument('--labeled-ratio-start', default=0.01, type=int,
                     help='what percentage of labeled data to start the training with')
@@ -89,10 +89,12 @@ parser.add_argument('--semi-supervised-method', default='simclr', type=str,
                     help='the semi supervised method to use')
 parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
-parser.add_argument('--simclr-temperature', default=0.5, type=float, help='the temperature term for simclr loss')
+parser.add_argument('--simclr-temperature', default=0.1, type=float, help='the temperature term for simclr loss')
 parser.add_argument('--simclr-normalize', action='store_false', help='normalize the hidden feat vectors in simclr')
 parser.add_argument('--simclr-batch-size', default=1024, type=int,
                     help='mini-batch size for simclr (default: 1024)')
+parser.add_argument('--simclr-arch', default='resnet', type=str, choices=['lenet', 'resnet'],
+                    help='which encoder architecture to use for simclr')
 parser.add_argument('--weighted', action='store_true', help='to use weighted loss or not')
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
 parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100'],
@@ -103,7 +105,7 @@ parser.add_argument('--seed', default=9999, type=int, choices=[6666, 9999, 2323,
 parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
-parser.add_argument('--run_batch', action='store_false', help='run all methods in batch mode')
+parser.add_argument('--run_batch', action='store_true', help='run all methods in batch mode')
 
 parser.set_defaults(augment=True)
 

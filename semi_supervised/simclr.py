@@ -1,7 +1,7 @@
 from data.cifar10_dataset import Cifar10Dataset
 from data.matek_dataset import MatekDataset
 from data.cifar100_dataset import Cifar100Dataset
-from model.lenet_simclr import LenetSimCLR
+from model.simclr_arch import SimCLRArch
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
     stratified_random_sampling, postprocess_indices, store_logs, NTXent
 import os
@@ -30,9 +30,9 @@ class SimCLR:
         kwargs = {'num_workers': 2, 'pin_memory': False}
         train_loader = create_base_loader(self.args, base_dataset, kwargs, self.args.simclr_batch_size)
 
-        model = LenetSimCLR(num_channels=3,
-                            num_classes=dataset_class.num_classes,
-                            drop_rate=self.args.drop_rate, normalize=True)
+        model = SimCLRArch(num_channels=3,
+                           num_classes=dataset_class.num_classes,
+                           drop_rate=self.args.drop_rate, normalize=True, arch=self.args.simclr_arch)
 
         model = model.cuda()
 
@@ -180,16 +180,14 @@ class SimCLR:
 
         end = time.time()
 
-        model.train()
-
         for i, (data_x, data_y) in enumerate(train_loader):
             data_x = data_x.cuda(non_blocking=True)
             data_y = data_y.cuda(non_blocking=True)
 
-            # model.eval()
-            # with torch.no_grad():
-            h = model.forward_encoder(data_x)
-            # model.train()
+            model.eval()
+            with torch.no_grad():
+                h = model.forward_encoder(data_x)
+            model.train()
 
             output = model.forward_classifier(h)
 

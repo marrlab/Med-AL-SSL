@@ -1,5 +1,6 @@
 import torch.nn as nn
 from utils import Flatten
+import torchvision
 
 
 class Identity(nn.Module):
@@ -10,23 +11,30 @@ class Identity(nn.Module):
         return x
 
 
-class LenetSimCLR(nn.Module):
-    def __init__(self, num_channels, num_classes, drop_rate, normalize, latent_dim=128, projection_dim=128):
-        super(LenetSimCLR, self).__init__()
+class SimCLRArch(nn.Module):
+    def __init__(self, num_channels, num_classes, drop_rate,
+                 normalize, latent_dim=128, projection_dim=128,
+                 arch='lenet'):
+        super(SimCLRArch, self).__init__()
 
         self.normalize = normalize
 
-        self.encoder = nn.Sequential(
-            nn.Conv2d(num_channels, 6, 3),
-            nn.ReLU(),
-            nn.MaxPool2d(2, 2),
-            nn.Conv2d(6, 16, kernel_size=5, padding=2),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            Flatten(),
-            nn.Linear(16 * 7 * 7, latent_dim),
-            nn.ReLU(),
-        )
+        if arch == 'lenet':
+            self.encoder = nn.Sequential(
+                nn.Conv2d(num_channels, 6, 3),
+                nn.ReLU(),
+                nn.MaxPool2d(2, 2),
+                nn.Conv2d(6, 16, kernel_size=5, padding=2),
+                nn.ReLU(),
+                nn.MaxPool2d(2),
+                Flatten(),
+                nn.Linear(16 * 7 * 7, latent_dim),
+                nn.ReLU(),
+            )
+        else:
+            self.encoder = torchvision.models.resnet18()
+            latent_dim = self.encoder.fc.in_features
+            self.encoder.fc = Identity()
 
         self.projector = nn.Sequential(
             nn.Linear(latent_dim, latent_dim, bias=False),
