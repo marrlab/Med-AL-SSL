@@ -8,6 +8,7 @@ from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import classification_report
 import json
 from datetime import datetime
+import torchvision
 
 
 def save_checkpoint(args, state, is_best, filename='checkpoint.pth.tar', best_model_filename='model_best.pth.tar'):
@@ -86,8 +87,8 @@ def create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset, label
     return labeled_loader, unlabeled_loader, val_loader
 
 
-def create_base_loader(args, base_dataset, kwargs, batch_size):
-    return DataLoader(dataset=base_dataset, batch_size=batch_size, shuffle=True, **kwargs)
+def create_base_loader(base_dataset, kwargs, batch_size):
+    return DataLoader(dataset=base_dataset, batch_size=batch_size, drop_last=True, shuffle=True, **kwargs)
 
 
 def stratified_random_sampling(unlabeled_indices, number):
@@ -127,47 +128,43 @@ import torch.nn as nn
 
 
 class NTXent(nn.Module):
-    def __init__(self, temperature, device):
+    def __init__(self, batch_size, temperature, device):
         super(NTXent, self).__init__()
         self.temperature = temperature
         self.device = device
         self.criterion = nn.CrossEntropyLoss(reduction="sum")
         self.similarity_f = nn.CosineSimilarity(dim=2)
+        self.batch_size = batch_size
+        self.mask = self.mask_correlated_samples()
 
-    @staticmethod
-    def mask_correlated_samples(batch_size):
+    def mask_correlated_samples(self):
         # noinspection PyTypeChecker
-        mask = torch.ones((batch_size * 2, batch_size * 2), dtype=bool)
+        mask = torch.ones((self.batch_size * 2, self.batch_size * 2), dtype=bool)
         mask = mask.fill_diagonal_(0)
-        for i in range(batch_size):
-            mask[i, batch_size + i] = 0
-            mask[batch_size + i, i] = 0
+        for i in range(self.batch_size):
+            mask[i, self.batch_size + i] = 0
+            mask[self.batch_size + i, i] = 0
         return mask
 
-    def forward(self, z_i, z_j, in_size):
+    def forward(self, z_i, z_j):
         p1 = torch.cat((z_i, z_j), dim=0)
         sim = self.similarity_f(p1.unsqueeze(1), p1.unsqueeze(0)) / self.temperature
 
-        mask = self.mask_correlated_samples(in_size)
-
-        sim_i_j = torch.diag(sim, in_size)
-        sim_j_i = torch.diag(sim, -in_size)
+        sim_i_j = torch.diag(sim, self.batch_size)
+        sim_j_i = torch.diag(sim, -self.batch_size)
 
         positive_samples = torch.cat((sim_i_j, sim_j_i), dim=0).reshape(
-            in_size * 2, 1
+            self.batch_size * 2, 1
         )
 
-        negative_samples = sim[mask].reshape(in_size * 2, -1)
+        negative_samples = sim[self.mask].reshape(self.batch_size * 2, -1)
 
-        labels = torch.zeros(in_size * 2).to(self.device).long()
+        labels = torch.zeros(self.batch_size * 2).to(self.device).long()
         logits = torch.cat((positive_samples, negative_samples), dim=1)
         loss = self.criterion(logits, labels)
-        loss /= 2 * in_size
+        loss /= 2 * self.batch_size
 
         return loss
-
-
-import torchvision
 
 
 class TransformsSimCLR:
@@ -189,7 +186,7 @@ class TransformsSimCLR:
         self.test_transform = torchvision.transforms.Compose(
             [
                 torchvision.transforms.Resize(size=(size, size)),
-                torchvision.transforms.ToTensor()
+                torchvision.transforms.ToTensor(),
             ]
         )
 

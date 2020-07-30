@@ -29,7 +29,7 @@ class AutoEncoder:
         base_dataset = dataset_class.get_base_dataset_autoencoder()
 
         kwargs = {'num_workers': 2, 'pin_memory': False}
-        train_loader = create_base_loader(self.args, base_dataset, kwargs, self.args.batch_size)
+        train_loader = create_base_loader(base_dataset, kwargs, self.args.batch_size)
 
         model = LenetAutoencoder(num_channels=3, num_classes=dataset_class.num_classes, drop_rate=self.args.drop_rate)
 
@@ -115,7 +115,7 @@ class AutoEncoder:
         else:
             criterion = nn.CrossEntropyLoss().cuda()
 
-        optimizer = torch.optim.Adam(model.parameters())
+        optimizer = torch.optim.Adam(model.parameters(), weight_decay=self.args.weight_decay)
 
         acc_ratio = {}
         best_acc1 = 0

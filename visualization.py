@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.style as style
 
 
-def plot_acc_dataprop(prop, acc, methods):
+def plot_acc_dataprop(prop, acc, methods, prop_supervised, acc_supervised, methods_supervised):
     """
     plot the accuracy vs data proportion being used, graph
     credits to: Alex Olteanu (https://www.dataquest.io/blog/making-538-plots/) for the plot style
@@ -11,26 +11,41 @@ def plot_acc_dataprop(prop, acc, methods):
     plt.figure(figsize=(14, 10))
     style.use('fivethirtyeight')
 
+    lenet = ['Margin Sampling', 'Least Confidence', 'Ratio Sampling', 'Entropy Based', 'Density Weighted',
+             'MC dropout (BALD)', 'Random Sampling', 'Pseudo Labeling', 'Auto Encoder']
+
+    resnet = ['SimCLR']
+
     colors = [[0, 0, 0, 1], [230 / 255, 159 / 255, 0, 1], [86 / 255, 180 / 255, 233 / 255, 1],
               [0, 158 / 255, 115 / 255, 1], [213 / 255, 94 / 255, 0, 1], [0, 114 / 255, 178 / 255, 1],
-              [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1], [211 / 255, 95 / 255, 183 / 255, 1]]
+              [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1], [211 / 255, 95 / 255, 183 / 255, 1],
+              [238 / 255, 136 / 255, 102 / 255, 1]]
+    color_grey = [0 / 255, 0 / 255, 0 / 255, 1]
 
     for i, j in enumerate(range(1, len(acc), 3)):
-        # plt.plot(prop[i], acc[j-1], linestyle='dashed', color=colors[i % len(colors)], linewidth=2, alpha=0.7)
-        plt.plot(prop[i], acc[j], color=colors[i % len(colors)], label=methods[i], linewidth=4)
-        # plt.plot(prop[i], acc[j+1], linestyle='dashed', color=colors[i % len(colors)], linewidth=2, alpha=0.7)
-        plt.fill_between(prop[i], acc[j-1], acc[j+1], color=colors[i % len(colors)], alpha=0.05)
+        linestyle = '-' if methods[i] in resnet else '-'
+        plt.plot(prop[i], acc[j], color=colors[i % len(colors)], label=methods[i], linewidth=4, linestyle=linestyle)
+        plt.fill_between(prop[i], acc[j - 1], acc[j + 1], color=colors[i % len(colors)], alpha=0.05)
+
+    for i, j in enumerate(range(1, len(acc_supervised), 3)):
+        plt.plot(prop_supervised[i], acc_supervised[j], color=color_grey, linewidth=4, linestyle=':', alpha=0.5)
+        plt.fill_between(prop_supervised[i], acc_supervised[j - 1], acc_supervised[j + 1], color=color_grey, alpha=0.05)
 
     plt.title("A comparison of active and semi-supervised learning on Cifar-10",
               fontsize=15, weight='bold', alpha=.75)
     plt.xlabel("Labeled percentage of dataset (%)", fontsize=15, weight='bold', alpha=.75)
     plt.ylabel("Top-1 Accuracy (%)", fontsize=15, weight='bold', alpha=.75)
+    plt.text(x=0.1, y=89.5, s='Resnet Fully Supervised', color=color_grey, weight='bold', rotation=0,
+             backgroundcolor='#f0f0f0')
+    plt.text(x=0.1, y=70, s='Lenet Fully Supervised', color=color_grey, weight='bold', rotation=0,
+             backgroundcolor='#f0f0f0')
     plt.legend(loc='lower right')
     plt.show()
 
 
 if __name__ == "__main__":
     plot_acc_dataprop(prop=[
+        [0.01, 0.06, 0.11, 0.16, 0.21, 0.26, 0.31, 0.36, 0.41, 0.46, 0.51, 0.56, 0.61, 0.66],
         [0.01, 0.06, 0.11, 0.16, 0.21, 0.26, 0.31, 0.36, 0.41, 0.46, 0.51, 0.56, 0.61, 0.66],
         [0.01, 0.06, 0.11, 0.16, 0.21, 0.26, 0.31, 0.36, 0.41, 0.46, 0.51, 0.56, 0.61, 0.66],
         [0.01, 0.06, 0.11, 0.16, 0.21, 0.26, 0.31, 0.36, 0.41, 0.46, 0.51, 0.56, 0.61, 0.66],
@@ -76,6 +91,10 @@ if __name__ == "__main__":
         [24.62, 40.06, 48.15, 53.27, 58.09, 61.36, 64.51, 66.36, 67.81, 68.9, 69.81, 70.66, 71.32, 72.07],
         [26.4, 41.66, 49.54, 54.64, 59.02, 62.17, 65.1, 66.91, 68.34, 69.6, 70.46, 71.19, 71.82, 72.38],
         [28.18, 43.26, 50.93, 56.01, 59.95, 62.98, 65.69, 67.46, 68.87, 70.3, 71.11, 71.72, 72.32, 72.69],
+
+        [54.33, 77.38, 80.16, 81.1, 81.79, 82.37, 82.88, 83.13, 83.45, 83.69, 83.75, 83.86, 83.99, 84.11],
+        [54.7, 77.6, 80.36, 81.34, 82.0, 82.58, 82.95, 83.26, 83.57, 83.74, 83.82, 83.94, 84.1, 84.23],
+        [55.07, 77.82, 80.56, 81.58, 82.21, 82.79, 83.02, 83.39, 83.69, 83.79, 83.89, 84.02, 84.21, 84.35],
     ], methods=[
         'Margin Sampling',
         'Least Confidence',
@@ -86,8 +105,23 @@ if __name__ == "__main__":
         'Random Sampling',
         'Pseudo Labeling',
         'Auto Encoder',
-    ])
+        'SimCLR (Resnet18)'
+    ], prop_supervised=[
+        [0.01, 0.06, 0.11, 0.16, 0.21, 0.26, 0.31, 0.36, 0.41, 0.46, 0.51, 0.56, 0.61, 0.66],
+        [0.01, 0.06, 0.11, 0.16, 0.21, 0.26, 0.31, 0.36, 0.41, 0.46, 0.51, 0.56, 0.61, 0.66],
+    ], acc_supervised=[
+        [75.36, 75.36, 75.36, 75.36, 75.36, 75.36, 75.36, 75.36, 75.36, 75.36, 75.36, 75.36, 75.36, 75.36],
+        [74.58, 74.58, 74.58, 74.58, 74.58, 74.58, 74.58, 74.58, 74.58, 74.58, 74.58, 74.58, 74.58, 74.58],
+        [72.25, 72.25, 72.25, 72.25, 72.25, 72.25, 72.25, 72.25, 72.25, 72.25, 72.25, 72.25, 72.25, 72.25],
 
+        [94.52, 94.52, 94.52, 94.52, 94.52, 94.52, 94.52, 94.52, 94.52, 94.52, 94.52, 94.52, 94.52, 94.52],
+        [93.24, 93.24, 93.24, 93.24, 93.24, 93.24, 93.24, 93.24, 93.24, 93.24, 93.24, 93.24, 93.24, 93.24],
+        [91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63],
+    ], methods_supervised=[
+        'Lenet Supervised',
+        'Resnet Supervised',
+    ]
+    )
 
 '''
 Adam Optimizer results:
@@ -226,7 +260,6 @@ prop=[
         [30.63, 40.62, 48.69, 53.83, 58.05, 61.87, 64.83, 67.06, 68.97, 70.38, 71.63, 72.31, 73.34, 73.84],
         [32.1, 42.38, 49.73, 54.59, 58.73, 62.15, 65.06, 67.46, 69.25, 70.55, 71.74, 72.55, 73.52, 74.12],
 '''
-
 
 '''
 Adam w/ augmentations:

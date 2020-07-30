@@ -19,9 +19,11 @@
       <w>fivethirtyeight</w>
       <w>komodakis</w>
       <w>lenet</w>
+      <w>linestyle</w>
       <w>logits</w>
       <w>matek</w>
       <w>maxk</w>
+      <w>maxpool</w>
       <w>nblock</w>
       <w>nblocks</w>
       <w>nesterov</w>
@@ -39,6 +41,7 @@
       <w>softmax</w>
       <w>topk</w>
       <w>torchscript</w>
+      <w>torchvision</w>
       <w>warmup</w>
       <w>wideresnet</w>
       <w>xent</w>

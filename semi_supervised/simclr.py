@@ -30,12 +30,13 @@ class SimCLR:
     def train(self):
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,
                                                          labeled_ratio=self.args.labeled_ratio_start,
-                                                         add_labeled_ratio=self.args.add_labeled_ratio)
+                                                         add_labeled_ratio=self.args.add_labeled_ratio,
+                                                         advanced_transforms=False)
 
         base_dataset = dataset_class.get_base_dataset_simclr()
 
-        kwargs = {'num_workers': 2, 'pin_memory': False}
-        train_loader = create_base_loader(self.args, base_dataset, kwargs, self.args.simclr_batch_size)
+        kwargs = {'num_workers': 16, 'pin_memory': False}
+        train_loader = create_base_loader(base_dataset, kwargs, self.args.simclr_batch_size)
 
         model = SimCLRArch(num_channels=3,
                            num_classes=dataset_class.num_classes,
@@ -56,7 +57,7 @@ class SimCLR:
             else:
                 print("=> no checkpoint found at '{}'".format(file))
 
-        criterion = NTXent(self.args.simclr_temperature, torch.device("cuda"))
+        criterion = NTXent(self.args.simclr_batch_size, self.args.simclr_temperature, torch.device("cuda"))
 
         scheduler = None
 
@@ -82,14 +83,14 @@ class SimCLR:
                 data_x_i = data_x_i.cuda(non_blocking=True)
                 data_x_j = data_x_j.cuda(non_blocking=True)
 
+                optimizer.zero_grad()
                 h_i, z_i = model(data_x_i)
                 h_j, z_j = model(data_x_j)
 
-                loss = criterion(z_i, z_j, data_x_i.size(0))
+                loss = criterion(z_i, z_j)
 
                 losses.update(loss.data.item(), data_x_i.size(0))
 
-                optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
 
@@ -120,7 +121,8 @@ class SimCLR:
     def train_validate_classifier(self):
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,
                                                          labeled_ratio=self.args.labeled_ratio_start,
-                                                         add_labeled_ratio=self.args.add_labeled_ratio)
+                                                         add_labeled_ratio=self.args.add_labeled_ratio,
+                                                         advanced_transforms=False)
 
         labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_class.get_dataset()
@@ -140,7 +142,7 @@ class SimCLR:
         else:
             criterion = nn.CrossEntropyLoss().cuda()
 
-        optimizer = torch.optim.Adam(model.parameters())
+        optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
 
         acc_ratio = {}
         best_acc1 = 0

@@ -5,12 +5,11 @@ from copy import deepcopy
 
 import random
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '5'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import torch
 import torch.cuda
 import torch.nn as nn
-import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.optim
 import torch.utils.data
@@ -84,14 +83,14 @@ parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/'
 parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
-parser.add_argument('--semi-supervised-method', default='simclr', type=str,
+parser.add_argument('--semi-supervised-method', default='auto_encoder', type=str,
                     choices=['pseudo_labeling', 'auto_encoder', 'simclr'],
                     help='the semi supervised method to use')
 parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
 parser.add_argument('--simclr-temperature', default=0.1, type=float, help='the temperature term for simclr loss')
 parser.add_argument('--simclr-normalize', action='store_false', help='normalize the hidden feat vectors in simclr')
-parser.add_argument('--simclr-batch-size', default=1024, type=int,
+parser.add_argument('--simclr-batch-size', default=2048, type=int,
                     help='mini-batch size for simclr (default: 1024)')
 parser.add_argument('--simclr-arch', default='resnet', type=str, choices=['lenet', 'resnet'],
                     help='which encoder architecture to use for simclr')
@@ -201,15 +200,6 @@ def main(args):
         criterion = nn.CrossEntropyLoss().cuda()
 
     optimizer = torch.optim.Adam(model.parameters(), weight_decay=args.weight_decay)
-    # optimizer = torch.optim.SGD(model.parameters(), args.lr,
-    #                            momentum=args.momentum, nesterov=args.nesterov,
-    #                            weight_decay=args.weight_decay)
-
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.75,
-    #                                                       patience=10, verbose=True, cooldown=30, threshold=0.01,
-    #                                                       min_lr=0.0001)
-    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=75, gamma=0.5)
-    # scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 10, 2)
 
     last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start

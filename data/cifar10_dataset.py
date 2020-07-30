@@ -7,30 +7,36 @@ from utils import TransformsSimCLR
 
 
 class Cifar10Dataset:
-    def __init__(self, root, labeled_ratio, add_labeled_ratio):
+    def __init__(self, root, labeled_ratio, add_labeled_ratio, advanced_transforms=True):
         self.root = root
         self.labeled_ratio = labeled_ratio
         self.cifar_mean = (0.4914, 0.4822, 0.4465)
         self.cifar_std = (0.2023, 0.1994, 0.2010)
+
         self.input_size = 32
-        self.transform_train = transforms.Compose([
-            transforms.RandomCrop(self.input_size, padding=4),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomAffine(degrees=0, translate=(0.125, 0.125)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
-        ])
-        self.transform_test = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
-        ])
+
+        if advanced_transforms:
+            self.transform_train = transforms.Compose([
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomAffine(degrees=0, translate=(0.125, 0.125)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
+            ])
+            self.transform_test = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
+            ])
+        else:
+            self.transform_train = transforms.Compose([
+                transforms.ToTensor(),
+            ])
+            self.transform_test = transforms.Compose([
+                transforms.ToTensor(),
+            ])
+
         self.transform_autoencoder = transforms.Compose([
-            # transforms.RandomVerticalFlip(),
-            # transforms.RandomHorizontalFlip(),
-            # transforms.RandomGrayscale(),
-            # transforms.ColorJitter(brightness=(0.1, 1.5), contrast=(0.75, 1.5), saturation=(0.5, 1.5)),
-            transforms.ToTensor(),
-         ])
+                transforms.ToTensor(),
+            ])
         self.transform_simclr = TransformsSimCLR(size=32)
         self.num_classes = 10
         self.add_labeled_ratio = add_labeled_ratio
@@ -50,7 +56,7 @@ class Cifar10Dataset:
             stratify=None)
 
         test_dataset = torchvision.datasets.CIFAR10(root=self.root, train=False,
-                                                    download=True, transform=self.transform_test)
+                                                    download=True, transform=self.transform_simclr.test_transform)
 
         targets = np.array(base_dataset.targets)[labeled_indices]
         labeled_indices = labeled_indices[~np.isin(targets, self.remove_classes)]
