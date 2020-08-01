@@ -17,10 +17,13 @@ class Cifar10Dataset:
 
         if advanced_transforms:
             self.transform_train = transforms.Compose([
+                transforms.RandomCrop(self.input_size, padding=4),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomAffine(degrees=0, translate=(0.125, 0.125)),
+                transforms.RandomGrayscale(),
+                transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
+                transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std),
             ])
             self.transform_test = transforms.Compose([
                 transforms.ToTensor(),

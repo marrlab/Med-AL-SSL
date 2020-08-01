@@ -19,6 +19,7 @@ import numpy as np
 from model.wideresnet import WideResNet
 from model.densenet import densenet121
 from model.lenet import LeNet
+from model.resnet import resnet50
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.cifar100_dataset import Cifar100Dataset
@@ -64,13 +65,13 @@ parser.add_argument('--add-labeled-epochs', default=30, type=int,
                     help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
 parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
                     help='what percentage of labeled data to be added')
-parser.add_argument('--labeled-ratio-start', default=0.01, type=int,
+parser.add_argument('--labeled-ratio-start', default=0.1, type=int,
                     help='what percentage of labeled data to start the training with')
 parser.add_argument('--labeled-ratio-stop', default=0.7, type=int,
                     help='what percentage of labeled data to stop the training process at')
 parser.add_argument('--labeled-warmup_epochs', default=80, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
-parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet'],
+parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
@@ -107,7 +108,7 @@ parser.add_argument('--seed', default=9999, type=int, choices=[6666, 9999, 2323,
 parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
-parser.add_argument('--run_batch', action='store_true', help='run all methods in batch mode')
+parser.add_argument('--run_batch', action='store_false', help='run all methods in batch mode')
 
 parser.set_defaults(augment=True)
 
@@ -143,7 +144,8 @@ def main(args):
 
     dataset_class = datasets[args.dataset](root=args.root,
                                            labeled_ratio=args.labeled_ratio_start,
-                                           add_labeled_ratio=args.add_labeled_ratio)
+                                           add_labeled_ratio=args.add_labeled_ratio,
+                                           advanced_transforms=True)
 
     labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = dataset_class.get_dataset()
 
@@ -168,6 +170,8 @@ def main(args):
         model = densenet121(num_classes=dataset_class.num_classes)
     elif args.arch == 'lenet':
         model = LeNet(num_channels=3, num_classes=dataset_class.num_classes, droprate=args.drop_rate)
+    elif args.arch == 'resnet':
+        model = resnet50()
     else:
         raise NotImplementedError
 
@@ -199,7 +203,9 @@ def main(args):
     else:
         criterion = nn.CrossEntropyLoss().cuda()
 
-    optimizer = torch.optim.Adam(model.parameters(), weight_decay=args.weight_decay)
+    optimizer = torch.optim.Adam(model.parameters(), weight_decay=5e-4)
+    # optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
+    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.75)
 
     last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start
@@ -228,7 +234,6 @@ def main(args):
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args)
         acc, acc5, (prec, recall, f1, _) = validate(val_loader, model, criterion, last_best_epochs, args)
-        # scheduler.step(metrics=acc, epoch=epoch)
         # scheduler.step(epoch=epoch)
 
         is_best = acc > best_acc1

@@ -24,22 +24,22 @@ def plot_acc_dataprop(prop, acc, methods, prop_supervised, acc_supervised, metho
 
     for i, j in enumerate(range(1, len(acc), 3)):
         linestyle = '-' if methods[i] in resnet else '-'
-        plt.plot(prop[i], acc[j], color=colors[i % len(colors)], label=methods[i], linewidth=4, linestyle=linestyle)
-        plt.fill_between(prop[i], acc[j - 1], acc[j + 1], color=colors[i % len(colors)], alpha=0.05)
+        plt.plot(prop[i], acc[j], color=colors[i % len(colors)], label=methods[i], linewidth=2, linestyle=linestyle)
+        # plt.fill_between(prop[i], acc[j - 1], acc[j + 1], color=colors[i % len(colors)], alpha=0.05)
 
     for i, j in enumerate(range(1, len(acc_supervised), 3)):
-        plt.plot(prop_supervised[i], acc_supervised[j], color=color_grey, linewidth=4, linestyle=':', alpha=0.5)
-        plt.fill_between(prop_supervised[i], acc_supervised[j - 1], acc_supervised[j + 1], color=color_grey, alpha=0.05)
+        plt.plot(prop_supervised[i], acc_supervised[j], color=color_grey, linewidth=2, linestyle=':', alpha=0.5)
+        # plt.fill_between(prop_supervised[i], acc_supervised[j - 1], acc_supervised[j + 1], color=color_grey, alpha=0.05)
 
-    plt.title("A comparison of active and semi-supervised learning on Cifar-10",
-              fontsize=15, weight='bold', alpha=.75)
-    plt.xlabel("Labeled percentage of dataset (%)", fontsize=15, weight='bold', alpha=.75)
-    plt.ylabel("Top-1 Accuracy (%)", fontsize=15, weight='bold', alpha=.75)
-    plt.text(x=0.1, y=89.5, s='Resnet Fully Supervised', color=color_grey, weight='bold', rotation=0,
+    plt.title("Proof of concept - AL on Cifar-10",
+              fontsize=20, weight='bold', alpha=.75)
+    plt.xlabel("Labeled ratio of the dataset", fontsize=20, weight='bold', alpha=.75)
+    plt.ylabel("Top-1 Accuracy (%)", fontsize=20, weight='bold', alpha=.75)
+    plt.text(x=0.1, y=89.5, s='Resnet Fully Supervised', color=color_grey, fontsize=18, rotation=0,
              backgroundcolor='#f0f0f0')
-    plt.text(x=0.1, y=70, s='Lenet Fully Supervised', color=color_grey, weight='bold', rotation=0,
+    plt.text(x=0.1, y=70, s='Lenet Fully Supervised', color=color_grey, fontsize=18, rotation=0,
              backgroundcolor='#f0f0f0')
-    plt.legend(loc='lower right')
+    plt.legend(loc='lower right', fontsize=18)
     plt.show()
 
 
@@ -56,6 +56,10 @@ if __name__ == "__main__":
         [0.01, 0.06, 0.11, 0.16, 0.21, 0.26, 0.31, 0.36, 0.41, 0.46, 0.51, 0.56, 0.61, 0.66],
         [0.01, 0.06, 0.11, 0.16, 0.21, 0.26, 0.31, 0.36, 0.41, 0.46, 0.51, 0.56, 0.61, 0.66],
     ], acc=[
+        [29.16, 43.0, 50.33, 54.95, 58.08, 59.94, 62.42, 64.08, 65.49, 66.68, 67.59, 68.44, 69.33, 69.94],
+        [30.82, 44.17, 51.53, 56.01, 59.3, 61.68, 63.93, 65.46, 66.73, 67.76, 68.64, 69.39, 70.03, 70.67],
+        [32.48, 45.34, 52.73, 57.07, 60.52, 63.42, 65.44, 66.84, 67.97, 68.84, 69.69, 70.34, 70.73, 71.4],
+
         [29.16, 42.91, 51.23, 55.76, 59.17, 61.46, 63.78, 65.56, 66.8, 68.18, 69.17, 69.81, 70.31, 70.79],
         [30.82, 44.57, 51.92, 56.37, 60.03, 62.42, 64.62, 66.27, 67.3, 68.52, 69.34, 70.09, 70.71, 71.11],
         [32.48, 46.23, 52.61, 56.98, 60.89, 63.38, 65.46, 66.98, 67.8, 68.86, 69.51, 70.37, 71.11, 71.43],
@@ -80,10 +84,6 @@ if __name__ == "__main__":
         [30.82, 44.36, 52.1, 56.57, 59.86, 62.14, 64.23, 65.59, 66.98, 67.94, 68.84, 69.45, 70.1, 70.57],
         [32.48, 45.36, 52.79, 57.5, 61.12, 63.4, 65.41, 66.77, 68.1, 69.08, 69.89, 70.21, 71.11, 71.44],
 
-        [29.16, 43.0, 50.33, 54.95, 58.08, 59.94, 62.42, 64.08, 65.49, 66.68, 67.59, 68.44, 69.33, 69.94],
-        [30.82, 44.17, 51.53, 56.01, 59.3, 61.68, 63.93, 65.46, 66.73, 67.76, 68.64, 69.39, 70.03, 70.67],
-        [32.48, 45.34, 52.73, 57.07, 60.52, 63.42, 65.44, 66.84, 67.97, 68.84, 69.69, 70.34, 70.73, 71.4],
-
         [29.16, 43.04, 50.91, 55.26, 57.9, 60.73, 62.89, 64.38, 65.61, 66.55, 67.62, 68.46, 69.36, 70.01],
         [30.82, 44.42, 51.76, 56.42, 59.55, 62.28, 64.24, 65.7, 66.99, 67.84, 68.87, 69.55, 70.37, 70.93],
         [32.48, 45.8, 52.61, 57.58, 61.2, 63.83, 65.59, 67.02, 68.37, 69.13, 70.12, 70.64, 71.38, 71.85],
@@ -96,13 +96,13 @@ if __name__ == "__main__":
         [54.7, 77.6, 80.36, 81.34, 82.0, 82.58, 82.95, 83.26, 83.57, 83.74, 83.82, 83.94, 84.1, 84.23],
         [55.07, 77.82, 80.56, 81.58, 82.21, 82.79, 83.02, 83.39, 83.69, 83.79, 83.89, 84.02, 84.21, 84.35],
     ], methods=[
+        'Random Sampling',
         'Margin Sampling',
         'Least Confidence',
         'Ratio Sampling',
         'Entropy Based',
         'Density Weighted',
         'MC dropout (BALD)',
-        'Random Sampling',
         'Pseudo Labeling',
         'Auto Encoder',
         'SimCLR (Resnet18)'
