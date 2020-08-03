@@ -100,7 +100,7 @@ parser.add_argument('--simclr-optimizer', default='adam', type=str, choices=['ad
                     help='which optimizer to use for simclr')
 parser.add_argument('--weighted', action='store_true', help='to use weighted loss or not')
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
-parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100'],
+parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100'],
                     help='the dataset to train on')
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
@@ -242,7 +242,7 @@ def main(args):
 
         if epoch > args.labeled_warmup_epochs and epoch % args.add_labeled_epochs == 0:
             acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
-                             [best_acc1, best_acc5, best_prec1, best_recall1]})
+                             [acc, acc5, prec, recall, f1]})
             if args.weak_supervision_strategy == 'active_learning':
                 samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
                                                                   train_loader,
