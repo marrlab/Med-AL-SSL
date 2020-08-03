@@ -4,8 +4,7 @@ import shutil
 from torch.utils.data import DataLoader
 from numpy.random import default_rng
 import numpy as np
-from sklearn.metrics import precision_recall_fscore_support
-from sklearn.metrics import classification_report
+from sklearn.metrics import precision_recall_fscore_support, classification_report, confusion_matrix
 import json
 from datetime import datetime
 import torchvision
@@ -122,6 +121,9 @@ class Metrics:
     def get_report(self):
         return classification_report(self.targets, self.outputs, zero_division=1)
 
+    def get_confusion_matrix(self):
+        return confusion_matrix(self.targets, self.outputs)
+
 
 import torch
 import torch.nn as nn
@@ -214,6 +216,7 @@ def store_logs(args, acc_ratio):
     file.update({'seed': args.seed})
     file.update({'dataset': args.dataset})
     file.update({'metrics': acc_ratio})
+    file.update({'args': args})
 
     with open(os.path.join(args.log_path, filename), 'w') as fp:
         json.dump(file, fp, indent=4, sort_keys=True)

@@ -98,7 +98,7 @@ parser.add_argument('--simclr-arch', default='resnet', type=str, choices=['lenet
 parser.add_argument('--simclr-base-lr', default=0.25, type=float, help='base learning rate, rescaled by batch_size/256')
 parser.add_argument('--simclr-optimizer', default='adam', type=str, choices=['adam', 'lars'],
                     help='which optimizer to use for simclr')
-parser.add_argument('--weighted', action='store_true', help='to use weighted loss or not')
+parser.add_argument('--weighted', action='store_false', help='to use weighted loss or not')
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
 parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100'],
                     help='the dataset to train on')
@@ -197,9 +197,10 @@ def main(args):
 
     if args.weighted:
         classes_targets = unlabeled_dataset.targets[unlabeled_indices]
-        classes_samples = [torch.sum(classes_targets == i) for i in range(dataset_class.num_classes)]
+        classes_samples = [np.sum(classes_targets == i) for i in range(dataset_class.num_classes)]
         classes_weights = np.log(len(unlabeled_dataset)) - np.log(classes_samples)
-        criterion = nn.CrossEntropyLoss(weight=classes_weights).cuda()
+        # noinspection PyArgumentList
+        criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(classes_weights).cuda())
     else:
         criterion = nn.CrossEntropyLoss().cuda()
 
@@ -233,7 +234,7 @@ def main(args):
 
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args)
-        acc, acc5, (prec, recall, f1, _) = validate(val_loader, model, criterion, last_best_epochs, args)
+        acc, acc5, (prec, recall, f1, _), confusion_mat = validate(val_loader, model, criterion, last_best_epochs, args)
         # scheduler.step(epoch=epoch)
 
         is_best = acc > best_acc1
@@ -242,7 +243,7 @@ def main(args):
 
         if epoch > args.labeled_warmup_epochs and epoch % args.add_labeled_epochs == 0:
             acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
-                             [acc, acc5, prec, recall, f1]})
+                             [acc, acc5, prec, recall, f1, confusion_mat]})
             if args.weak_supervision_strategy == 'active_learning':
                 samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
                                                                   train_loader,
@@ -402,10 +403,11 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
                           last_best_epoch=last_best_epochs))
 
     (prec, recall, f1, _) = metrics.get_metrics()
+    confusion_matrix = metrics.get_confusion_matrix()
     print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t'
           .format(prec, recall, top1=top1, top5=top5))
 
-    return top1.avg, top5.avg, (prec, recall, f1, _)
+    return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix
 
 
 def evaluate(val_loader, model):
