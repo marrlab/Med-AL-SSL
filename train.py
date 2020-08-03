@@ -19,7 +19,7 @@ import numpy as np
 from model.wideresnet import WideResNet
 from model.densenet import densenet121
 from model.lenet import LeNet
-from model.resnet import resnet50
+from model.resnet import resnet18
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.cifar100_dataset import Cifar100Dataset
@@ -171,7 +171,7 @@ def main(args):
     elif args.arch == 'lenet':
         model = LeNet(num_channels=3, num_classes=dataset_class.num_classes, droprate=args.drop_rate)
     elif args.arch == 'resnet':
-        model = resnet50()
+        model = resnet18(pretrained=True)
     else:
         raise NotImplementedError
 
@@ -203,7 +203,7 @@ def main(args):
     else:
         criterion = nn.CrossEntropyLoss().cuda()
 
-    optimizer = torch.optim.Adam(model.parameters(), weight_decay=5e-4)
+    optimizer = torch.optim.Adam(model.parameters())
     # optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
     # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.75)
 
@@ -433,9 +433,9 @@ if __name__ == '__main__':
             ('active_learning', 'density_weighted', 'pseudo_labeling'),
             ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
             ('random_sampling', 'least_confidence', 'pseudo_labeling'),
-            ('semi_supervised', 'least_confidence', 'auto_encoder'),
             ('semi_supervised', 'least_confidence', 'simclr'),
-            ('active_learning', 'mc_dropout', 'pseudo_labeling')
+            ('active_learning', 'mc_dropout', 'pseudo_labeling'),
+            ('semi_supervised', 'least_confidence', 'auto_encoder'),
         ]
 
         for (m, u, s) in states:

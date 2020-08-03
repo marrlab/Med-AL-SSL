@@ -7,7 +7,7 @@ from utils import TransformsSimCLR
 
 
 class Cifar10Dataset:
-    def __init__(self, root, labeled_ratio, add_labeled_ratio, advanced_transforms=True):
+    def __init__(self, root, labeled_ratio, add_labeled_ratio, advanced_transforms=True, remove_classes=False):
         self.root = root
         self.labeled_ratio = labeled_ratio
         self.cifar_mean = (0.4914, 0.4822, 0.4465)
@@ -22,6 +22,8 @@ class Cifar10Dataset:
                 transforms.RandomAffine(degrees=0, translate=(0.125, 0.125)),
                 transforms.RandomGrayscale(),
                 transforms.RandomVerticalFlip(),
+                transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
+                transforms.RandomRotation(10),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std),
             ])
@@ -44,7 +46,8 @@ class Cifar10Dataset:
         self.num_classes = 10
         self.add_labeled_ratio = add_labeled_ratio
         self.add_labeled_num = None
-        self.remove_classes = np.array([0, 1, 2])
+        self.remove_classes = remove_classes
+        self.classes_to_remove = np.array([0, 1, 2])
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.CIFAR10(root=self.root, train=True,
@@ -62,7 +65,9 @@ class Cifar10Dataset:
                                                     download=True, transform=self.transform_simclr.test_transform)
 
         targets = np.array(base_dataset.targets)[labeled_indices]
-        labeled_indices = labeled_indices[~np.isin(targets, self.remove_classes)]
+
+        if self.remove_classes:
+            labeled_indices = labeled_indices[~np.isin(targets, self.remove_classes)]
 
         labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=self.transform_train)
         unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_test)
