@@ -142,7 +142,7 @@ class SimCLR:
         else:
             criterion = nn.CrossEntropyLoss().cuda()
 
-        optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
+        optimizer = torch.optim.Adam(model.parameters())
 
         acc_ratio = {}
         best_acc1 = 0

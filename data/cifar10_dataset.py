@@ -17,22 +17,15 @@ class Cifar10Dataset:
 
         if advanced_transforms:
             self.transform_train = transforms.Compose([
-                # transforms.RandomCrop(self.input_size, padding=4),
-                # transforms.RandomHorizontalFlip(),
-                # transforms.RandomAffine(degrees=0, translate=(0.125, 0.125)),
-                # transforms.RandomGrayscale(),
-                # transforms.RandomVerticalFlip(),
-                # transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
-                # transforms.RandomRotation(10),
-                # transforms.ToTensor(),
-                transforms.RandomCrop(self.input_size, padding=4),
+                transforms.RandomCrop(32, padding=4),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std),
+                transforms.Normalize(self.cifar_mean, self.cifar_std),
             ])
+
             self.transform_test = transforms.Compose([
                 transforms.ToTensor(),
-                transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
+                transforms.Normalize(self.cifar_mean, self.cifar_std),
             ])
         else:
             self.transform_train = transforms.Compose([
@@ -65,7 +58,7 @@ class Cifar10Dataset:
             stratify=None)
 
         test_dataset = torchvision.datasets.CIFAR10(root=self.root, train=False,
-                                                    download=True, transform=self.transform_simclr.test_transform)
+                                                    download=True, transform=self.transform_test)
 
         targets = np.array(base_dataset.targets)[labeled_indices]
 

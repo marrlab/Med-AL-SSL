@@ -115,7 +115,7 @@ class AutoEncoder:
         else:
             criterion = nn.CrossEntropyLoss().cuda()
 
-        optimizer = torch.optim.Adam(model.parameters(), weight_decay=self.args.weight_decay)
+        optimizer = torch.optim.Adam(model.parameters())
 
         acc_ratio = {}
         best_acc1 = 0
