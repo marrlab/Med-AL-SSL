@@ -1,5 +1,4 @@
 import torch.nn as nn
-from utils import Flatten
 
 """
 Lenet implementation based on the paper: Gradient Based Learning Applied to Document Recognition
@@ -21,7 +20,7 @@ class LeNet(nn.Module):
             nn.Conv2d(6, 16, kernel_size=5, padding=2),
             nn.ReLU(),
             nn.MaxPool2d(2),
-            Flatten()
+            nn.Flatten()
         )
 
         self.classifier = nn.Sequential(

@@ -27,7 +27,6 @@ class Cifar10Dataset:
                 # transforms.ToTensor(),
                 transforms.RandomCrop(self.input_size, padding=4),
                 transforms.RandomHorizontalFlip(),
-                transforms.RandomAffine(degrees=0, translate=(0.125, 0.125)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std),
             ])

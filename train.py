@@ -16,14 +16,11 @@ import torch.utils.data
 
 import numpy as np
 
-from model.wideresnet import WideResNet
-from model.densenet import densenet121
-from model.lenet import LeNet
-from model.resnet import resnet18
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.cifar100_dataset import Cifar100Dataset
-from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, postprocess_indices
+from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, postprocess_indices, \
+    create_model_optimizer_scheduler
 from utils import stratified_random_sampling, Metrics, store_logs
 from active_learning.uncertainty_sampling import UncertaintySampling
 from active_learning.mc_dropout import UncertaintySamplingMCDropout
@@ -40,22 +37,22 @@ parser.add_argument('--simclr-train-epochs', default=100, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
-parser.add_argument('-b', '--batch-size', default=512, type=int,
-                    help='mini-batch size (default: 512)')
+parser.add_argument('-b', '--batch-size', default=128, type=int,
+                    help='mini-batch size (default: 128)')
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
                     help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
 parser.add_argument('--nesterov', default=True, type=bool, help='nesterov momentum')
-parser.add_argument('--weight-decay', '--wd', default=0.0001, type=float,
-                    help='weight decay (default: 0.0001)')
+parser.add_argument('--weight-decay', '--wd', default=5e-4, type=float,
+                    help='weight decay (default: 5e-4)')
 parser.add_argument('--print-freq', '-p', default=10, type=int,
                     help='print frequency (default: 10)')
 parser.add_argument('--layers', default=28, type=int,
                     help='total number of layers (default: 28)')
-parser.add_argument('--widen-factor', default=2, type=int,
-                    help='widen factor (default: 2)')
-parser.add_argument('--drop-rate', default=0.2, type=float,
-                    help='dropout probability (default: 0.2)')
+parser.add_argument('--widen-factor', default=10, type=int,
+                    help='widen factor (default: 10)')
+parser.add_argument('--drop-rate', default=0.3, type=float,
+                    help='dropout probability (default: 0.3)')
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentation (default: True)')
 parser.add_argument('--resume', action='store_true', help='flag to be set if an existed model is to be loaded')
@@ -65,13 +62,13 @@ parser.add_argument('--add-labeled-epochs', default=50, type=int,
                     help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
 parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
                     help='what percentage of labeled data to be added')
-parser.add_argument('--labeled-ratio-start', default=0.1, type=int,
+parser.add_argument('--labeled-ratio-start', default=0.6, type=int,
                     help='what percentage of labeled data to start the training with')
 parser.add_argument('--labeled-ratio-stop', default=0.7, type=int,
                     help='what percentage of labeled data to stop the training process at')
-parser.add_argument('--labeled-warmup_epochs', default=50, type=int,
+parser.add_argument('--labeled-warmup_epochs', default=150, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
-parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
+parser.add_argument('--arch', default='wideresnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
@@ -160,29 +157,7 @@ def main(args):
                                                   uncertainty_sampling_method=args.uncertainty_sampling_method)
     pseudo_labeler = PseudoLabeling()
 
-    if args.arch == 'wideresnet':
-        model = WideResNet(args.layers,
-                           num_classes=dataset_class.num_classes,
-                           widen_factor=args.widen_factor,
-                           drop_rate=args.drop_rate,
-                           input_size=dataset_class.input_size)
-    elif args.arch == 'densenet':
-        model = densenet121(num_classes=dataset_class.num_classes)
-    elif args.arch == 'lenet':
-        model = LeNet(num_channels=3, num_classes=dataset_class.num_classes,
-                      droprate=args.drop_rate, input_size=dataset_class.input_size)
-    elif args.arch == 'resnet':
-        model = resnet18(pretrained=False, num_classes=dataset_class.num_classes)
-    else:
-        raise NotImplementedError
-
-    print('Number of model parameters: {}'.format(
-        sum([p.data.nelement() for p in model.parameters()])))
-
-    # doc: for training on multiple GPUs.
-    # doc: Use CUDA_VISIBLE_DEVICES=0,1 to specify which GPUs to use
-    # doc: model = torch.nn.DataParallel(model).cuda()
-    model = model.cuda()
+    model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
 
     if args.resume:
         file = os.path.join(args.checkpoint_path, args.name, 'model_best.pth.tar')
@@ -204,10 +179,6 @@ def main(args):
         criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(classes_weights).cuda())
     else:
         criterion = nn.CrossEntropyLoss().cuda()
-
-    optimizer = torch.optim.Adam(model.parameters())
-    # optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
-    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.75)
 
     last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start
@@ -234,6 +205,7 @@ def main(args):
         train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args)
         acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve = validate(val_loader, model,
                                                                                   criterion, last_best_epochs, args)
+        scheduler.step(epoch=epoch)
 
         is_best = acc > best_acc1
         last_best_epochs = 0 if is_best else last_best_epochs + 1
@@ -257,7 +229,7 @@ def main(args):
                                                                             unlabeled_indices, kwargs)
 
                 print(f'Uncertainty Sampling\t '
-                      f'Current labeled ratio: {current_labeled_ratio}\t'
+                      f'Current labeled ratio: {current_labeled_ratio + args.add_labeled_ratio}\t'
                       f'Model Reset')
             elif args.weak_supervision_strategy == 'semi_supervised':
                 samples_indices, samples_targets = pseudo_labeler.get_samples(epoch, args, best_model,
@@ -279,7 +251,7 @@ def main(args):
                                                                             unlabeled_indices, kwargs)
 
                 print(f'Pseudo labeling\t '
-                      f'Current labeled ratio: {current_labeled_ratio}\t'
+                      f'Current labeled ratio: {current_labeled_ratio + args.add_labeled_ratio}\t'
                       f'Pseudo labeled accuracy: {np.sum(pseudo_labels_acc == 1) / samples_indices.shape[0]}\t'
                       f'Model Reset')
 
@@ -294,12 +266,12 @@ def main(args):
                                                                             unlabeled_indices, kwargs)
 
                 print(f'Random Sampling\t '
-                      f'Current labeled ratio: {current_labeled_ratio}\t'
+                      f'Current labeled ratio: {current_labeled_ratio + args.add_labeled_ratio}\t'
                       f'Model Reset')
 
             current_labeled_ratio += args.add_labeled_ratio
             last_best_epochs = 0
-            model = resnet18(pretrained=False)
+            model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
 
         best_acc1 = max(acc, best_acc1)
         best_prec1 = max(prec, best_prec1)

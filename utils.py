@@ -9,6 +9,11 @@ import json
 from datetime import datetime
 import torchvision
 
+from model.densenet import densenet121
+from model.lenet import LeNet
+from model.resnet import resnet18
+from model.wideresnet import WideResNet
+
 
 def save_checkpoint(args, state, is_best, filename='checkpoint.pth.tar', best_model_filename='model_best.pth.tar'):
     directory = os.path.join(args.checkpoint_path, args.name)
@@ -201,6 +206,39 @@ class TransformsSimCLR:
 
     def __call__(self, x):
         return self.train_transform(x), self.train_transform(x)
+
+
+def create_model_optimizer_scheduler(args, dataset_class):
+    if args.arch == 'wideresnet':
+        model = WideResNet(depth=args.layers,
+                           num_classes=dataset_class.num_classes,
+                           widen_factor=args.widen_factor,
+                           drop_rate=args.drop_rate,
+                           input_size=dataset_class.input_size)
+    elif args.arch == 'densenet':
+        model = densenet121(num_classes=dataset_class.num_classes)
+    elif args.arch == 'lenet':
+        model = LeNet(num_channels=3, num_classes=dataset_class.num_classes,
+                      droprate=args.drop_rate, input_size=dataset_class.input_size)
+    elif args.arch == 'resnet':
+        model = resnet18(pretrained=False, num_classes=dataset_class.num_classes)
+    else:
+        raise NotImplementedError
+
+    print('Number of model parameters: {}'.format(
+        sum([p.data.nelement() for p in model.parameters()])))
+
+    # doc: for training on multiple GPUs.
+    # doc: Use CUDA_VISIBLE_DEVICES=0,1 to specify which GPUs to use
+    # doc: model = torch.nn.DataParallel(model).cuda()
+    model = model.cuda()
+
+    # optimizer = torch.optim.Adam(model.parameters())
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr,
+                                momentum=args.momentum, weight_decay=args.weight_decay, nesterov=args.nesterov)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.2)
+
+    return model, optimizer, scheduler
 
 
 def print_args(args):
