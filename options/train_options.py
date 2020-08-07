@@ -77,7 +77,7 @@ parser.add_argument('--seed', default=9999, type=int, choices=[6666, 9999, 2323,
 parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
-parser.add_argument('--run_batch', action='store_true', help='run all methods in batch mode')
+parser.add_argument('--run_batch', action='store_false', help='run all methods in batch mode')
 
 parser.set_defaults(augment=True)
 

@@ -336,7 +336,7 @@ def perform_sampling(args, uncertainty_sampler, pseudo_labeler, epoch, model, tr
               f'Current labeled ratio: {current_labeled_ratio + args.add_labeled_ratio}\t'
               f'Model Reset')
 
-    return train_loader, unlabeled_loader, val_loader
+    return train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices
 
 
 def print_args(args):
@@ -359,7 +359,6 @@ def store_logs(args, acc_ratio):
     file.update({'seed': args.seed})
     file.update({'dataset': args.dataset})
     file.update({'metrics': acc_ratio})
-    file.update({'args': args})
 
     with open(os.path.join(args.log_path, filename), 'w') as fp:
         json.dump(file, fp, indent=4, sort_keys=True)

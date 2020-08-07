@@ -125,15 +125,14 @@ class AutoEncoder:
                 acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
                                  [acc, acc5, prec, recall, f1, confusion_mat, roc_auc_curve]})
 
-                train_loader, unlabeled_loader, val_loader = perform_sampling(self.args, None, None,
-                                                                              epoch, model, train_loader,
-                                                                              unlabeled_loader,
-                                                                              dataset_class, labeled_indices,
-                                                                              unlabeled_indices, labeled_dataset,
-                                                                              unlabeled_dataset,
-                                                                              test_dataset, kwargs,
-                                                                              current_labeled_ratio,
-                                                                              None)
+                train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
+                    perform_sampling(self.args, None, None,
+                                     epoch, model, train_loader, unlabeled_loader,
+                                     dataset_class, labeled_indices,
+                                     unlabeled_indices, labeled_dataset,
+                                     unlabeled_dataset,
+                                     test_dataset, kwargs, current_labeled_ratio,
+                                     None)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
                 best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
