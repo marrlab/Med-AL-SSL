@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import random
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 import torch
 import torch.cuda
@@ -61,7 +61,7 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true', help='flag to be set if an existed model is to be loaded')
 parser.add_argument('--name', default='densenet-least-confidence', type=str,
                     help='name of experiment')
-parser.add_argument('--add-labeled-epochs', default=30, type=int,
+parser.add_argument('--add-labeled-epochs', default=50, type=int,
                     help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
 parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
                     help='what percentage of labeled data to be added')
@@ -69,9 +69,9 @@ parser.add_argument('--labeled-ratio-start', default=0.1, type=int,
                     help='what percentage of labeled data to start the training with')
 parser.add_argument('--labeled-ratio-stop', default=0.7, type=int,
                     help='what percentage of labeled data to stop the training process at')
-parser.add_argument('--labeled-warmup_epochs', default=80, type=int,
+parser.add_argument('--labeled-warmup_epochs', default=50, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
-parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
+parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
@@ -98,9 +98,9 @@ parser.add_argument('--simclr-arch', default='resnet', type=str, choices=['lenet
 parser.add_argument('--simclr-base-lr', default=0.25, type=float, help='base learning rate, rescaled by batch_size/256')
 parser.add_argument('--simclr-optimizer', default='adam', type=str, choices=['adam', 'lars'],
                     help='which optimizer to use for simclr')
-parser.add_argument('--weighted', action='store_false', help='to use weighted loss or not')
+parser.add_argument('--weighted', action='store_true', help='to use weighted loss or not')
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
-parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100'],
+parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100'],
                     help='the dataset to train on')
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
@@ -169,9 +169,10 @@ def main(args):
     elif args.arch == 'densenet':
         model = densenet121(num_classes=dataset_class.num_classes)
     elif args.arch == 'lenet':
-        model = LeNet(num_channels=3, num_classes=dataset_class.num_classes, droprate=args.drop_rate)
+        model = LeNet(num_channels=3, num_classes=dataset_class.num_classes,
+                      droprate=args.drop_rate, input_size=dataset_class.input_size)
     elif args.arch == 'resnet':
-        model = resnet18(pretrained=True)
+        model = resnet18(pretrained=False, num_classes=dataset_class.num_classes)
     else:
         raise NotImplementedError
 
@@ -227,15 +228,12 @@ def main(args):
     else:
         print('Starting training..')
 
-    best_acc1 = 0
-    best_acc5 = 0
-    best_prec1 = 0
-    best_recall1 = 0
+    best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
 
     for epoch in range(args.start_epoch, args.epochs):
         train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args)
-        acc, acc5, (prec, recall, f1, _), confusion_mat = validate(val_loader, model, criterion, last_best_epochs, args)
-        # scheduler.step(epoch=epoch)
+        acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve = validate(val_loader, model,
+                                                                                  criterion, last_best_epochs, args)
 
         is_best = acc > best_acc1
         last_best_epochs = 0 if is_best else last_best_epochs + 1
@@ -243,7 +241,8 @@ def main(args):
 
         if epoch > args.labeled_warmup_epochs and epoch % args.add_labeled_epochs == 0:
             acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
-                             [acc, acc5, prec, recall, f1, confusion_mat]})
+                             [acc, acc5, prec, recall, f1, confusion_mat, roc_auc_curve]})
+
             if args.weak_supervision_strategy == 'active_learning':
                 samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
                                                                   train_loader,
@@ -258,7 +257,8 @@ def main(args):
                                                                             unlabeled_indices, kwargs)
 
                 print(f'Uncertainty Sampling\t '
-                      f'Current labeled ratio: {current_labeled_ratio}\t')
+                      f'Current labeled ratio: {current_labeled_ratio}\t'
+                      f'Model Reset')
             elif args.weak_supervision_strategy == 'semi_supervised':
                 samples_indices, samples_targets = pseudo_labeler.get_samples(epoch, args, best_model,
                                                                               unlabeled_loader,
@@ -280,7 +280,8 @@ def main(args):
 
                 print(f'Pseudo labeling\t '
                       f'Current labeled ratio: {current_labeled_ratio}\t'
-                      f'Pseudo labeled accuracy: {np.sum(pseudo_labels_acc == 1) / samples_indices.shape[0]}')
+                      f'Pseudo labeled accuracy: {np.sum(pseudo_labels_acc == 1) / samples_indices.shape[0]}\t'
+                      f'Model Reset')
 
             else:
                 samples_indices = stratified_random_sampling(unlabeled_indices, number=dataset_class.add_labeled_num)
@@ -293,10 +294,12 @@ def main(args):
                                                                             unlabeled_indices, kwargs)
 
                 print(f'Random Sampling\t '
-                      f'Current labeled ratio: {current_labeled_ratio}\t')
+                      f'Current labeled ratio: {current_labeled_ratio}\t'
+                      f'Model Reset')
 
             current_labeled_ratio += args.add_labeled_ratio
             last_best_epochs = 0
+            model = resnet18(pretrained=False)
 
         best_acc1 = max(acc, best_acc1)
         best_prec1 = max(prec, best_prec1)
@@ -404,10 +407,11 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 
     (prec, recall, f1, _) = metrics.get_metrics()
     confusion_matrix = metrics.get_confusion_matrix()
-    print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t'
-          .format(prec, recall, top1=top1, top5=top5))
+    roc_auc_curve = metrics.get_roc_auc_curve()
+    print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t * Roc_Auc {2}\t'
+          .format(prec, recall, roc_auc_curve, top1=top1, top5=top5))
 
-    return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix
+    return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix, roc_auc_curve
 
 
 def evaluate(val_loader, model):

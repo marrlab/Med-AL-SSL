@@ -2,6 +2,7 @@
   <dictionary name="ahmad">
     <words>
       <w>autoencoder</w>
+      <w>avgpool</w>
       <w>bmvc</w>
       <w>checkpointing</w>
       <w>cifar</w>
@@ -16,6 +17,7 @@
       <w>denselayer</w>
       <w>densenet</w>
       <w>downsample</w>
+      <w>droprate</w>
       <w>exponentials</w>
       <w>fivethirtyeight</w>
       <w>inplanes</w>

@@ -4,7 +4,7 @@ import shutil
 from torch.utils.data import DataLoader
 from numpy.random import default_rng
 import numpy as np
-from sklearn.metrics import precision_recall_fscore_support, classification_report, confusion_matrix
+from sklearn.metrics import precision_recall_fscore_support, classification_report, confusion_matrix, roc_auc_score
 import json
 from datetime import datetime
 import torchvision
@@ -110,10 +110,13 @@ class Metrics:
     def __init__(self):
         self.targets = []
         self.outputs = []
+        self.outputs_probs = None
 
     def add_mini_batch(self, mini_targets, mini_outputs):
         self.targets.extend(mini_targets.tolist())
         self.outputs.extend(torch.argmax(mini_outputs, dim=1).tolist())
+        self.outputs_probs = mini_outputs \
+            if self.outputs_probs is None else torch.cat([self.outputs_probs, mini_outputs], dim=0)
 
     def get_metrics(self):
         return precision_recall_fscore_support(self.targets, self.outputs, average='macro', zero_division=1)
@@ -123,6 +126,10 @@ class Metrics:
 
     def get_confusion_matrix(self):
         return confusion_matrix(self.targets, self.outputs)
+
+    def get_roc_auc_curve(self):
+        self.outputs_probs = torch.softmax(self.outputs_probs, dim=1)
+        return roc_auc_score(self.targets, self.outputs_probs.cpu().numpy(), multi_class='ovr')
 
 
 import torch

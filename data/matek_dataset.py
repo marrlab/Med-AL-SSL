@@ -15,17 +15,21 @@ class MatekDataset:
         self.labeled_ratio = labeled_ratio
         self.matek_mean = (0.8205, 0.7279, 0.8360)
         self.matek_std = (0.1719, 0.2589, 0.1042)
-        self.input_size = 32
+        self.input_size = 64
 
         if advanced_transforms:
             self.transform_train = transforms.Compose([
+                # transforms.RandomCrop(self.input_size, padding=4),
+                # transforms.RandomHorizontalFlip(),
+                # transforms.RandomAffine(degrees=0, translate=(0.125, 0.125)),
+                # transforms.RandomGrayscale(),
+                # transforms.RandomVerticalFlip(),
+                # transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
+                # transforms.RandomRotation(10),
+                # transforms.ToTensor(),
                 transforms.RandomCrop(self.input_size, padding=4),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomAffine(degrees=0, translate=(0.125, 0.125)),
-                transforms.RandomGrayscale(),
-                transforms.RandomVerticalFlip(),
-                transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
-                transforms.RandomRotation(10),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
             ])
