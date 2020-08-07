@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import random
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 import torch
 import torch.cuda

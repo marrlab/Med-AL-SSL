@@ -53,14 +53,14 @@ parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/'
 parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
-parser.add_argument('--semi-supervised-method', default='simclr', type=str,
+parser.add_argument('--semi-supervised-method', default='auto_encoder', type=str,
                     choices=['pseudo_labeling', 'auto_encoder', 'simclr'],
                     help='the semi supervised method to use')
 parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
 parser.add_argument('--simclr-temperature', default=0.1, type=float, help='the temperature term for simclr loss')
 parser.add_argument('--simclr-normalize', action='store_false', help='normalize the hidden feat vectors in simclr')
-parser.add_argument('--simclr-batch-size', default=2048, type=int,
+parser.add_argument('--simclr-batch-size', default=1024, type=int,
                     help='mini-batch size for simclr (default: 1024)')
 parser.add_argument('--simclr-arch', default='resnet', type=str, choices=['lenet', 'resnet'],
                     help='which encoder architecture to use for simclr')

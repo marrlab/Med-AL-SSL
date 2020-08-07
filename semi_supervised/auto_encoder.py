@@ -1,7 +1,7 @@
 from data.cifar10_dataset import Cifar10Dataset
 from data.matek_dataset import MatekDataset
 from data.cifar100_dataset import Cifar100Dataset
-from model.lenet_autoencoder import LenetAutoencoder
+from model.resnet_autoencoder import ResnetAutoencoder
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
     store_logs, get_loss, perform_sampling
 import os
@@ -30,7 +30,7 @@ class AutoEncoder:
         kwargs = {'num_workers': 2, 'pin_memory': False}
         train_loader = create_base_loader(base_dataset, kwargs, self.args.batch_size)
 
-        model = LenetAutoencoder(num_channels=3, num_classes=dataset_class.num_classes, drop_rate=self.args.drop_rate)
+        model = ResnetAutoencoder(z_dim=32)
 
         model = model.cuda()
 
