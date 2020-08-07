@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import random
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '4'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 import torch
 import torch.cuda
@@ -118,7 +118,7 @@ def main(args):
                                                                           test_dataset, kwargs, current_labeled_ratio,
                                                                           best_model)
             current_labeled_ratio += args.add_labeled_ratio
-            last_best_epochs = 0
+            best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
             model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
 
         best_acc1 = max(acc, best_acc1)

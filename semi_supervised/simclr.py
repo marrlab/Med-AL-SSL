@@ -3,11 +3,9 @@ from data.matek_dataset import MatekDataset
 from data.cifar100_dataset import Cifar100Dataset
 from model.simclr_arch import SimCLRArch
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
-    stratified_random_sampling, postprocess_indices, store_logs, NTXent
-import os
+    store_logs, NTXent, resume_model, get_loss, perform_sampling
 import time
 import torch
-import torch.nn as nn
 import numpy as np
 from torchlars import LARS
 
@@ -45,17 +43,8 @@ class SimCLR:
         model = model.cuda()
 
         if self.args.resume:
-            file = os.path.join(self.args.checkpoint_path, self.args.name, 'model_best.pth.tar')
-            if os.path.isfile(file):
-                print("=> loading checkpoint '{}'".format(file))
-                checkpoint = torch.load(file)
-                self.args.start_epoch = checkpoint['epoch']
-                self.args.start_epoch = self.args.epochs
-                model.load_state_dict(checkpoint['state_dict'])
-                print("=> loaded checkpoint '{}' (epoch {})"
-                      .format(self.args.resume, checkpoint['epoch']))
-            else:
-                print("=> no checkpoint found at '{}'".format(file))
+            resume_model(self.args, model)
+            self.args.start_epoch = self.args.epochs
 
         criterion = NTXent(self.args.simclr_batch_size, self.args.simclr_temperature, torch.device("cuda"))
 
@@ -134,59 +123,43 @@ class SimCLR:
 
         model = self.model
 
-        if self.args.weighted:
-            classes_targets = unlabeled_dataset.targets[unlabeled_indices]
-            classes_samples = [torch.sum(classes_targets == i) for i in range(dataset_class.num_classes)]
-            classes_weights = np.log(len(unlabeled_dataset)) - np.log(classes_samples)
-            criterion = nn.CrossEntropyLoss(weight=classes_weights).cuda()
-        else:
-            criterion = nn.CrossEntropyLoss().cuda()
+        criterion = get_loss(self.args, unlabeled_dataset, unlabeled_indices, dataset_class)
 
         optimizer = torch.optim.Adam(model.parameters())
 
         acc_ratio = {}
-        best_acc1 = 0
-        best_acc5 = 0
-        best_prec1 = 0
-        best_recall1 = 0
+
+        best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
         self.args.start_epoch = 0
+        self.args.weak_supervision_strategy = "random_sampling"
         current_labeled_ratio = self.args.labeled_ratio_start
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
             self.train_classifier(train_loader, model, criterion, optimizer, epoch)
-            acc, acc5, (prec, recall, f1, _) = self.validate_classifier(val_loader, model, criterion)
+            acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve = self.validate_classifier(val_loader,
+                                                                                                      model, criterion)
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
                 acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
-                                 [best_acc1, best_acc5, best_prec1, best_recall1]})
-                samples_indices = stratified_random_sampling(unlabeled_indices, number=dataset_class.add_labeled_num)
+                                 [acc, acc5, prec, recall, f1, confusion_mat, roc_auc_curve]})
 
-                labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
-                                                                         samples_indices)
-
-                train_loader, unlabeled_loader, val_loader = create_loaders(self.args, labeled_dataset,
-                                                                            unlabeled_dataset,
-                                                                            test_dataset, labeled_indices,
-                                                                            unlabeled_indices, kwargs)
-
-                print(f'Random Sampling\t '
-                      f'Current labeled ratio: {current_labeled_ratio}\t')
+                train_loader, unlabeled_loader, val_loader = perform_sampling(self.args, None, None,
+                                                                              epoch, model, train_loader,
+                                                                              unlabeled_loader,
+                                                                              dataset_class, labeled_indices,
+                                                                              unlabeled_indices, labeled_dataset,
+                                                                              unlabeled_dataset,
+                                                                              test_dataset, kwargs,
+                                                                              current_labeled_ratio,
+                                                                              None)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
+                best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
 
-            # is_best = best_acc1 > acc
             best_acc1 = max(best_acc1, acc)
             best_prec1 = max(prec, best_prec1)
             best_recall1 = max(recall, best_recall1)
             best_acc5 = max(acc5, best_acc5)
-
-            '''
-            save_checkpoint(self.args, {
-                'epoch': epoch + 1,
-                'state_dict': model.state_dict(),
-                'best_prec1': best_acc1,
-            }, is_best)
-            '''
 
             if current_labeled_ratio > self.args.labeled_ratio_stop:
                 break
@@ -243,34 +216,37 @@ class SimCLR:
         model.eval()
 
         end = time.time()
-        for i, (data_x, data_y) in enumerate(val_loader):
-            data_x = data_x.cuda(non_blocking=True)
-            data_y = data_y.cuda(non_blocking=True)
 
-            with torch.no_grad():
+        with torch.no_grad():
+            for i, (data_x, data_y) in enumerate(val_loader):
+                data_x = data_x.cuda(non_blocking=True)
+                data_y = data_y.cuda(non_blocking=True)
+
                 h = model.forward_encoder(data_x)
                 output = model.forward_classifier(h)
 
-            loss = criterion(output, data_y)
+                loss = criterion(output, data_y)
 
-            acc = accuracy(output.data, data_y, topk=(1, 5,))
-            losses.update(loss.data.item(), data_x.size(0))
-            top1.update(acc[0].item(), data_x.size(0))
-            top5.update(acc[1].item(), data_x.size(0))
-            metrics.add_mini_batch(data_y, output)
+                acc = accuracy(output.data, data_y, topk=(1, 5,))
+                losses.update(loss.data.item(), data_x.size(0))
+                top1.update(acc[0].item(), data_x.size(0))
+                top5.update(acc[1].item(), data_x.size(0))
+                metrics.add_mini_batch(data_y, output)
 
-            batch_time.update(time.time() - end)
-            end = time.time()
+                batch_time.update(time.time() - end)
+                end = time.time()
 
-            if i % self.args.print_freq == 0:
-                print('Test: [{0}/{1}]\t'
-                      'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                      'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                      'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                      .format(i, len(val_loader), batch_time=batch_time, loss=losses, top1=top1))
+                if i % self.args.print_freq == 0:
+                    print('Test: [{0}/{1}]\t'
+                          'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
+                          'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                          'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
+                          .format(i, len(val_loader), batch_time=batch_time, loss=losses, top1=top1))
 
         (prec, recall, f1, _) = metrics.get_metrics()
-        print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t'
-              .format(prec, recall, top1=top1, top5=top5))
+        confusion_matrix = metrics.get_confusion_matrix()
+        roc_auc_curve = metrics.get_roc_auc_curve()
+        print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t * Roc_Auc {2}\t'
+              .format(prec, recall, roc_auc_curve, top1=top1, top5=top5))
 
-        return top1.avg, top5.avg, (prec, recall, f1, _)
+        return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix, roc_auc_curve
