@@ -23,8 +23,8 @@ states = [
 # noinspection PyTypeChecker,PyUnresolvedReferences
 def get_metrics(name, log_path):
     filenames = os.listdir(log_path)
-    metrics = {'acc1': [[], []], 'acc5': [[], []], 'prec': [[], []], 'recall': [[], []],
-               'acc1_std': [], 'acc5_std': [], 'prec_std': [], 'recall_std': []}
+    metrics = {'acc1': [[], []], 'acc5': [[], []], 'prec': [[], []], 'recall': [[], []], 'f1': [[], []],
+               'acc1_std': [], 'acc5_std': [], 'prec_std': [], 'recall_std': [], 'f1_std': []}
     ratios = []
 
     for filename in filenames:
@@ -32,18 +32,20 @@ def get_metrics(name, log_path):
             file = json.load(fp)
         if name in file['name']:
             for k, v in file['metrics'].items():
-                v = np.round(v[0:4], decimals=2)
+                v = np.round(v[0:5], decimals=2)
                 if k not in ratios:
                     metrics['acc1_' + k] = [v[0]]
                     metrics['acc5_' + k] = [v[1]]
                     metrics['prec_' + k] = [v[2]]
                     metrics['recall_' + k] = [v[3]]
+                    metrics['f1_' + k] = [v[4]]
                     ratios.append(k)
                 else:
                     metrics['acc1_' + k].append(v[0])
                     metrics['acc5_' + k].append(v[1])
                     metrics['prec_' + k].append(v[2])
                     metrics['recall_' + k].append(v[3])
+                    metrics['f1_' + k].append(v[4])
         else:
             continue
 
@@ -56,6 +58,8 @@ def get_metrics(name, log_path):
         prec_std = np.round(np.std(metrics["prec_" + ratio]), decimals=2)
         recall_m = np.round(np.mean(metrics["recall_" + ratio]), decimals=2)
         recall_std = np.round(np.std(metrics["recall_" + ratio]), decimals=2)
+        f1_m = np.round(np.mean(metrics["f1_" + ratio]), decimals=2)
+        f1_std = np.round(np.std(metrics["f1_" + ratio]), decimals=2)
         metrics['acc1'][0].append(acc1_m)
         metrics['acc1'][1].append(acc1_std)
         metrics['acc5'][0].append(acc5_m)
@@ -64,10 +68,13 @@ def get_metrics(name, log_path):
         metrics['prec'][1].append(prec_std)
         metrics['recall'][0].append(recall_m)
         metrics['recall'][1].append(recall_std)
+        metrics['f1'][0].append(f1_m)
+        metrics['f1'][1].append(f1_std)
         metrics['acc1_std'].append(str(acc1_m) + '±' + str(acc1_std))
         metrics['acc5_std'].append(str(acc5_m) + '±' + str(acc5_std))
         metrics['prec_std'].append(str(prec_m) + '±' + str(prec_std))
         metrics['recall_std'].append(str(recall_m) + '±' + str(recall_std))
+        metrics['f1_std'].append(str(f1_m) + '±' + str(f1_std))
 
     metrics['acc1'][0] = np.array(metrics['acc1'][0])
     metrics['acc1'][1] = np.array(metrics['acc1'][1])
@@ -77,6 +84,8 @@ def get_metrics(name, log_path):
     metrics['prec'][1] = np.array(metrics['prec'][1]) * 100
     metrics['recall'][0] = np.array(metrics['recall'][0]) * 100
     metrics['recall'][1] = np.array(metrics['recall'][1]) * 100
+    metrics['f1'][0] = np.array(metrics['f1'][0]) * 100
+    metrics['f1'][1] = np.array(metrics['f1'][1]) * 100
 
     return metrics, ratios
 
@@ -84,7 +93,7 @@ def get_metrics(name, log_path):
 # noinspection PyTypeChecker,PyUnresolvedReferences
 def get_class_specific_metrics(name, log_path, class_id):
     filenames = os.listdir(log_path)
-    metrics = {'acc1': [[], []], 'acc5': [[], []], 'prec': [[], []], 'recall': [[], []]}
+    metrics = {'acc1': [[], []], 'acc5': [[], []], 'prec': [[], []], 'recall': [[], []], 'f1': [[], []]}
     ratios = []
 
     for filename in filenames:
@@ -100,17 +109,20 @@ def get_class_specific_metrics(name, log_path, class_id):
                 acc1 = ((TP + TN) / (TP + TN + FP + FN)) * 100
                 prec = (TP / (TP + FP)) * 100
                 recall = (TP / (TP + FN)) * 100
+                f1 = (TP / (TP + 0.5 * (FP + FN))) * 100
                 if k not in ratios:
                     metrics['acc1_' + k] = [acc1]
                     metrics['acc5_' + k] = [0]
                     metrics['prec_' + k] = [prec]
                     metrics['recall_' + k] = [recall]
+                    metrics['f1_' + k] = [f1]
                     ratios.append(k)
                 else:
                     metrics['acc1_' + k].append(acc1)
                     metrics['acc5_' + k].append(0)
                     metrics['prec_' + k].append(prec)
                     metrics['recall_' + k].append(recall)
+                    metrics['f1_' + k].append(f1)
         else:
             continue
 
@@ -123,6 +135,8 @@ def get_class_specific_metrics(name, log_path, class_id):
         prec_std = np.round(np.std(metrics["prec_" + ratio]), decimals=2)
         recall_m = np.round(np.mean(metrics["recall_" + ratio]), decimals=2)
         recall_std = np.round(np.std(metrics["recall_" + ratio]), decimals=2)
+        f1_m = np.round(np.mean(metrics["f1_" + ratio]), decimals=2)
+        f1_std = np.round(np.std(metrics["f1_" + ratio]), decimals=2)
         metrics['acc1'][0].append(acc1_m)
         metrics['acc1'][1].append(acc1_std)
         metrics['acc5'][0].append(acc5_m)
@@ -131,6 +145,8 @@ def get_class_specific_metrics(name, log_path, class_id):
         metrics['prec'][1].append(prec_std)
         metrics['recall'][0].append(recall_m)
         metrics['recall'][1].append(recall_std)
+        metrics['f1'][0].append(f1_m)
+        metrics['f1'][1].append(f1_std)
 
     metrics['acc1'][0] = np.array(metrics['acc1'][0])
     metrics['acc1'][1] = np.array(metrics['acc1'][1])
@@ -140,6 +156,8 @@ def get_class_specific_metrics(name, log_path, class_id):
     metrics['prec'][1] = np.array(metrics['prec'][1])
     metrics['recall'][0] = np.array(metrics['recall'][0])
     metrics['recall'][1] = np.array(metrics['recall'][1])
+    metrics['f1'][0] = np.array(metrics['f1'][0])
+    metrics['f1'][1] = np.array(metrics['f1'][1])
 
     return metrics, ratios
 
