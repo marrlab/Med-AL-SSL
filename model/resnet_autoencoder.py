@@ -151,12 +151,25 @@ class ResNet18Dec(nn.Module):
 
 
 class ResnetAutoencoder(nn.Module):
-    def __init__(self, z_dim):
+    def __init__(self, z_dim, drop_rate, num_classes):
         super().__init__()
         self.encoder = ResNet18Enc(z_dim=z_dim)
         self.decoder = ResNet18Dec(z_dim=z_dim)
 
+        self.classifier = nn.Sequential(
+            nn.Dropout(p=drop_rate, inplace=False),
+            nn.Linear(z_dim, 84),
+            nn.ReLU(),
+            nn.Dropout(p=drop_rate, inplace=False),
+            nn.Linear(84, num_classes)
+        )
+
     def forward(self, x):
         z = self.encoder(x)
         x = self.decoder(z)
+        return x
+
+    def forward_classifier(self, x):
+        x = self.encoder(x)
+        x = self.classifier(x)
         return x

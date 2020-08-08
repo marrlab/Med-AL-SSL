@@ -30,7 +30,7 @@ class AutoEncoder:
         kwargs = {'num_workers': 2, 'pin_memory': False}
         train_loader = create_base_loader(base_dataset, kwargs, self.args.batch_size)
 
-        model = ResnetAutoencoder(z_dim=32)
+        model = ResnetAutoencoder(z_dim=32, num_classes=dataset_class.num_classes, drop_rate=self.args.drop_rate)
 
         model = model.cuda()
 
@@ -123,7 +123,7 @@ class AutoEncoder:
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
                 acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
-                                 [acc, acc5, prec, recall, f1, confusion_mat, roc_auc_curve]})
+                                 [acc, acc5, prec, recall, f1, confusion_mat.tolist(), roc_auc_curve]})
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                     perform_sampling(self.args, None, None,

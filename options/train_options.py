@@ -1,7 +1,7 @@
 import argparse
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
-parser.add_argument('--epochs', default=1000, type=int,
+parser.add_argument('--epochs', default=3, type=int,
                     help='number of total epochs to run')
 parser.add_argument('--autoencoder-train-epochs', default=20, type=int,
                     help='number of total epochs to run')
@@ -30,7 +30,7 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true', help='flag to be set if an existed model is to be loaded')
 parser.add_argument('--name', default=' ', type=str,
                     help='name of experiment')
-parser.add_argument('--add-labeled-epochs', default=20, type=int,
+parser.add_argument('--add-labeled-epochs', default=1, type=int,
                     help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
 parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
                     help='what percentage of labeled data to be added')
@@ -38,7 +38,7 @@ parser.add_argument('--labeled-ratio-start', default=0.05, type=int,
                     help='what percentage of labeled data to start the training with')
 parser.add_argument('--labeled-ratio-stop', default=0.7, type=int,
                     help='what percentage of labeled data to stop the training process at')
-parser.add_argument('--labeled-warmup_epochs', default=15, type=int,
+parser.add_argument('--labeled-warmup_epochs', default=0, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')

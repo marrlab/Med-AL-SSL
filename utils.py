@@ -353,12 +353,14 @@ def print_args(args):
 
 def store_logs(args, acc_ratio):
     filename = '{0}-{1}-seed:{2}'.format(datetime.now().strftime("%d.%m.%Y"), args.name, args.seed)
+
     file = dict()
     file.update({'name': args.name})
     file.update({'time': str(datetime.now())})
     file.update({'seed': args.seed})
     file.update({'dataset': args.dataset})
     file.update({'metrics': acc_ratio})
+    file.update({'other args': vars(args)})
 
     with open(os.path.join(args.log_path, filename), 'w') as fp:
         json.dump(file, fp, indent=4, sort_keys=True)
