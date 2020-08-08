@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import random
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
 import torch
 import torch.cuda
@@ -266,7 +266,7 @@ if __name__ == '__main__':
             ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             ('semi_supervised', 'least_confidence', 'simclr'),
             ('active_learning', 'mc_dropout', 'pseudo_labeling'),
-            ('semi_supervised', 'least_confidence', 'auto_encoder'),
+            # ('semi_supervised', 'least_confidence', 'auto_encoder'),
         ]
 
         for (m, u, s) in states:

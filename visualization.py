@@ -25,11 +25,10 @@ def plot_acc_dataprop(prop, acc, methods, prop_supervised, acc_supervised, metho
     for i, j in enumerate(range(1, len(acc), 3)):
         linestyle = '-' if methods[i] in resnet else '-'
         plt.plot(prop[i], acc[j], color=colors[i % len(colors)], label=methods[i], linewidth=2, linestyle=linestyle)
-        # plt.fill_between(prop[i], acc[j - 1], acc[j + 1], color=colors[i % len(colors)], alpha=0.05)
+        plt.fill_between(prop[i], acc[j - 1], acc[j + 1], color=colors[i % len(colors)], alpha=0.05)
 
     for i, j in enumerate(range(1, len(acc_supervised), 3)):
         plt.plot(prop_supervised[i], acc_supervised[j], color=color_grey, linewidth=2, linestyle=':', alpha=0.5)
-        # plt.fill_between(prop_supervised[i], acc_supervised[j - 1], acc_supervised[j + 1], color=color_grey, alpha=0.05)
 
     plt.title("Proof of concept - AL on Cifar-10",
               fontsize=20, weight='bold', alpha=.75)
