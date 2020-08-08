@@ -3,7 +3,7 @@ from data.matek_dataset import MatekDataset
 from data.cifar100_dataset import Cifar100Dataset
 from model.simclr_arch import SimCLRArch
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
-    store_logs, NTXent, resume_model, get_loss, perform_sampling
+    store_logs, NTXent, resume_model, get_loss, perform_sampling, create_model_optimizer_scheduler
 import time
 import torch
 import numpy as np
@@ -155,11 +155,12 @@ class SimCLR:
 
                 current_labeled_ratio += self.args.add_labeled_ratio
                 best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
-
-            best_acc1 = max(best_acc1, acc)
-            best_prec1 = max(prec, best_prec1)
-            best_recall1 = max(recall, best_recall1)
-            best_acc5 = max(acc5, best_acc5)
+                model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_class)
+            else:
+                best_acc1 = max(acc, best_acc1)
+                best_prec1 = max(prec, best_prec1)
+                best_recall1 = max(recall, best_recall1)
+                best_acc5 = max(acc5, best_acc5)
 
             if current_labeled_ratio > self.args.labeled_ratio_stop:
                 break
