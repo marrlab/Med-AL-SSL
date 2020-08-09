@@ -2,7 +2,7 @@ from data.cifar10_dataset import Cifar10Dataset
 from data.matek_dataset import MatekDataset
 from data.cifar100_dataset import Cifar100Dataset
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
-    store_logs, get_loss, perform_sampling, create_model_optimizer_scheduler, create_model_optimizer_autoencoder
+    store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder
 import time
 import torch
 import torch.nn as nn

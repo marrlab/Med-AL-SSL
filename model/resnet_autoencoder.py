@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
+import math
 
 """
 Resnet-based autoencoder, modified version of: https://github.com/julianstastny/VAE-ResNet18-PyTorch
@@ -78,13 +79,13 @@ class BasicBlockDec(nn.Module):
 
 
 class ResNet18Enc(nn.Module):
-    def __init__(self, num_blocks=None, z_dim=128, nc=3):
+    def __init__(self, num_blocks=None, z_dim=128, nc=3, input_size=32):
         super().__init__()
         if num_blocks is None:
             num_blocks = [2, 2, 2, 2]
         self.in_planes = 64
         self.z_dim = z_dim
-        self.conv1 = nn.Conv2d(nc, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(nc, 64, kernel_size=3, stride=int(math.log2(input_size) - 4), padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.layer1 = self._make_layer(BasicBlockEnc, 64, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(BasicBlockEnc, 128, num_blocks[1], stride=2)
@@ -114,19 +115,20 @@ class ResNet18Enc(nn.Module):
 
 
 class ResNet18Dec(nn.Module):
-    def __init__(self, num_blocks=None, z_dim=128, nc=3):
+    def __init__(self, num_blocks=None, z_dim=128, nc=3, input_size=32):
         super().__init__()
         if num_blocks is None:
             num_blocks = [2, 2, 2, 2]
         self.in_planes = 512
 
         self.linear = nn.Linear(z_dim, 512)
+        self.input_size = input_size
 
         self.layer4 = self._make_layer(BasicBlockDec, 256, num_blocks[3], stride=2)
         self.layer3 = self._make_layer(BasicBlockDec, 128, num_blocks[2], stride=2)
         self.layer2 = self._make_layer(BasicBlockDec, 64, num_blocks[1], stride=2)
         self.layer1 = self._make_layer(BasicBlockDec, 64, num_blocks[0], stride=1)
-        self.conv1 = ResizeConv2d(64, nc, kernel_size=3, scale_factor=1)
+        self.conv1 = ResizeConv2d(64, nc, kernel_size=3, scale_factor=int(input_size/32))
 
     def _make_layer(self, basic_block_dec, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks - 1)
@@ -145,16 +147,16 @@ class ResNet18Dec(nn.Module):
         x = self.layer2(x)
         x = self.layer1(x)
         x = torch.sigmoid(self.conv1(x))
-        x = x.view(x.size(0), 3, 32, 32)
+        x = x.view(x.size(0), 3, self.input_size, self.input_size)
 
         return x
 
 
 class ResnetAutoencoder(nn.Module):
-    def __init__(self, z_dim, drop_rate, num_classes):
+    def __init__(self, z_dim, drop_rate, num_classes, input_size=32):
         super().__init__()
-        self.encoder = ResNet18Enc(z_dim=z_dim)
-        self.decoder = ResNet18Dec(z_dim=z_dim)
+        self.encoder = ResNet18Enc(z_dim=z_dim, input_size=input_size)
+        self.decoder = ResNet18Dec(z_dim=z_dim, input_size=input_size)
 
         self.classifier = nn.Sequential(
             nn.Dropout(p=drop_rate, inplace=False),

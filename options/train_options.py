@@ -14,7 +14,7 @@ parser.add_argument('--simclr-train-epochs', default=100, type=int,
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
 
-parser.add_argument('-b', '--batch-size', default=512, type=int,
+parser.add_argument('-b', '--batch-size', default=128, type=int,
                     help='mini-batch size (default: 512)')
 
 parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
@@ -50,13 +50,13 @@ parser.add_argument('--name', default=' ', type=str,
 parser.add_argument('--add-labeled-epochs', default=20, type=int,
                     help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
 
-parser.add_argument('--add-labeled-ratio', default=0.05, type=int,
+parser.add_argument('--add-labeled-ratio', default=0.025, type=int,
                     help='what percentage of labeled data to be added')
 
 parser.add_argument('--labeled-ratio-start', default=0.05, type=int,
                     help='what percentage of labeled data to start the training with')
 
-parser.add_argument('--labeled-ratio-stop', default=0.7, type=int,
+parser.add_argument('--labeled-ratio-stop', default=0.25, type=int,
                     help='what percentage of labeled data to stop the training process at')
 
 parser.add_argument('--labeled-warmup_epochs', default=15, type=int,
@@ -105,7 +105,7 @@ parser.add_argument('--weighted', action='store_true', help='to use weighted los
 
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
 
-parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100'],
+parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100'],
                     help='the dataset to train on')
 
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,

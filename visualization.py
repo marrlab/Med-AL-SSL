@@ -29,15 +29,15 @@ def plot_metric_dataprop(prop, metric, methods, prop_supervised, metric_supervis
         plt.plot(prop[i], metric[j], color=colors[i % len(colors)], label=methods[i], linewidth=2, linestyle=linestyle)
         plt.fill_between(prop[i], metric[j - 1], metric[j + 1], color=colors[i % len(colors)], alpha=0.05)
 
-    for i, j in enumerate(range(1, len(metric_supervised), 3)):
-        plt.plot(prop_supervised[i], metric_supervised[j], color=color_grey, linewidth=2, linestyle=':', alpha=0.5)
+    # for i, j in enumerate(range(1, len(metric_supervised), 3)):
+    #    plt.plot(prop_supervised[i], metric_supervised[j], color=color_grey, linewidth=2, linestyle=':', alpha=0.5)
 
     plt.title("Proof of concept - AL on Cifar-10",
               fontsize=20, weight='bold', alpha=.75)
     plt.xlabel("Labeled ratio of the dataset", fontsize=20, weight='bold', alpha=.75)
     plt.ylabel("Top-1 Accuracy (%)", fontsize=20, weight='bold', alpha=.75)
-    plt.text(x=0.1, y=91, s='Resnet Fully Supervised', color=color_grey, fontsize=18, rotation=0,
-             backgroundcolor='#f0f0f0')
+    # plt.text(x=0.1, y=91, s='Resnet Fully Supervised', color=color_grey, fontsize=18, rotation=0,
+    #         backgroundcolor='#f0f0f0')
     plt.legend(loc='lower right', fontsize=18)
     plt.show()
 

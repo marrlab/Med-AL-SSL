@@ -18,7 +18,7 @@ parser.add_argument('--uncertainty-sampling-method', default='least_confidence',
 parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100'],
                     help='the dataset to train on')
 
-parser.add_argument('--arch', default='lenet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
+parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 
 parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,

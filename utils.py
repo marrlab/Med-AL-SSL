@@ -223,7 +223,7 @@ def create_model_optimizer_scheduler(args, dataset_class):
         model = LeNet(num_channels=3, num_classes=dataset_class.num_classes,
                       droprate=args.drop_rate, input_size=dataset_class.input_size)
     elif args.arch == 'resnet':
-        model = resnet18(num_classes=dataset_class.num_classes)
+        model = resnet18(num_classes=dataset_class.num_classes, input_size=dataset_class.input_size)
     else:
         raise NotImplementedError
 
@@ -246,11 +246,12 @@ def create_model_optimizer_scheduler(args, dataset_class):
 def create_model_optimizer_simclr(args, dataset_class):
     model = SimCLRArch(num_channels=3,
                        num_classes=dataset_class.num_classes,
-                       drop_rate=args.drop_rate, normalize=True, arch=args.simclr_arch)
+                       drop_rate=args.drop_rate, normalize=True, arch=args.simclr_arch,
+                       input_size=dataset_class.input_size)
 
     model = model.cuda()
 
-    args.resume = True
+    # args.resume = True
     if args.resume:
         resume_model(args, model)
         args.start_epoch = args.epochs
@@ -270,10 +271,12 @@ def create_model_optimizer_simclr(args, dataset_class):
 
 
 def create_model_optimizer_autoencoder(args, dataset_class):
-    model = ResnetAutoencoder(z_dim=32, num_classes=dataset_class.num_classes, drop_rate=args.drop_rate)
+    model = ResnetAutoencoder(z_dim=32, num_classes=dataset_class.num_classes, drop_rate=args.drop_rate,
+                              input_size=dataset_class.input_size)
 
     model = model.cuda()
 
+    # args.resume = True
     if args.resume:
         file = os.path.join(args.checkpoint_path, args.name, 'model_best.pth.tar')
         if os.path.isfile(file):
@@ -296,7 +299,7 @@ def get_loss(args, unlabeled_dataset, unlabeled_indices, dataset_class):
     if args.weighted:
         classes_targets = unlabeled_dataset.targets[unlabeled_indices]
         classes_samples = [np.sum(classes_targets == i) for i in range(dataset_class.num_classes)]
-        classes_weights = np.log(len(unlabeled_dataset)) - np.log(classes_samples)
+        classes_weights = np.log2(len(unlabeled_dataset)) - np.log2(classes_samples)
         # noinspection PyArgumentList
         criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(classes_weights).cuda())
     else:

@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torchvision
+import math
 
 
 class Identity(nn.Module):
@@ -13,7 +14,7 @@ class Identity(nn.Module):
 class SimCLRArch(nn.Module):
     def __init__(self, num_channels, num_classes, drop_rate,
                  normalize, latent_dim=64, projection_dim=64,
-                 arch='lenet'):
+                 arch='lenet', input_size=32):
         super(SimCLRArch, self).__init__()
 
         self.normalize = normalize
@@ -32,7 +33,7 @@ class SimCLRArch(nn.Module):
             )
         else:
             self.encoder = modify_resnet_model(
-                torchvision.models.resnet18(), cifar_stem=True, v1=True
+                torchvision.models.resnet18(), v1=True, input_size=input_size
             )
             latent_dim = self.encoder.fc.in_features
             self.encoder.fc = Identity()
@@ -72,7 +73,7 @@ import torch.nn as nn
 from torchvision.models.resnet import Bottleneck, ResNet
 
 
-def modify_resnet_model(model, *, cifar_stem=True, v1=True):
+def modify_resnet_model(model, *, v1=True, input_size=32):
     """Modifies some layers of a given torchvision resnet model to
     match the one used for the CIFAR-10 experiments in the SimCLR paper.
     Parameters
@@ -91,13 +92,16 @@ def modify_resnet_model(model, *, cifar_stem=True, v1=True):
     Returns
     -------
     Modified ResNet model.
+    :param model:
+    :param v1:
+    :param input_size:
     """
     assert isinstance(model, ResNet), "model must be a ResNet instance"
-    if cifar_stem:
-        conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        nn.init.kaiming_normal_(conv1.weight, mode='fan_out', nonlinearity='relu')
-        model.conv1 = conv1
-        model.maxpool = nn.Identity()
+
+    conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=int(math.log2(input_size) - 4), padding=1, bias=False)
+    nn.init.kaiming_normal_(conv1.weight, mode='fan_out', nonlinearity='relu')
+    model.conv1 = conv1
+    model.maxpool = nn.Identity()
     if v1:
         for l in range(2, 5):
             layer = getattr(model, "layer{}".format(l))

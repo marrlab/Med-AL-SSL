@@ -21,7 +21,7 @@ states = [
 
 
 # noinspection PyTypeChecker,PyUnresolvedReferences
-def get_metrics(name, log_path):
+def get_metrics(name, log_path, dataset):
     filenames = os.listdir(log_path)
     metrics = {'acc1': [[], []], 'acc5': [[], []], 'prec': [[], []], 'recall': [[], []], 'f1': [[], []],
                'acc1_std': [], 'acc5_std': [], 'prec_std': [], 'recall_std': [], 'f1_std': []}
@@ -30,7 +30,7 @@ def get_metrics(name, log_path):
     for filename in filenames:
         with open(os.path.join(log_path, filename), 'r') as fp:
             file = json.load(fp)
-        if name in file['name']:
+        if name in file['name'] and dataset in file['dataset']:
             for k, v in file['metrics'].items():
                 v = np.round(v[0:5], decimals=2)
                 if k not in ratios:
@@ -91,7 +91,7 @@ def get_metrics(name, log_path):
 
 
 # noinspection PyTypeChecker,PyUnresolvedReferences
-def get_class_specific_metrics(name, log_path, class_id):
+def get_class_specific_metrics(name, log_path, class_id, dataset):
     filenames = os.listdir(log_path)
     metrics = {'acc1': [[], []], 'acc5': [[], []], 'prec': [[], []], 'recall': [[], []], 'f1': [[], []]}
     ratios = []
@@ -99,7 +99,7 @@ def get_class_specific_metrics(name, log_path, class_id):
     for filename in filenames:
         with open(os.path.join(log_path, filename), 'r') as fp:
             file = json.load(fp)
-        if name in file['name']:
+        if name in file['name'] and dataset in file['dataset']:
             for k, v in file['metrics'].items():
                 v = np.array(v[5])
                 TP = v[class_id, class_id]
@@ -162,7 +162,7 @@ def get_class_specific_metrics(name, log_path, class_id):
     return metrics, ratios
 
 
-def get_batch_metrics(met='acc1', class_specific=False, class_id=0):
+def get_batch_metrics(met='acc1', class_specific=False, class_id=0, dataset='cifar10'):
     metric = []
     ratios = []
 
@@ -175,9 +175,11 @@ def get_batch_metrics(met='acc1', class_specific=False, class_id=0):
             args.name = m
 
         if class_specific:
-            metrics, ratio = get_class_specific_metrics(args.name, args.log_path, class_id=class_id)
+            metrics, ratio = get_class_specific_metrics(args.name, args.log_path, class_id=class_id,
+                                                        dataset=args.dataset)
         else:
-            metrics, ratio = get_metrics(args.name, args.log_path)
+            metrics, ratio = get_metrics(args.name, args.log_path,
+                                         dataset=args.dataset)
 
         metric.append(metrics[met][0] - metrics[met][1])
         metric.append(metrics[met][0].tolist())
@@ -187,7 +189,7 @@ def get_batch_metrics(met='acc1', class_specific=False, class_id=0):
     return metric, ratios
 
 
-def print_individual_metric():
+def print_individual_metric(dataset='cifar10'):
     if args.weak_supervision_strategy == 'semi_supervised':
         args.name = f"{args.dataset}@{args.arch}@{args.semi_supervised_method}"
     elif args.weak_supervision_strategy == 'active_learning':
@@ -195,7 +197,7 @@ def print_individual_metric():
     else:
         args.name = f"{args.dataset}@{args.arch}@{args.weak_supervision_strategy}"
 
-    metrics, ratios = get_metrics(args.name, args.log_path)
+    metrics, ratios = get_metrics(args.name, args.log_path, dataset)
 
     print(f'* Name: {args.name}\n\n'
           f'* Metrics: \n'
