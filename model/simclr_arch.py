@@ -1,5 +1,4 @@
 import torch.nn as nn
-from utils import Flatten
 import torchvision
 
 
@@ -27,7 +26,7 @@ class SimCLRArch(nn.Module):
                 nn.Conv2d(6, 16, kernel_size=5, padding=2),
                 nn.ReLU(),
                 nn.MaxPool2d(2),
-                Flatten(),
+                nn.Flatten(),
                 nn.Linear(16 * 7 * 7, latent_dim),
                 nn.ReLU(),
             )

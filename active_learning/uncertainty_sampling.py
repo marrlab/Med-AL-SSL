@@ -44,13 +44,14 @@ class UncertaintySampling:
 
     @staticmethod
     def density_weighted(probs, feat, feat_train):
-        simple_least_conf = torch.max(probs, dim=1)[0]
+        log_probs = torch.log(probs)
+        entropy = torch.sum(-probs * log_probs, dim=1)
         feat_norm = feat / feat.norm(dim=1)[:, None]
         feat_train_norm = feat_train / feat_train.norm(dim=1)[:, None]
 
         similarities = torch.mm(feat_norm, feat_train_norm.transpose(0, 1))
 
-        return simple_least_conf * (-torch.mean(similarities, dim=1)+1)
+        return entropy * (-torch.mean(similarities, dim=1)+1)
 
     def get_samples(self, epoch, args, model, train_loader, unlabeled_loader, number):
         batch_time = AverageMeter()

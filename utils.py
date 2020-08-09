@@ -12,10 +12,13 @@ import torchvision
 from numpy.random import default_rng
 from sklearn.metrics import precision_recall_fscore_support, classification_report, confusion_matrix, roc_auc_score
 from torch.utils.data import DataLoader
+from torchlars import LARS
 
 from model.densenet import densenet121
 from model.lenet import LeNet
 from model.resnet import resnet18
+from model.resnet_autoencoder import ResnetAutoencoder
+from model.simclr_arch import SimCLRArch
 from model.wideresnet import WideResNet
 
 
@@ -238,6 +241,55 @@ def create_model_optimizer_scheduler(args, dataset_class):
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.2)
 
     return model, optimizer, scheduler
+
+
+def create_model_optimizer_simclr(args, dataset_class):
+    model = SimCLRArch(num_channels=3,
+                       num_classes=dataset_class.num_classes,
+                       drop_rate=args.drop_rate, normalize=True, arch=args.simclr_arch)
+
+    model = model.cuda()
+
+    args.resume = True
+    if args.resume:
+        resume_model(args, model)
+        args.start_epoch = args.epochs
+
+    if args.simclr_optimizer == 'adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
+        scheduler = None
+    else:
+        args.simclr_base_lr = args.simclr_base_lr * (args.batch_size / 256)
+        base_optimizer = torch.optim.SGD(model.parameters(), lr=args.lr,
+                                         weight_decay=1e-6, momentum=args.momentum)
+        optimizer = LARS(base_optimizer, trust_coef=1e-3)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.simclr_train_epochs,
+                                                               eta_min=0, last_epoch=-1)
+
+    return model, optimizer, scheduler, args
+
+
+def create_model_optimizer_autoencoder(args, dataset_class):
+    model = ResnetAutoencoder(z_dim=32, num_classes=dataset_class.num_classes, drop_rate=args.drop_rate)
+
+    model = model.cuda()
+
+    if args.resume:
+        file = os.path.join(args.checkpoint_path, args.name, 'model_best.pth.tar')
+        if os.path.isfile(file):
+            print("=> loading checkpoint '{}'".format(file))
+            checkpoint = torch.load(file)
+            args.start_epoch = checkpoint['epoch']
+            args.start_epoch = args.epochs
+            model.load_state_dict(checkpoint['state_dict'])
+            print("=> loaded checkpoint '{}' (epoch {})"
+                  .format(args.resume, checkpoint['epoch']))
+        else:
+            print("=> no checkpoint found at '{}'".format(file))
+
+    optimizer = torch.optim.Adam(model.parameters())
+
+    return model, optimizer, args
 
 
 def get_loss(args, unlabeled_dataset, unlabeled_indices, dataset_class):

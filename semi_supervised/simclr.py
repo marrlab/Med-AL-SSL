@@ -1,13 +1,12 @@
 from data.cifar10_dataset import Cifar10Dataset
 from data.matek_dataset import MatekDataset
 from data.cifar100_dataset import Cifar100Dataset
-from model.simclr_arch import SimCLRArch
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
-    store_logs, NTXent, resume_model, get_loss, perform_sampling, create_model_optimizer_scheduler
+    store_logs, NTXent, get_loss, perform_sampling, create_model_optimizer_scheduler, \
+    create_model_optimizer_simclr
 import time
 import torch
 import numpy as np
-from torchlars import LARS
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -36,30 +35,9 @@ class SimCLR:
         kwargs = {'num_workers': 16, 'pin_memory': False}
         train_loader = create_base_loader(base_dataset, kwargs, self.args.simclr_batch_size)
 
-        model = SimCLRArch(num_channels=3,
-                           num_classes=dataset_class.num_classes,
-                           drop_rate=self.args.drop_rate, normalize=True, arch=self.args.simclr_arch)
-
-        model = model.cuda()
-
-        self.args.resume = True
-        if self.args.resume:
-            resume_model(self.args, model)
-            self.args.start_epoch = self.args.epochs
-
         criterion = NTXent(self.args.simclr_batch_size, self.args.simclr_temperature, torch.device("cuda"))
 
-        scheduler = None
-
-        if self.args.simclr_optimizer == 'adam':
-            optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
-        else:
-            self.args.simclr_base_lr = self.args.simclr_base_lr * (self.args.batch_size / 256)
-            base_optimizer = torch.optim.SGD(model.parameters(), lr=self.args.lr,
-                                             weight_decay=1e-6, momentum=self.args.momentum)
-            optimizer = LARS(base_optimizer, trust_coef=1e-3)
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, self.args.simclr_train_epochs,
-                                                                   eta_min=0, last_epoch=-1)
+        model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_class)
 
         best_loss = np.inf
 
@@ -101,9 +79,6 @@ class SimCLR:
                 'state_dict': model.state_dict(),
                 'best_prec1': best_loss,
             }, is_best)
-
-            if scheduler:
-                scheduler.step(epoch=epoch)
 
         self.model = model
         return model
@@ -155,7 +130,8 @@ class SimCLR:
 
                 current_labeled_ratio += self.args.add_labeled_ratio
                 best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
-                model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_class)
+                model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_class)
+                optimizer = torch.optim.Adam(model.parameters())
             else:
                 best_acc1 = max(acc, best_acc1)
                 best_prec1 = max(prec, best_prec1)

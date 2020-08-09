@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import random
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 import torch
 import torch.cuda
@@ -257,16 +257,16 @@ def evaluate(val_loader, model):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            ('active_learning', 'least_confidence', 'pseudo_labeling'),
-            ('active_learning', 'margin_confidence', 'pseudo_labeling'),
-            ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
-            ('active_learning', 'entropy_based', 'pseudo_labeling'),
-            ('active_learning', 'density_weighted', 'pseudo_labeling'),
-            ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
-            ('random_sampling', 'least_confidence', 'pseudo_labeling'),
+            # ('active_learning', 'least_confidence', 'pseudo_labeling'),
+            # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
+            # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
+            # ('active_learning', 'entropy_based', 'pseudo_labeling'),
+            # ('active_learning', 'density_weighted', 'pseudo_labeling'),
+            # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
+            # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             ('semi_supervised', 'least_confidence', 'simclr'),
-            ('active_learning', 'mc_dropout', 'pseudo_labeling'),
-            # ('semi_supervised', 'least_confidence', 'auto_encoder'),
+            # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
+            ('semi_supervised', 'least_confidence', 'auto_encoder'),
         ]
 
         for (m, u, s) in states:

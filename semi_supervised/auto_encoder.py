@@ -1,10 +1,8 @@
 from data.cifar10_dataset import Cifar10Dataset
 from data.matek_dataset import MatekDataset
 from data.cifar100_dataset import Cifar100Dataset
-from model.resnet_autoencoder import ResnetAutoencoder
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
-    store_logs, get_loss, perform_sampling, create_model_optimizer_scheduler
-import os
+    store_logs, get_loss, perform_sampling, create_model_optimizer_scheduler, create_model_optimizer_autoencoder
 import time
 import torch
 import torch.nn as nn
@@ -30,25 +28,8 @@ class AutoEncoder:
         kwargs = {'num_workers': 2, 'pin_memory': False}
         train_loader = create_base_loader(base_dataset, kwargs, self.args.batch_size)
 
-        model = ResnetAutoencoder(z_dim=32, num_classes=dataset_class.num_classes, drop_rate=self.args.drop_rate)
-
-        model = model.cuda()
-
-        if self.args.resume:
-            file = os.path.join(self.args.checkpoint_path, self.args.name, 'model_best.pth.tar')
-            if os.path.isfile(file):
-                print("=> loading checkpoint '{}'".format(file))
-                checkpoint = torch.load(file)
-                self.args.start_epoch = checkpoint['epoch']
-                self.args.start_epoch = self.args.epochs
-                model.load_state_dict(checkpoint['state_dict'])
-                print("=> loaded checkpoint '{}' (epoch {})"
-                      .format(self.args.resume, checkpoint['epoch']))
-            else:
-                print("=> no checkpoint found at '{}'".format(file))
-
         criterion = nn.BCELoss().cuda()
-        optimizer = torch.optim.Adam(model.parameters())
+        model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
 
         best_loss = np.inf
 
@@ -136,7 +117,7 @@ class AutoEncoder:
 
                 current_labeled_ratio += self.args.add_labeled_ratio
                 best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
-                model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_class)
+                model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
             else:
                 best_acc1 = max(acc, best_acc1)
                 best_prec1 = max(prec, best_prec1)
