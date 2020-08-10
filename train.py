@@ -103,7 +103,7 @@ def main(args):
     else:
         print('Starting training..')
 
-    best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
+    best_acc1, best_acc5, best_prec1, best_recall1, best_f1 = 0, 0, 0, 0, 0
 
     for epoch in range(args.start_epoch, args.epochs):
         model = train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args)
@@ -115,7 +115,8 @@ def main(args):
 
         if epoch > args.labeled_warmup_epochs and epoch % args.add_labeled_epochs == 0:
             acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
-                             [acc, acc5, prec, recall, f1, confusion_mat.tolist(), roc_auc_curve]})
+                             [best_acc1, best_acc5, best_prec1, best_recall1, best_f1,
+                              confusion_mat.tolist(), roc_auc_curve]})
 
             train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                 perform_sampling(args, uncertainty_sampler, pseudo_labeler,
@@ -126,13 +127,14 @@ def main(args):
                                  test_dataset, kwargs, current_labeled_ratio,
                                  best_model)
             current_labeled_ratio += args.add_labeled_ratio
-            best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
+            best_acc1, best_acc5, best_prec1, best_recall1, best_f1 = 0, 0, 0, 0, 0
             model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
         else:
             best_acc1 = max(acc, best_acc1)
             best_prec1 = max(prec, best_prec1)
             best_recall1 = max(recall, best_recall1)
             best_acc5 = max(acc5, best_acc5)
+            best_f1 = max(f1, best_f1)
 
         save_checkpoint(args, {
             'epoch': epoch + 1,

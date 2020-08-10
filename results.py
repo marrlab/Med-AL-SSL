@@ -8,7 +8,7 @@ args = get_arguments()
 
 states = [
     ('random_sampling', 'least_confidence', 'pseudo_labeling'),
-    ('active_learning', 'margin_confidence', 'pseudo_labeling'),
+    ('semi_supervised', 'least_confidence', 'fixmatch'),
     ('active_learning', 'least_confidence', 'pseudo_labeling'),
     ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
     ('active_learning', 'entropy_based', 'pseudo_labeling'),

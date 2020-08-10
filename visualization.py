@@ -51,7 +51,7 @@ if __name__ == "__main__":
         metric=met,
         methods=[
             'Random Sampling',
-            'Margin Sampling',
+            'FixMatch',
             'Least Confidence',
             'Ratio Sampling',
             'Entropy Based',
@@ -59,7 +59,7 @@ if __name__ == "__main__":
             'MC dropout (BALD)',
             'Pseudo Labeling',
             'Auto Encoder',
-            'SimCLR (Resnet18)'
+            'SimCLR'
         ], prop_supervised=[
             [0.01, 0.06, 0.11, 0.16, 0.21, 0.26, 0.31, 0.36, 0.41, 0.46, 0.51, 0.56, 0.61, 0.66],
         ], metric_supervised=[

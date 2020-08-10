@@ -91,7 +91,7 @@ class AutoEncoder:
         optimizer = torch.optim.Adam(model.parameters())
 
         acc_ratio = {}
-        best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
+        best_acc1, best_acc5, best_prec1, best_recall1, best_f1 = 0, 0, 0, 0, 0
         self.args.start_epoch = 0
         self.args.weak_supervision_strategy = "random_sampling"
         current_labeled_ratio = self.args.labeled_ratio_start
@@ -103,7 +103,8 @@ class AutoEncoder:
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
                 acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
-                                 [acc, acc5, prec, recall, f1, confusion_mat.tolist(), roc_auc_curve]})
+                                 [best_acc1, best_acc5, best_prec1, best_recall1, best_f1,
+                                  confusion_mat.tolist(), roc_auc_curve]})
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                     perform_sampling(self.args, None, None,
@@ -115,13 +116,14 @@ class AutoEncoder:
                                      None)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
+                best_acc1, best_acc5, best_prec1, best_recall1, best_f1 = 0, 0, 0, 0, 0
                 model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
             else:
                 best_acc1 = max(acc, best_acc1)
                 best_prec1 = max(prec, best_prec1)
                 best_recall1 = max(recall, best_recall1)
                 best_acc5 = max(acc5, best_acc5)
+                best_f1 = max(f1, best_f1)
 
             if current_labeled_ratio > self.args.labeled_ratio_stop:
                 break

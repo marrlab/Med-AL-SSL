@@ -55,7 +55,7 @@ class FixMatch:
                                 shuffle=True, **self.kwargs)
 
         model.zero_grad()
-        best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
+        best_acc1, best_acc5, best_prec1, best_recall1, best_f1 = 0, 0, 0, 0, 0
         acc_ratio = {}
         self.args.start_epoch = 0
         self.args.weak_supervision_strategy = "random_sampling"
@@ -70,7 +70,8 @@ class FixMatch:
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
                 acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
-                                 [acc, acc5, prec, recall, f1, confusion_mat.tolist(), roc_auc_curve]})
+                                 [best_acc1, best_acc5, best_prec1, best_recall1, best_f1,
+                                  confusion_mat.tolist(), roc_auc_curve]})
 
                 unlabeled_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                     perform_sampling(self.args, None, None,
@@ -90,7 +91,7 @@ class FixMatch:
                                               shuffle=True, **self.kwargs)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
+                best_acc1, best_acc5, best_prec1, best_recall1, best_f1 = 0, 0, 0, 0, 0
                 model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_cls,
                                                                                optimizer='sgd',
                                                                                scheduler='cosine_schedule_with_warmup',
@@ -100,6 +101,7 @@ class FixMatch:
                 best_prec1 = max(prec, best_prec1)
                 best_recall1 = max(recall, best_recall1)
                 best_acc5 = max(acc5, best_acc5)
+                best_f1 = max(f1, best_f1)
 
             save_checkpoint(self.args, {
                 'epoch': epoch + 1,
