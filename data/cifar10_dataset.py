@@ -87,6 +87,15 @@ class Cifar10Dataset:
         return base_dataset
 
     def get_datasets_fixmatch(self, base_dataset, labeled_indices, unlabeled_indices):
+        transform_labeled = transforms.Compose([
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomCrop(size=self.input_size,
+                                  padding=int(self.input_size * 0.125),
+                                  padding_mode='reflect'),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
+        ])
+
         expand_labeled = self.expand_labeled // len(labeled_indices)
         expand_unlabeled = self.expand_unlabeled // len(unlabeled_indices)
         labeled_indices = np.hstack(
@@ -108,7 +117,7 @@ class Cifar10Dataset:
         else:
             assert len(unlabeled_indices) == self.expand_unlabeled
 
-        labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=self.transform_train)
+        labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=transform_labeled)
         unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_fixmatch)
 
         return labeled_dataset, unlabeled_dataset

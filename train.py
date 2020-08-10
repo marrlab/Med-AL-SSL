@@ -5,6 +5,8 @@ from copy import deepcopy
 
 import random
 
+from semi_supervised.fixmatch import FixMatch
+
 os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 import torch
@@ -50,6 +52,10 @@ def main(args):
         simclr = SimCLR(args)
         simclr.train()
         best_acc = simclr.train_validate_classifier()
+        return best_acc
+    elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'fixmatch':
+        simclr = FixMatch(args)
+        best_acc = simclr.main()
         return best_acc
 
     dataset_class = datasets[args.dataset](root=args.root,

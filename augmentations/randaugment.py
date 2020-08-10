@@ -20,7 +20,7 @@ https://github.com/google-research/fixmatch/blob/master/libml/ctaugment.py
 '''
 
 
-def auto_contrast(img):
+def auto_contrast(img, **kwargs):
     return PIL.ImageOps.autocontrast(img)
 
 
@@ -62,15 +62,15 @@ def cutout_abs(img, v):
     return img
 
 
-def equalize(img):
+def equalize(img, **kwargs):
     return PIL.ImageOps.equalize(img)
 
 
-def identity(img):
+def identity(img, **kwargs):
     return img
 
 
-def invert(img):
+def invert(img, **kwargs):
     return PIL.ImageOps.invert(img)
 
 
@@ -147,12 +147,12 @@ def _int_parameter(v, max_v):
 
 
 def fixmatch_augment_pool():
-    augs = [auto_contrast,
+    augs = [(auto_contrast, None, None),
             (brightness, 0.9, 0.05),
             (color, 0.9, 0.05),
             (contrast, 0.9, 0.05),
-            equalize,
-            identity,
+            (equalize, None, None),
+            (identity, None, None),
             (posterize, 4, 4),
             (rotate, 30, 0),
             (sharpness, 0.9, 0.05),

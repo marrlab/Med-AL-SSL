@@ -14,10 +14,10 @@ parser.add_argument('--simclr-train-epochs', default=100, type=int,
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
 
-parser.add_argument('-b', '--batch-size', default=128, type=int,
+parser.add_argument('-b', '--batch-size', default=512, type=int,
                     help='mini-batch size (default: 512)')
 
-parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
+parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
                     help='initial learning rate')
 
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
@@ -105,7 +105,7 @@ parser.add_argument('--weighted', action='store_true', help='to use weighted los
 
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
 
-parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100'],
+parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100'],
                     help='the dataset to train on')
 
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,
@@ -118,7 +118,7 @@ parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs
 
 parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
 
-parser.add_argument('--run_batch', action='store_false', help='run all methods in batch mode')
+parser.add_argument('--run_batch', action='store_true', help='run all methods in batch mode')
 
 parser.add_argument('--fixmatch-mu', default=5, type=int,
                     help='coefficient of unlabeled batch size i.e. mu.B from paper')
@@ -129,10 +129,10 @@ parser.add_argument('--fixmatch-lambda-u', default=2, type=float,
 parser.add_argument('--fixmatch-threshold', default=0.95, type=float,
                     help='pseudo label threshold')
 
-parser.add_argument('--fixmatch-k-img', default=8192, type=int,
+parser.add_argument('--fixmatch-k-img', default=16384, type=int,
                     help='number of labeled examples')
 
-parser.add_argument('--fixmatch-epochs', default=100, type=int,
+parser.add_argument('--fixmatch-epochs', default=1000, type=int,
                     help='epochs for fixmatch algorithm')
 
 parser.add_argument('--fixmatch-warmup', default=0, type=int,

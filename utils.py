@@ -215,16 +215,14 @@ class TransformsSimCLR:
 
 
 class TransformFix(object):
-    def __init__(self, mean, std):
+    def __init__(self, mean, std, input_size=32):
         self.weak = torchvision.transforms.Compose([
-            torchvision.transforms.Resize(size=64),
             torchvision.transforms.RandomHorizontalFlip(),
-            torchvision.transforms.RandomCrop(size=32, padding=int(32*0.125), padding_mode='reflect'),
+            torchvision.transforms.RandomCrop(size=input_size, padding=int(input_size*0.125), padding_mode='reflect'),
         ])
         self.strong = torchvision.transforms.Compose([
-            torchvision.transforms.Resize(size=64),
             torchvision.transforms.RandomHorizontalFlip(),
-            torchvision.transforms.RandomCrop(size=32, padding=int(32*0.125), padding_mode='reflect'),
+            torchvision.transforms.RandomCrop(size=input_size, padding=int(input_size*0.125), padding_mode='reflect'),
             RandAugmentMC(n=2, m=10)
         ])
         self.normalize = torchvision.transforms.Compose([
@@ -269,7 +267,7 @@ def create_model_optimizer_scheduler(args, dataset_class, optimizer='adam', sche
     if scheduler == 'steplr':
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.2)
     else:
-        args.iteration = args.fixmatch_k_img // args.fixmatch_batch_size
+        args.iteration = args.fixmatch_k_img // args.batch_size
         args.total_steps = args.fixmatch_epochs * args.iteration
         scheduler = get_cosine_schedule_with_warmup(
             optimizer, args.fixmatch_warmup * args.iteration, args.total_steps)
