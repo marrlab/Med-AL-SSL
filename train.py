@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import random
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '5'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 import torch
 import torch.cuda
@@ -57,7 +57,8 @@ def main(args):
                                            add_labeled_ratio=args.add_labeled_ratio,
                                            advanced_transforms=True)
 
-    labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = dataset_class.get_dataset()
+    base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
+        dataset_class.get_dataset()
 
     kwargs = {'num_workers': 2, 'pin_memory': False}
     train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset,
@@ -73,7 +74,7 @@ def main(args):
     model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
 
     if args.resume:
-        model = resume_model(args, model)
+        model, _, _ = resume_model(args, model)
 
     criterion = get_loss(args, unlabeled_dataset, unlabeled_indices, dataset_class)
 
@@ -260,7 +261,7 @@ if __name__ == '__main__':
             # ('active_learning', 'least_confidence', 'pseudo_labeling'),
             # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
-            # ('active_learning', 'entropy_based', 'pseudo_labeling'),
+            ('active_learning', 'entropy_based', 'pseudo_labeling'),
             # ('active_learning', 'density_weighted', 'pseudo_labeling'),
             ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             ('semi_supervised', 'least_confidence', 'pseudo_labeling'),

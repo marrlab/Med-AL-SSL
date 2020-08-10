@@ -43,7 +43,7 @@ class MatekDataset:
                 transforms.Resize(size=self.input_size),
                 transforms.ToTensor(),
             ])
-        self.transform_simclr = TransformsSimCLR(size=128)
+        self.transform_simclr = TransformsSimCLR(size=self.input_size)
         self.num_classes = 15
         self.add_labeled_ratio = add_labeled_ratio
         self.add_labeled_num = None

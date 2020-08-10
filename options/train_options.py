@@ -80,18 +80,18 @@ parser.add_argument('--weak-supervision-strategy', default='semi_supervised', ty
                     choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
 
-parser.add_argument('--semi-supervised-method', default='auto_encoder', type=str,
-                    choices=['pseudo_labeling', 'auto_encoder', 'simclr'],
+parser.add_argument('--semi-supervised-method', default='fixmatch', type=str,
+                    choices=['pseudo_labeling', 'auto_encoder', 'simclr', 'fixmatch'],
                     help='the semi supervised method to use')
 
 parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
 
-parser.add_argument('--simclr-temperature', default=0.1, type=float, help='the temperature term for simclr loss')
+parser.add_argument('--simclr-temperature', default=0.5, type=float, help='the temperature term for simclr loss')
 
 parser.add_argument('--simclr-normalize', action='store_false', help='normalize the hidden feat vectors in simclr')
 
-parser.add_argument('--simclr-batch-size', default=1024, type=int,
+parser.add_argument('--simclr-batch-size', default=512, type=int,
                     help='mini-batch size for simclr (default: 1024)')
 
 parser.add_argument('--simclr-arch', default='resnet', type=str, choices=['lenet', 'resnet'],
@@ -118,7 +118,25 @@ parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs
 
 parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
 
-parser.add_argument('--run_batch', action='store_true', help='run all methods in batch mode')
+parser.add_argument('--run_batch', action='store_false', help='run all methods in batch mode')
+
+parser.add_argument('--fixmatch-mu', default=5, type=int,
+                    help='coefficient of unlabeled batch size i.e. mu.B from paper')
+
+parser.add_argument('--fixmatch-lambda-u', default=2, type=float,
+                    help='coefficient of unlabeled loss')
+
+parser.add_argument('--fixmatch-threshold', default=0.95, type=float,
+                    help='pseudo label threshold')
+
+parser.add_argument('--fixmatch-k-img', default=8192, type=int,
+                    help='number of labeled examples')
+
+parser.add_argument('--fixmatch-epochs', default=100, type=int,
+                    help='epochs for fixmatch algorithm')
+
+parser.add_argument('--fixmatch-warmup', default=0, type=int,
+                    help='warmup epochs with unlabeled data')
 
 parser.set_defaults(augment=True)
 

@@ -1,111 +1,70 @@
+from data.cifar100_dataset import Cifar100Dataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.matek_dataset import MatekDataset
-from data.cifar100_dataset import Cifar100Dataset
-from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
-    store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder
-import time
+
 import torch
-import torch.nn as nn
+import torch.nn.functional as F
+import time
+
 import numpy as np
+
+from utils import create_model_optimizer_scheduler, create_loaders, AverageMeter, accuracy, Metrics, perform_sampling, \
+    store_logs
 
 torch.autograd.set_detect_anomaly(True)
 
+'''
+FixMatch implementation, adapted from:
+Courtesy to: https://github.com/kekmodel/FixMatch-pytorch
+'''
 
-class AutoEncoder:
+
+class FixMatch:
     def __init__(self, args, verbose=True):
         self.args = args
         self.verbose = verbose
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset}
         self.model = None
-        self.kwargs = {'num_workers': 2, 'pin_memory': False}
+        self.kwargs = {'num_workers': 16, 'pin_memory': False}
 
-    def train(self):
+    def main(self):
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,
                                                          labeled_ratio=self.args.labeled_ratio_start,
-                                                         add_labeled_ratio=self.args.add_labeled_ratio)
-
-        base_dataset = dataset_class.get_base_dataset_autoencoder()
-
-        train_loader = create_base_loader(base_dataset, self.kwargs, self.args.batch_size)
-
-        criterion = nn.BCELoss().cuda()
-        model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
-
-        best_loss = np.inf
-
-        for epoch in range(self.args.start_epoch, self.args.autoencoder_train_epochs):
-            model.train()
-            batch_time = AverageMeter()
-            losses = AverageMeter()
-
-            end = time.time()
-            for i, (data_x, data_y) in enumerate(train_loader):
-                data_x = data_x.cuda(non_blocking=True)
-
-                output = model(data_x)
-                loss = criterion(output, data_x)
-
-                losses.update(loss.data.item(), data_x.size(0))
-
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-
-                batch_time.update(time.time() - end)
-                end = time.time()
-
-                if i % self.args.print_freq == 0:
-                    print('Epoch: [{0}][{1}/{2}]\t'
-                          'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                          'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                          .format(epoch, i, len(train_loader), batch_time=batch_time, loss=losses))
-
-            is_best = best_loss > losses.avg
-            best_loss = min(best_loss, losses.avg)
-
-            save_checkpoint(self.args, {
-                'epoch': epoch + 1,
-                'state_dict': model.state_dict(),
-                'best_prec1': best_loss,
-            }, is_best)
-
-        self.model = model
-        return model
-
-    def train_validate_classifier(self):
-        dataset_class = self.datasets[self.args.dataset](root=self.args.root,
-                                                         labeled_ratio=self.args.labeled_ratio_start,
-                                                         add_labeled_ratio=self.args.add_labeled_ratio)
+                                                         add_labeled_ratio=self.args.add_labeled_ratio,
+                                                         advanced_transforms=False)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_class.get_dataset()
 
-        train_loader, unlabeled_loader, val_loader = create_loaders(self.args, labeled_dataset, unlabeled_dataset,
-                                                                    test_dataset,
-                                                                    labeled_indices, unlabeled_indices, self.kwargs)
+        labeled_dataset, unlabeled_dataset = dataset_class.get_datasets_fixmatch(base_dataset, labeled_dataset,
+                                                                                 unlabeled_dataset)
 
-        model = self.model
+        model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_class, optimizer='sgd',
+                                                                       scheduler='cosine_schedule_with_warmup',
+                                                                       load_optimizer_scheduler=True)
 
-        criterion = get_loss(self.args, unlabeled_dataset, unlabeled_indices, dataset_class)
+        labeled_loader, unlabeled_loader, val_loader = create_loaders(self.args, labeled_dataset, unlabeled_dataset,
+                                                                      test_dataset,
+                                                                      labeled_indices, unlabeled_indices, self.kwargs)
 
-        optimizer = torch.optim.Adam(model.parameters())
-
-        acc_ratio = {}
+        model.zero_grad()
         best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
+        acc_ratio = {}
         self.args.start_epoch = 0
         self.args.weak_supervision_strategy = "random_sampling"
         current_labeled_ratio = self.args.labeled_ratio_start
 
-        for epoch in range(self.args.start_epoch, self.args.epochs):
-            self.train_classifier(train_loader, model, criterion, optimizer, epoch)
-            acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve = self.validate_classifier(val_loader,
-                                                                                                      model, criterion)
+        train_loader = zip(labeled_loader, unlabeled_loader)
+
+        for epoch in range(self.args.start_epoch, self.args.fixmatch_epochs):
+            self.train(train_loader, model, optimizer, epoch)
+            acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve = self.validate(val_loader, model)
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
                 acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
                                  [acc, acc5, prec, recall, f1, confusion_mat.tolist(), roc_auc_curve]})
 
-                train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
+                unlabeled_loader_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                     perform_sampling(self.args, None, None,
                                      epoch, model, train_loader, unlabeled_loader,
                                      dataset_class, labeled_indices,
@@ -114,9 +73,23 @@ class AutoEncoder:
                                      test_dataset, self.kwargs, current_labeled_ratio,
                                      None)
 
+                labeled_dataset, unlabeled_dataset = dataset_class.get_datasets_fixmatch(base_dataset, labeled_dataset,
+                                                                                         unlabeled_dataset)
+
+                labeled_loader, unlabeled_loader, val_loader = create_loaders(self.args, labeled_dataset,
+                                                                              unlabeled_dataset,
+                                                                              test_dataset,
+                                                                              labeled_indices, unlabeled_indices,
+                                                                              self.kwargs)
+
+                train_loader = zip(labeled_loader, unlabeled_loader)
+
                 current_labeled_ratio += self.args.add_labeled_ratio
                 best_acc1, best_acc5, best_prec1, best_recall1 = 0, 0, 0, 0
-                model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
+                model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_class,
+                                                                               optimizer='sgd',
+                                                                               scheduler='cosine_schedule_with_warmup',
+                                                                               load_optimizer_scheduler=True)
             else:
                 best_acc1 = max(acc, best_acc1)
                 best_prec1 = max(prec, best_prec1)
@@ -131,7 +104,7 @@ class AutoEncoder:
 
         return best_acc1
 
-    def train_classifier(self, train_loader, model, criterion, optimizer, epoch):
+    def train(self, train_loader, model, optimizer, epoch):
         batch_time = AverageMeter()
         losses = AverageMeter()
         top1 = AverageMeter()
@@ -140,15 +113,31 @@ class AutoEncoder:
 
         model.train()
 
-        for i, (data_x, data_y) in enumerate(train_loader):
-            data_x = data_x.cuda(non_blocking=True)
-            data_y = data_y.cuda(non_blocking=True)
+        for i, (data_labeled, data_unlabeled) in enumerate(train_loader):
+            data_x, data_y = data_labeled
+            data_x, data_y = data_x.cuda(non_blocking=True), data_y.cuda(non_blocking=True)
 
-            output = model.forward_classifier(data_x)
+            data_w, data_s = data_unlabeled
+            data_w, data_s = data_w.cuda(non_blocking=True), data_s.cuda(non_blocking=True)
 
-            loss = criterion(output, data_y)
+            inputs = torch.cat((data_x, data_w, data_s))
+            logits = model(inputs)
+            logits_labeled = logits[:self.args.batch_size]
+            logits_unlabeled_w, logits_unlabeled_s = logits[self.args.batch_size:].chunk(2)
+            del logits
 
-            acc = accuracy(output.data, data_y, topk=(1,))[0]
+            loss_labeled = F.cross_entropy(logits_labeled, data_y, reduction='mean')
+
+            pseudo_label = torch.softmax(logits_unlabeled_w.detach_(), dim=-1)
+            max_probs, data_y_unlabeled = torch.max(pseudo_label, dim=-1)
+            mask = max_probs.ge(self.args.fixmatch_threshold).float()
+
+            loss_unlabeled = (F.cross_entropy(logits_unlabeled_s, data_y_unlabeled,
+                                              reduction='none') * mask).mean()
+
+            loss = loss_labeled + self.args.fixmatch_lambda_u * loss_unlabeled
+
+            acc = accuracy(logits_labeled.data, data_y, topk=(1,))[0]
             losses.update(loss.data.item(), data_x.size(0))
             top1.update(acc.item(), data_x.size(0))
 
@@ -165,7 +154,7 @@ class AutoEncoder:
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                       .format(epoch, i, len(train_loader), batch_time=batch_time, loss=losses))
 
-    def validate_classifier(self, val_loader, model, criterion):
+    def validate(self, val_loader, model):
         batch_time = AverageMeter()
         losses = AverageMeter()
         top1 = AverageMeter()
@@ -181,9 +170,10 @@ class AutoEncoder:
                 data_x = data_x.cuda(non_blocking=True)
                 data_y = data_y.cuda(non_blocking=True)
 
-                output = model.forward_classifier(data_x)
+                h = model.forward_encoder(data_x)
+                output = model.forward_classifier(h)
 
-                loss = criterion(output, data_y)
+                loss = F.cross_entropy(output, data_y)
 
                 acc = accuracy(output.data, data_y, topk=(1, 5,))
                 losses.update(loss.data.item(), data_x.size(0))

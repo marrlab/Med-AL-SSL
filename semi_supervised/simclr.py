@@ -2,7 +2,7 @@ from data.cifar10_dataset import Cifar10Dataset
 from data.matek_dataset import MatekDataset
 from data.cifar100_dataset import Cifar100Dataset
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
-    store_logs, NTXent, get_loss, perform_sampling, create_model_optimizer_scheduler, \
+    store_logs, NTXent, get_loss, perform_sampling, \
     create_model_optimizer_simclr
 import time
 import torch
@@ -23,6 +23,7 @@ class SimCLR:
         self.verbose = verbose
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset}
         self.model = None
+        self.kwargs = {'num_workers': 16, 'pin_memory': False}
 
     def train(self):
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,
@@ -32,8 +33,7 @@ class SimCLR:
 
         base_dataset = dataset_class.get_base_dataset_simclr()
 
-        kwargs = {'num_workers': 16, 'pin_memory': False}
-        train_loader = create_base_loader(base_dataset, kwargs, self.args.simclr_batch_size)
+        train_loader = create_base_loader(base_dataset, self.kwargs, self.args.simclr_batch_size)
 
         criterion = NTXent(self.args.simclr_batch_size, self.args.simclr_temperature, torch.device("cuda"))
 
@@ -89,13 +89,12 @@ class SimCLR:
                                                          add_labeled_ratio=self.args.add_labeled_ratio,
                                                          advanced_transforms=False)
 
-        labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
+        base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_class.get_dataset()
 
-        kwargs = {'num_workers': 2, 'pin_memory': False}
         train_loader, unlabeled_loader, val_loader = create_loaders(self.args, labeled_dataset, unlabeled_dataset,
                                                                     test_dataset,
-                                                                    labeled_indices, unlabeled_indices, kwargs)
+                                                                    labeled_indices, unlabeled_indices, self.kwargs)
 
         model = self.model
 
@@ -125,7 +124,7 @@ class SimCLR:
                                      dataset_class, labeled_indices,
                                      unlabeled_indices, labeled_dataset,
                                      unlabeled_dataset,
-                                     test_dataset, kwargs, current_labeled_ratio,
+                                     test_dataset, self.kwargs, current_labeled_ratio,
                                      None)
 
                 current_labeled_ratio += self.args.add_labeled_ratio

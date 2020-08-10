@@ -4,6 +4,7 @@ import json
 import numpy as np
 import os
 import shutil
+import math
 
 import torch
 import torch.nn as nn
@@ -11,6 +12,7 @@ import torchvision
 
 from numpy.random import default_rng
 from sklearn.metrics import precision_recall_fscore_support, classification_report, confusion_matrix, roc_auc_score
+from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
 from torchlars import LARS
 
@@ -20,6 +22,7 @@ from model.resnet import resnet18
 from model.resnet_autoencoder import ResnetAutoencoder
 from model.simclr_arch import SimCLRArch
 from model.wideresnet import WideResNet
+from augmentations.randaugment import RandAugmentMC
 
 
 def save_checkpoint(args, state, is_best, filename='checkpoint.pth.tar', best_model_filename='model_best.pth.tar'):
@@ -211,7 +214,32 @@ class TransformsSimCLR:
         return self.train_transform(x), self.train_transform(x)
 
 
-def create_model_optimizer_scheduler(args, dataset_class):
+class TransformFix(object):
+    def __init__(self, mean, std):
+        self.weak = torchvision.transforms.Compose([
+            torchvision.transforms.Resize(size=64),
+            torchvision.transforms.RandomHorizontalFlip(),
+            torchvision.transforms.RandomCrop(size=32, padding=int(32*0.125), padding_mode='reflect'),
+        ])
+        self.strong = torchvision.transforms.Compose([
+            torchvision.transforms.Resize(size=64),
+            torchvision.transforms.RandomHorizontalFlip(),
+            torchvision.transforms.RandomCrop(size=32, padding=int(32*0.125), padding_mode='reflect'),
+            RandAugmentMC(n=2, m=10)
+        ])
+        self.normalize = torchvision.transforms.Compose([
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize(mean=mean, std=std)
+        ])
+
+    def __call__(self, x):
+        weak = self.weak(x)
+        strong = self.strong(x)
+        return self.normalize(weak), self.normalize(strong)
+
+
+def create_model_optimizer_scheduler(args, dataset_class, optimizer='adam', scheduler='steplr',
+                                     load_optimizer_scheduler=False):
     if args.arch == 'wideresnet':
         model = WideResNet(depth=args.layers,
                            num_classes=dataset_class.num_classes,
@@ -230,15 +258,27 @@ def create_model_optimizer_scheduler(args, dataset_class):
     print('Number of model parameters: {}'.format(
         sum([p.data.nelement() for p in model.parameters()])))
 
-    # doc: for training on multiple GPUs.
-    # doc: Use CUDA_VISIBLE_DEVICES=0,1 to specify which GPUs to use
-    # doc: model = torch.nn.DataParallel(model).cuda()
     model = model.cuda()
 
-    optimizer = torch.optim.Adam(model.parameters())
-    # optimizer = torch.optim.SGD(model.parameters(), lr=args.lr,
-    #                            momentum=args.momentum, weight_decay=args.weight_decay, nesterov=False)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.2)
+    if optimizer == 'adam':
+        optimizer = torch.optim.Adam(model.parameters())
+    else:
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr,
+                                    momentum=args.momentum, nesterov=args.nesterov)
+
+    if scheduler == 'steplr':
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.2)
+    else:
+        args.iteration = args.fixmatch_k_img // args.fixmatch_batch_size
+        args.total_steps = args.fixmatch_epochs * args.iteration
+        scheduler = get_cosine_schedule_with_warmup(
+            optimizer, args.fixmatch_warmup * args.iteration, args.total_steps)
+
+    if args.resume:
+        if load_optimizer_scheduler:
+            model, optimizer, scheduler = resume_model(args, model, optimizer, scheduler)
+        else:
+            model, _, _ = resume_model(args, model)
 
     return model, optimizer, scheduler
 
@@ -251,9 +291,9 @@ def create_model_optimizer_simclr(args, dataset_class):
 
     model = model.cuda()
 
-    # args.resume = True
+    args.resume = True
     if args.resume:
-        resume_model(args, model)
+        model, _, _ = resume_model(args, model)
         args.start_epoch = args.epochs
 
     if args.simclr_optimizer == 'adam':
@@ -276,7 +316,7 @@ def create_model_optimizer_autoencoder(args, dataset_class):
 
     model = model.cuda()
 
-    # args.resume = True
+    args.resume = True
     if args.resume:
         file = os.path.join(args.checkpoint_path, args.name, 'model_best.pth.tar')
         if os.path.isfile(file):
@@ -308,19 +348,23 @@ def get_loss(args, unlabeled_dataset, unlabeled_indices, dataset_class):
     return criterion
 
 
-def resume_model(args, model):
+def resume_model(args, model, optimizer=None, scheduler=None):
     file = os.path.join(args.checkpoint_path, args.name, 'model_best.pth.tar')
     if os.path.isfile(file):
         print("=> loading checkpoint '{}'".format(file))
         checkpoint = torch.load(file)
         args.start_epoch = checkpoint['epoch']
         model.load_state_dict(checkpoint['state_dict'])
+        if optimizer:
+            optimizer.load_state_dict(checkpoint['optimizer'])
+        if scheduler:
+            scheduler.load_state_dict(checkpoint['scheduler'])
         print("=> loaded checkpoint '{}' (epoch {})"
               .format(args.resume, checkpoint['epoch']))
     else:
         print("=> no checkpoint found at '{}'".format(file))
 
-    return model
+    return model, optimizer, scheduler
 
 
 def set_model_name(args):
@@ -392,6 +436,21 @@ def perform_sampling(args, uncertainty_sampler, pseudo_labeler, epoch, model, tr
               f'Model Reset')
 
     return train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices
+
+
+def get_cosine_schedule_with_warmup(optimizer,
+                                    num_warmup_steps,
+                                    num_training_steps,
+                                    num_cycles=7. / 16.,
+                                    last_epoch=-1):
+    def _lr_lambda(current_step):
+        if current_step < num_warmup_steps:
+            return float(current_step) / float(max(1, num_warmup_steps))
+        no_progress = float(current_step - num_warmup_steps) / float(max(1, num_training_steps - num_warmup_steps))
+        return max(0., math.cos(math.pi * num_cycles * no_progress))
+
+    # noinspection PyTypeChecker
+    return LambdaLR(optimizer, _lr_lambda, last_epoch)
 
 
 def print_args(args):
