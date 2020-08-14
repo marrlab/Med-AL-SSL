@@ -65,9 +65,9 @@ parser.add_argument('--labeled-warmup_epochs', default=15, type=int,
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 
-parser.add_argument('--uncertainty-sampling-method', default='least_confidence', type=str,
+parser.add_argument('--uncertainty-sampling-method', default='learning_loss', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
-                             'density_weighted', 'mc_dropout'],
+                             'density_weighted', 'mc_dropout', 'learning_loss'],
                     help='the uncertainty sampling method to use')
 
 parser.add_argument('--mc-dropout-iterations', default=25, type=int,
@@ -76,7 +76,7 @@ parser.add_argument('--mc-dropout-iterations', default=25, type=int,
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
 
-parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
+parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
 
@@ -118,7 +118,7 @@ parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs
 
 parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
 
-parser.add_argument('--run_batch', action='store_true', help='run all methods in batch mode')
+parser.add_argument('--run-batch', action='store_true', help='run all methods in batch mode')
 
 parser.add_argument('--fixmatch-mu', default=5, type=int,
                     help='coefficient of unlabeled batch size i.e. mu.B from paper')

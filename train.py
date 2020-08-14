@@ -1,3 +1,4 @@
+from active_learning.learning_loss import LearningLoss
 from options.train_options import get_arguments
 import os
 import time
@@ -7,7 +8,7 @@ import random
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '6'
 
 import torch
 import torch.cuda
@@ -57,6 +58,10 @@ def main(args):
         simclr = FixMatch(args)
         best_acc = simclr.main()
         return best_acc
+    elif args.weak_supervision_strategy == 'active_learning' and args.semi_supervised_method == 'learning_loss':
+        learning_loss = LearningLoss(args)
+        best_acc = learning_loss.main()
+        return best_acc
 
     dataset_class = datasets[args.dataset](root=args.root,
                                            labeled_ratio=args.labeled_ratio_start,
@@ -103,7 +108,7 @@ def main(args):
     else:
         print('Starting training..')
 
-    best_acc1, best_acc5, best_prec1, best_recall1, best_f1 = 0, 0, 0, 0, 0
+    best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
 
     for epoch in range(args.start_epoch, args.epochs):
         model = train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args)
@@ -116,7 +121,7 @@ def main(args):
         if epoch > args.labeled_warmup_epochs and epoch % args.add_labeled_epochs == 0:
             acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
                              [best_acc1, best_acc5, best_prec1, best_recall1, best_f1,
-                              confusion_mat.tolist(), roc_auc_curve]})
+                              best_confusion_mat.tolist(), roc_auc_curve]})
 
             train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                 perform_sampling(args, uncertainty_sampler, pseudo_labeler,
@@ -127,7 +132,7 @@ def main(args):
                                  test_dataset, kwargs, current_labeled_ratio,
                                  best_model)
             current_labeled_ratio += args.add_labeled_ratio
-            best_acc1, best_acc5, best_prec1, best_recall1, best_f1 = 0, 0, 0, 0, 0
+            best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
             model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
         else:
             best_acc1 = max(acc, best_acc1)
@@ -135,6 +140,7 @@ def main(args):
             best_recall1 = max(recall, best_recall1)
             best_acc5 = max(acc5, best_acc5)
             best_f1 = max(f1, best_f1)
+            best_confusion_mat = confusion_mat if is_best else best_confusion_mat
 
         save_checkpoint(args, {
             'epoch': epoch + 1,
@@ -177,7 +183,7 @@ def train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, ar
         data_x = data_x.cuda(non_blocking=True)
 
         optimizer.zero_grad()
-        output, _ = model(data_x)
+        output, _, _ = model(data_x)
         loss = criterion(output, data_y)
 
         acc = accuracy(output.data, data_y, topk=(1,))[0]
@@ -218,7 +224,7 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
             data_y = data_y.cuda(non_blocking=True)
             data_x = data_x.cuda(non_blocking=True)
 
-            output, _ = model(data_x)
+            output, _, _ = model(data_x)
             loss = criterion(output, data_y)
 
             acc = accuracy(output.data, data_y, topk=(1, 5,))
@@ -257,7 +263,7 @@ def evaluate(val_loader, model):
             data_y = data_y.cuda(non_blocking=True)
             data_x = data_x.cuda(non_blocking=True)
 
-            output, _ = model(data_x)
+            output, _, _ = model(data_x)
             metrics.add_mini_batch(data_y, output)
 
     return metrics.get_metrics(), metrics.get_report()

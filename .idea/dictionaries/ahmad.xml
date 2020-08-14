@@ -11,6 +11,7 @@
       <w>concated</w>
       <w>conv</w>
       <w>convolutional</w>
+      <w>criterions</w>
       <w>cuda</w>
       <w>cudnn</w>
       <w>dataprop</w>
@@ -24,6 +25,7 @@
       <w>fivethirtyeight</w>
       <w>fixmatch</w>
       <w>inplanes</w>
+      <w>interm</w>
       <w>komodakis</w>
       <w>labelerm</w>
       <w>lenet</w>

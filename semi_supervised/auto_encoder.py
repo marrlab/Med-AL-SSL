@@ -91,7 +91,7 @@ class AutoEncoder:
         optimizer = torch.optim.Adam(model.parameters())
 
         acc_ratio = {}
-        best_acc1, best_acc5, best_prec1, best_recall1, best_f1 = 0, 0, 0, 0, 0
+        best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
         self.args.start_epoch = 0
         self.args.weak_supervision_strategy = "random_sampling"
         current_labeled_ratio = self.args.labeled_ratio_start
@@ -101,10 +101,12 @@ class AutoEncoder:
             acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve = self.validate_classifier(val_loader,
                                                                                                       model, criterion)
 
+            is_best = acc > best_acc1
+
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
                 acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
                                  [best_acc1, best_acc5, best_prec1, best_recall1, best_f1,
-                                  confusion_mat.tolist(), roc_auc_curve]})
+                                  best_confusion_mat.tolist(), roc_auc_curve]})
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                     perform_sampling(self.args, None, None,
@@ -116,7 +118,7 @@ class AutoEncoder:
                                      None)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_acc1, best_acc5, best_prec1, best_recall1, best_f1 = 0, 0, 0, 0, 0
+                best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
                 model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
             else:
                 best_acc1 = max(acc, best_acc1)
@@ -124,6 +126,7 @@ class AutoEncoder:
                 best_recall1 = max(recall, best_recall1)
                 best_acc5 = max(acc5, best_acc5)
                 best_f1 = max(f1, best_f1)
+                best_confusion_mat = confusion_mat if is_best else best_confusion_mat
 
             if current_labeled_ratio > self.args.labeled_ratio_stop:
                 break

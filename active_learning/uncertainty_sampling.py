@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 from utils import AverageMeter
 import time
+import numpy as np
 
 
 class UncertaintySampling:
@@ -53,12 +54,40 @@ class UncertaintySampling:
 
         return entropy * (-torch.mean(similarities, dim=1)+1)
 
+    @staticmethod
+    def predict_loss(models, unlabeled_loader, args, epoch, uncertainty_sampling_method):
+        models['backbone'].eval()
+        models['module'].eval()
+        uncertainty = torch.tensor([]).cuda()
+
+        with torch.no_grad():
+            for i, (data_x, data_y) in enumerate(unlabeled_loader):
+                data_x = data_x.cuda(non_blocking=True)
+
+                output, features = models['backbone'](data_x)
+                pred_loss = models['module'](features)
+                pred_loss = pred_loss.view(pred_loss.size(0))
+
+                uncertainty = torch.cat((uncertainty, pred_loss), 0)
+
+                if i % args.print_freq == 0:
+                    print('{0}\t'
+                          'Epoch: [{1}][{2}/{3}]\t'
+                          .format(uncertainty_sampling_method, epoch, i, len(unlabeled_loader)))
+
+        return uncertainty.cpu()
+
     def get_samples(self, epoch, args, model, train_loader, unlabeled_loader, number):
         batch_time = AverageMeter()
         samples = None
         feat_train = None
+        targets = None
 
         end = time.time()
+
+        if args.uncertainty_sampling_method == 'learning_loss':
+            scores = self.predict_loss(model, unlabeled_loader, args, epoch, self.uncertainty_sampling_method)
+            return scores.argsort(descending=True)[:number]
 
         model.eval()
 
@@ -72,6 +101,8 @@ class UncertaintySampling:
 
         for i, (data_x, data_y) in enumerate(unlabeled_loader):
             data_x = data_x.cuda(non_blocking=True)
+            targets = data_y.cpu().numpy() if targets is None \
+                else np.concatenate([targets, data_y.cpu().numpy().tolist()])
 
             with torch.no_grad():
                 output, feat = model(data_x)

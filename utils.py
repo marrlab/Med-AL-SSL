@@ -18,6 +18,7 @@ from torchlars import LARS
 
 from model.densenet import densenet121
 from model.lenet import LeNet
+from model.loss_net import LossNet
 from model.resnet import resnet18
 from model.resnet_autoencoder import ResnetAutoencoder
 from model.simclr_arch import SimCLRArch
@@ -95,7 +96,7 @@ def create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset, label
     unlabeled_dataset.indices = unlabeled_indices
 
     labeled_loader = DataLoader(dataset=labeled_dataset, batch_size=args.batch_size, shuffle=True, **kwargs)
-    unlabeled_loader = DataLoader(dataset=unlabeled_dataset, batch_size=args.batch_size, shuffle=True, **kwargs)
+    unlabeled_loader = DataLoader(dataset=unlabeled_dataset, batch_size=args.batch_size, shuffle=False, **kwargs)
     val_loader = DataLoader(dataset=test_dataset, batch_size=args.batch_size, shuffle=True, **kwargs)
 
     return labeled_loader, unlabeled_loader, val_loader
@@ -333,17 +334,48 @@ def create_model_optimizer_autoencoder(args, dataset_class):
     return model, optimizer, args
 
 
-def get_loss(args, unlabeled_dataset, unlabeled_indices, dataset_class):
+def create_model_optimizer_loss_net():
+    model = LossNet().cuda()
+    optimizer = torch.optim.Adam(model.parameters())
+
+    return model, optimizer
+
+
+def get_loss(args, unlabeled_dataset, unlabeled_indices, dataset_class, reduction='mean'):
     if args.weighted:
         classes_targets = unlabeled_dataset.targets[unlabeled_indices]
         classes_samples = [np.sum(classes_targets == i) for i in range(dataset_class.num_classes)]
         classes_weights = np.log2(len(unlabeled_dataset)) - np.log2(classes_samples)
+        # classes_weights = len(unlabeled_dataset) / np.array(classes_samples)
+        # classes_weights = [100, 100, 50, 150, 150, 10, 150, 150, 20, 150, 10, 50, 5, 150, 100]
         # noinspection PyArgumentList
-        criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(classes_weights).cuda())
+        criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(classes_weights).cuda(), reduction=reduction)
     else:
-        criterion = nn.CrossEntropyLoss().cuda()
+        criterion = nn.CrossEntropyLoss(reduction=reduction).cuda()
 
     return criterion
+
+
+def loss_module_objective_func(pred, target, margin=1.0, reduction='mean'):
+    assert len(pred) % 2 == 0, 'the batch size is not even.'
+    assert pred.shape == pred.flip(0).shape
+
+    pred = (pred - pred.flip(0))[:len(pred) // 2]
+    target = (target - target.flip(0))[:len(target) // 2]
+    target = target.detach()
+
+    indicator_func = 2 * torch.sign(torch.clamp(target, min=0)) - 1
+
+    if reduction == 'mean':
+        loss = torch.sum(torch.clamp(margin - indicator_func * pred, min=0))
+        loss = loss / pred.size(0)
+    elif reduction == 'none':
+        loss = torch.clamp(margin - indicator_func * pred, min=0)
+    else:
+        loss = None
+        NotImplementedError()
+
+    return loss
 
 
 def resume_model(args, model, optimizer=None, scheduler=None):
