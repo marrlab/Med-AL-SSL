@@ -5,6 +5,7 @@ import numpy as np
 import os
 import shutil
 import math
+import random
 
 import torch
 import torch.nn as nn
@@ -93,7 +94,8 @@ def accuracy(output, target, topk=(1,)):
 
 def create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset, labeled_indices, unlabeled_indices, kwargs):
     labeled_dataset.indices = labeled_indices
-    unlabeled_dataset.indices = unlabeled_indices
+    random.shuffle(unlabeled_indices)
+    unlabeled_dataset.indices = unlabeled_indices[:10000]
 
     labeled_loader = DataLoader(dataset=labeled_dataset, batch_size=args.batch_size, shuffle=True, **kwargs)
     unlabeled_loader = DataLoader(dataset=unlabeled_dataset, batch_size=args.batch_size, shuffle=False, **kwargs)

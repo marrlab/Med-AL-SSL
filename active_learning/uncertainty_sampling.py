@@ -55,7 +55,7 @@ class UncertaintySampling:
         return entropy * (-torch.mean(similarities, dim=1)+1)
 
     @staticmethod
-    def predict_loss(models, unlabeled_loader, args, epoch, uncertainty_sampling_method):
+    def learning_loss(models, unlabeled_loader, args, epoch, uncertainty_sampling_method):
         models['backbone'].eval()
         models['module'].eval()
         uncertainty = torch.tensor([]).cuda()
@@ -64,7 +64,7 @@ class UncertaintySampling:
             for i, (data_x, data_y) in enumerate(unlabeled_loader):
                 data_x = data_x.cuda(non_blocking=True)
 
-                output, features = models['backbone'](data_x)
+                output, _, features = models['backbone'](data_x)
                 pred_loss = models['module'](features)
                 pred_loss = pred_loss.view(pred_loss.size(0))
 
@@ -86,7 +86,7 @@ class UncertaintySampling:
         end = time.time()
 
         if args.uncertainty_sampling_method == 'learning_loss':
-            scores = self.predict_loss(model, unlabeled_loader, args, epoch, self.uncertainty_sampling_method)
+            scores = self.learning_loss(model, unlabeled_loader, args, epoch, self.uncertainty_sampling_method)
             return scores.argsort(descending=True)[:number]
 
         model.eval()
@@ -95,7 +95,7 @@ class UncertaintySampling:
             data_x = data_x.cuda(non_blocking=True)
 
             with torch.no_grad():
-                output, feat = model(data_x)
+                output, _, feat = model(data_x)
 
             feat_train = feat if feat_train is None else torch.cat([feat_train, feat])
 

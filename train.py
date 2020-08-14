@@ -58,7 +58,7 @@ def main(args):
         simclr = FixMatch(args)
         best_acc = simclr.main()
         return best_acc
-    elif args.weak_supervision_strategy == 'active_learning' and args.semi_supervised_method == 'learning_loss':
+    elif args.weak_supervision_strategy == 'active_learning' and args.uncertainty_sampling_method == 'learning_loss':
         learning_loss = LearningLoss(args)
         best_acc = learning_loss.main()
         return best_acc
