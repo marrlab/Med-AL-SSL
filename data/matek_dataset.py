@@ -9,7 +9,7 @@ from utils import TransformsSimCLR, TransformFix
 
 class MatekDataset:
     def __init__(self, root, labeled_ratio, add_labeled_ratio, advanced_transforms=True, remove_classes=False,
-                 expand_labeled=0, expand_unlabeled=0):
+                 expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1):
         self.root = root
         self.train_path = os.path.join(self.root, "matek", "train")
         self.test_path = os.path.join(self.root, "matek", "test")
@@ -50,7 +50,9 @@ class MatekDataset:
         self.transform_fixmatch = TransformFix(mean=self.matek_mean, std=self.matek_std, input_size=self.input_size)
         self.num_classes = 15
         self.add_labeled_ratio = add_labeled_ratio
+        self.unlabeled_subset_ratio = unlabeled_subset_ratio
         self.add_labeled_num = None
+        self.unlabeled_subset_num = None
         self.remove_classes = remove_classes
         self.classes_to_remove = np.array([0, 1, 2, 3, 4, 6, 7, 9, 11, 13, 14])
 
@@ -66,6 +68,8 @@ class MatekDataset:
             test_size=(1 - self.labeled_ratio),
             shuffle=True,
             stratify=None)
+
+        self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
 
         test_dataset = torchvision.datasets.ImageFolder(
             self.test_path, transform=self.transform_test

@@ -92,10 +92,11 @@ def accuracy(output, target, topk=(1,)):
     return res
 
 
-def create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset, labeled_indices, unlabeled_indices, kwargs):
+def create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset, labeled_indices, unlabeled_indices, kwargs,
+                   unlabeled_subset_num):
     labeled_dataset.indices = labeled_indices
     random.shuffle(unlabeled_indices)
-    unlabeled_dataset.indices = unlabeled_indices[:10000]
+    unlabeled_dataset.indices = unlabeled_indices[:unlabeled_subset_num]
 
     labeled_loader = DataLoader(dataset=labeled_dataset, batch_size=args.batch_size, shuffle=True, **kwargs)
     unlabeled_loader = DataLoader(dataset=unlabeled_dataset, batch_size=args.batch_size, shuffle=False, **kwargs)
@@ -295,7 +296,7 @@ def create_model_optimizer_simclr(args, dataset_class):
     args.resume = True
     if args.resume:
         model, _, _ = resume_model(args, model)
-        args.start_epoch = args.epochs
+        # args.start_epoch = args.epochs
 
     if args.simclr_optimizer == 'adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
@@ -338,7 +339,7 @@ def create_model_optimizer_autoencoder(args, dataset_class):
 
 def create_model_optimizer_loss_net():
     model = LossNet().cuda()
-    optimizer = torch.optim.Adam(model.parameters())
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     return model, optimizer
 
@@ -424,7 +425,8 @@ def perform_sampling(args, uncertainty_sampler, pseudo_labeler, epoch, model, tr
 
         train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset,
                                                                     test_dataset, labeled_indices,
-                                                                    unlabeled_indices, kwargs)
+                                                                    unlabeled_indices, kwargs,
+                                                                    dataset_class.unlabeled_subset_num)
 
         print(f'Uncertainty Sampling\t '
               f'Current labeled ratio: {current_labeled_ratio + args.add_labeled_ratio}\t'
@@ -446,7 +448,8 @@ def perform_sampling(args, uncertainty_sampler, pseudo_labeler, epoch, model, tr
 
         train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset,
                                                                     test_dataset, labeled_indices,
-                                                                    unlabeled_indices, kwargs)
+                                                                    unlabeled_indices, kwargs,
+                                                                    dataset_class.unlabeled_subset_num)
 
         print(f'Pseudo labeling\t '
               f'Current labeled ratio: {current_labeled_ratio + args.add_labeled_ratio}\t'
@@ -461,7 +464,8 @@ def perform_sampling(args, uncertainty_sampler, pseudo_labeler, epoch, model, tr
 
         train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset,
                                                                     test_dataset, labeled_indices,
-                                                                    unlabeled_indices, kwargs)
+                                                                    unlabeled_indices, kwargs,
+                                                                    dataset_class.unlabeled_subset_num)
 
         print(f'Random Sampling\t '
               f'Current labeled ratio: {current_labeled_ratio + args.add_labeled_ratio}\t'

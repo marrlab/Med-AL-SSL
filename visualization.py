@@ -53,7 +53,7 @@ if __name__ == "__main__":
             'Random Sampling',
             'FixMatch',
             'Least Confidence',
-            'Ratio Sampling',
+            'Learning Loss',
             'Entropy Based',
             'Density Weighted',
             'MC dropout (BALD)',

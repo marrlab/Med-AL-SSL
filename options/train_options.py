@@ -8,7 +8,7 @@ parser.add_argument('--epochs', default=1000, type=int,
 parser.add_argument('--autoencoder-train-epochs', default=20, type=int,
                     help='number of total epochs to run')
 
-parser.add_argument('--simclr-train-epochs', default=100, type=int,
+parser.add_argument('--simclr-train-epochs', default=200, type=int,
                     help='number of total epochs to run')
 
 parser.add_argument('--start-epoch', default=0, type=int,
@@ -59,8 +59,11 @@ parser.add_argument('--labeled-ratio-start', default=0.05, type=int,
 parser.add_argument('--labeled-ratio-stop', default=0.25, type=int,
                     help='what percentage of labeled data to stop the training process at')
 
-parser.add_argument('--labeled-warmup_epochs', default=15, type=int,
+parser.add_argument('--labeled-warmup-epochs', default=15, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
+
+parser.add_argument('--unlabeled-subset', default=0.15, type=float,
+                    help='the subset of the unlabeled data to use, to avoid choosing similar data points')
 
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
@@ -76,22 +79,22 @@ parser.add_argument('--mc-dropout-iterations', default=25, type=int,
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
 
-parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
+parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
 
-parser.add_argument('--semi-supervised-method', default='fixmatch', type=str,
+parser.add_argument('--semi-supervised-method', default='simclr', type=str,
                     choices=['pseudo_labeling', 'auto_encoder', 'simclr', 'fixmatch'],
                     help='the semi supervised method to use')
 
 parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
 
-parser.add_argument('--simclr-temperature', default=0.5, type=float, help='the temperature term for simclr loss')
+parser.add_argument('--simclr-temperature', default=0.1, type=float, help='the temperature term for simclr loss')
 
 parser.add_argument('--simclr-normalize', action='store_false', help='normalize the hidden feat vectors in simclr')
 
-parser.add_argument('--simclr-batch-size', default=512, type=int,
+parser.add_argument('--simclr-batch-size', default=1152, type=int,
                     help='mini-batch size for simclr (default: 1024)')
 
 parser.add_argument('--simclr-arch', default='resnet', type=str, choices=['lenet', 'resnet'],
@@ -116,9 +119,11 @@ parser.add_argument('--seed', default=9999, type=int, choices=[6666, 9999, 2323,
 parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
-parser.add_argument('--store_logs', action='store_false', help='store the logs after training')
+parser.add_argument('--store-logs', action='store_false', help='store the logs after training')
 
 parser.add_argument('--run-batch', action='store_true', help='run all methods in batch mode')
+
+parser.add_argument('--reset-model', action='store_true', help='reset models after every labels injection cycle')
 
 parser.add_argument('--fixmatch-mu', default=5, type=int,
                     help='coefficient of unlabeled batch size i.e. mu.B from paper')
@@ -137,6 +142,9 @@ parser.add_argument('--fixmatch-epochs', default=1000, type=int,
 
 parser.add_argument('--fixmatch-warmup', default=0, type=int,
                     help='warmup epochs with unlabeled data')
+
+parser.add_argument('--learning-loss-weight', default=1.0, type=float,
+                    help='the weight for the loss network, loss term in the objective function')
 
 parser.set_defaults(augment=True)
 

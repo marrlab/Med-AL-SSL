@@ -81,8 +81,8 @@ class AutoEncoder:
             dataset_class.get_dataset()
 
         train_loader, unlabeled_loader, val_loader = create_loaders(self.args, labeled_dataset, unlabeled_dataset,
-                                                                    test_dataset,
-                                                                    labeled_indices, unlabeled_indices, self.kwargs)
+                                                                    test_dataset, labeled_indices, unlabeled_indices,
+                                                                    self.kwargs, dataset_class.unlabeled_subset_num)
 
         model = self.model
 

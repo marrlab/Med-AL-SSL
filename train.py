@@ -73,7 +73,8 @@ def main(args):
 
     kwargs = {'num_workers': 2, 'pin_memory': False}
     train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset,
-                                                                labeled_indices, unlabeled_indices, kwargs)
+                                                                labeled_indices, unlabeled_indices, kwargs,
+                                                                dataset_class.unlabeled_subset_num)
 
     if args.uncertainty_sampling_method == 'mc_dropout':
         uncertainty_sampler = UncertaintySamplingMCDropout()
@@ -133,7 +134,9 @@ def main(args):
                                  best_model)
             current_labeled_ratio += args.add_labeled_ratio
             best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
-            model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
+
+            if args.reset_model:
+                model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
         else:
             best_acc1 = max(acc, best_acc1)
             best_prec1 = max(prec, best_prec1)

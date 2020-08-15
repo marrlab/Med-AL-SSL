@@ -10,7 +10,7 @@ states = [
     ('random_sampling', 'least_confidence', 'pseudo_labeling'),
     ('semi_supervised', 'least_confidence', 'fixmatch'),
     ('active_learning', 'least_confidence', 'pseudo_labeling'),
-    ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
+    ('active_learning', 'learning_loss', 'pseudo_labeling'),
     ('active_learning', 'entropy_based', 'pseudo_labeling'),
     ('active_learning', 'density_weighted', 'pseudo_labeling'),
     ('active_learning', 'mc_dropout', 'pseudo_labeling'),

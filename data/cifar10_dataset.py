@@ -8,7 +8,7 @@ from utils import TransformsSimCLR, TransformFix
 
 class Cifar10Dataset:
     def __init__(self, root, labeled_ratio, add_labeled_ratio, advanced_transforms=True, remove_classes=False,
-                 expand_labeled=0, expand_unlabeled=0):
+                 expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1):
         self.root = root
         self.labeled_ratio = labeled_ratio
         self.cifar_mean = (0.4914, 0.4822, 0.4465)
@@ -20,8 +20,8 @@ class Cifar10Dataset:
 
         if advanced_transforms:
             self.transform_train = transforms.Compose([
-                transforms.RandomCrop(32, padding=4),
                 transforms.RandomHorizontalFlip(),
+                transforms.RandomCrop(32, padding=4),
                 transforms.ToTensor(),
                 transforms.Normalize(self.cifar_mean, self.cifar_std),
             ])
@@ -45,7 +45,9 @@ class Cifar10Dataset:
         self.transform_fixmatch = TransformFix(mean=self.cifar_mean, std=self.cifar_std)
         self.num_classes = 10
         self.add_labeled_ratio = add_labeled_ratio
+        self.unlabeled_subset_ratio = unlabeled_subset_ratio
         self.add_labeled_num = None
+        self.unlabeled_subset_num = None
         self.remove_classes = remove_classes
         self.classes_to_remove = np.array([0, 1, 2])
 
@@ -60,6 +62,8 @@ class Cifar10Dataset:
             test_size=(1 - self.labeled_ratio),
             shuffle=True,
             stratify=None)
+
+        self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
 
         test_dataset = torchvision.datasets.CIFAR10(root=self.root, train=False,
                                                     download=True, transform=self.transform_test)

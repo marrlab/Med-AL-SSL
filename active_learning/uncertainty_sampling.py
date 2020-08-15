@@ -75,7 +75,7 @@ class UncertaintySampling:
                           'Epoch: [{1}][{2}/{3}]\t'
                           .format(uncertainty_sampling_method, epoch, i, len(unlabeled_loader)))
 
-        return uncertainty.cpu()
+        return uncertainty
 
     def get_samples(self, epoch, args, model, train_loader, unlabeled_loader, number):
         batch_time = AverageMeter()
@@ -95,7 +95,7 @@ class UncertaintySampling:
             data_x = data_x.cuda(non_blocking=True)
 
             with torch.no_grad():
-                output, _, feat = model(data_x)
+                output, feat, _ = model(data_x)
 
             feat_train = feat if feat_train is None else torch.cat([feat_train, feat])
 
@@ -105,7 +105,7 @@ class UncertaintySampling:
                 else np.concatenate([targets, data_y.cpu().numpy().tolist()])
 
             with torch.no_grad():
-                output, feat = model(data_x)
+                output, feat, _ = model(data_x)
             score = self.method(F.softmax(output, dim=1), feat, feat_train)
 
             samples = score if samples is None else torch.cat([samples, score])

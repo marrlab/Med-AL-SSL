@@ -12,10 +12,11 @@ class LossNet(nn.Module):
     def __init__(self, feature_sizes=None, num_channels=None, interm_dim=128):
         super(LossNet, self).__init__()
 
-        if num_channels is None:
-            num_channels = [64, 128, 256, 512]
         if feature_sizes is None:
             feature_sizes = [32, 16, 8, 4]
+        if num_channels is None:
+            num_channels = [64, 128, 256, 512]
+
         self.GAP1 = nn.AvgPool2d(feature_sizes[0])
         self.GAP2 = nn.AvgPool2d(feature_sizes[1])
         self.GAP3 = nn.AvgPool2d(feature_sizes[2])
