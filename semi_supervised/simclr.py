@@ -132,8 +132,9 @@ class SimCLR:
 
                 current_labeled_ratio += self.args.add_labeled_ratio
                 best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
-                model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_class)
-                optimizer = torch.optim.Adam(model.parameters())
+                if args.reset_model:
+                    model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_class)
+                    optimizer = torch.optim.Adam(model.parameters())
             else:
                 best_acc1 = max(acc, best_acc1)
                 best_prec1 = max(prec, best_prec1)

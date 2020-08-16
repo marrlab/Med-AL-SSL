@@ -91,11 +91,12 @@ class FixMatch:
                                               shuffle=True, **self.kwargs)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
-                model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_cls,
-                                                                               optimizer='sgd',
-                                                                               scheduler='cosine_schedule_with_warmup',
-                                                                               load_optimizer_scheduler=True)
+                if self.args.reset_model:
+                    best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
+                    model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_cls,
+                                                                                   optimizer='sgd',
+                                                                                   scheduler='cosine_schedule_with_warmup',
+                                                                                   load_optimizer_scheduler=True)
             else:
                 best_acc1 = max(acc, best_acc1)
                 best_prec1 = max(prec, best_prec1)

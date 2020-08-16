@@ -22,7 +22,7 @@ class UncertaintySamplingMCDropout:
 
         return entropy
 
-    def get_samples(self, epoch, args, model, train_loader, unlabeled_loader, number):
+    def get_samples(self, epoch, args, model, _, unlabeled_loader, number):
         batch_time = AverageMeter()
         all_score = None
         all_entropy = None
@@ -38,7 +38,7 @@ class UncertaintySamplingMCDropout:
                 data_x = data_x.cuda(non_blocking=True)
 
                 with torch.no_grad():
-                    output, feat = model(data_x)
+                    output, _, _ = model(data_x)
 
                 scores = output if scores is None else torch.cat([scores, output])
 

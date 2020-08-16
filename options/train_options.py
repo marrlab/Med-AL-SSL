@@ -68,7 +68,7 @@ parser.add_argument('--unlabeled-subset', default=0.15, type=float,
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 
-parser.add_argument('--uncertainty-sampling-method', default='learning_loss', type=str,
+parser.add_argument('--uncertainty-sampling-method', default='mc_dropout', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
                              'density_weighted', 'mc_dropout', 'learning_loss'],
                     help='the uncertainty sampling method to use')
@@ -83,11 +83,11 @@ parser.add_argument('--weak-supervision-strategy', default='semi_supervised', ty
                     choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
 
-parser.add_argument('--semi-supervised-method', default='simclr', type=str,
+parser.add_argument('--semi-supervised-method', default='pseudo_labeling', type=str,
                     choices=['pseudo_labeling', 'auto_encoder', 'simclr', 'fixmatch'],
                     help='the semi supervised method to use')
 
-parser.add_argument('--pseudo-labeling-threshold', default=0.3, type=int,
+parser.add_argument('--pseudo-labeling-threshold', default=0.9, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
 
 parser.add_argument('--simclr-temperature', default=0.1, type=float, help='the temperature term for simclr loss')

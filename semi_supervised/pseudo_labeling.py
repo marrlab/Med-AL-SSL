@@ -38,6 +38,9 @@ class PseudoLabeling:
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                       .format('Pseudo Labeling', epoch, i, len(unlabeled_loader), batch_time=batch_time))
 
+        samples_targets = samples_targets[samples > args.pseudo_labeling_threshold]
+        samples = samples[samples > args.pseudo_labeling_threshold]
+
         samples_indices = samples.argsort(descending=True)[:number]
         samples_targets = samples_targets[samples_indices]
 
