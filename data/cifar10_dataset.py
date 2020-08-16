@@ -7,7 +7,7 @@ from utils import TransformsSimCLR, TransformFix
 
 
 class Cifar10Dataset:
-    def __init__(self, root, labeled_ratio, add_labeled_ratio, advanced_transforms=True, remove_classes=False,
+    def __init__(self, root, labeled_ratio=1, add_labeled_ratio=0, advanced_transforms=True, remove_classes=False,
                  expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1):
         self.root = root
         self.labeled_ratio = labeled_ratio

@@ -8,14 +8,12 @@ args = get_arguments()
 
 states = [
     ('random_sampling', 'least_confidence', 'pseudo_labeling'),
-    ('semi_supervised', 'least_confidence', 'fixmatch'),
-    ('active_learning', 'least_confidence', 'pseudo_labeling'),
-    ('active_learning', 'learning_loss', 'pseudo_labeling'),
     ('active_learning', 'entropy_based', 'pseudo_labeling'),
-    ('active_learning', 'density_weighted', 'pseudo_labeling'),
+    ('active_learning', 'learning_loss', 'pseudo_labeling'),
     ('active_learning', 'mc_dropout', 'pseudo_labeling'),
     ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
     ('semi_supervised', 'least_confidence', 'auto_encoder'),
+    ('semi_supervised', 'least_confidence', 'fixmatch'),
     ('semi_supervised', 'least_confidence', 'simclr'),
 ]
 
@@ -176,10 +174,10 @@ def get_batch_metrics(met='acc1', class_specific=False, class_id=0, dataset='cif
 
         if class_specific:
             metrics, ratio = get_class_specific_metrics(args.name, args.log_path, class_id=class_id,
-                                                        dataset=args.dataset)
+                                                        dataset=dataset)
         else:
             metrics, ratio = get_metrics(args.name, args.log_path,
-                                         dataset=args.dataset)
+                                         dataset=dataset)
 
         metric.append(metrics[met][0] - metrics[met][1])
         metric.append(metrics[met][0].tolist())

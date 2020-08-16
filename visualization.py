@@ -1,10 +1,17 @@
 import matplotlib.pyplot as plt
 import matplotlib.style as style
+
+from data.cifar100_dataset import Cifar100Dataset
+from data.cifar10_dataset import Cifar10Dataset
+from data.matek_dataset import MatekDataset
 from results import get_batch_metrics
 from options.visualization_options import get_arguments
 
+datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset}
 
-def plot_metric_dataprop(prop, metric, methods, prop_supervised, metric_supervised, methods_supervised):
+
+def plot_metric_dataprop(prop, metric, methods, prop_supervised, metric_supervised, methods_supervised, label_y,
+                         _title):
     """
     plot the accuracy vs data proportion being used, graph
     credits to: Alex Olteanu (https://www.dataquest.io/blog/making-538-plots/) for the plot style
@@ -25,17 +32,20 @@ def plot_metric_dataprop(prop, metric, methods, prop_supervised, metric_supervis
     color_grey = [0 / 255, 0 / 255, 0 / 255, 1]
 
     for i, j in enumerate(range(1, len(metric), 3)):
+        if len(prop[i]) == 0:
+            continue
         linestyle = '-' if methods[i] in resnet else '-'
-        plt.plot(prop[i], metric[j], color=colors[i % len(colors)], label=methods[i], linewidth=2, linestyle=linestyle)
+        plt.errorbar(prop[i], metric[j], yerr=(metric[j + 1]-metric[j - 1])/2, color=colors[i % len(colors)],
+                     label=methods[i], linewidth=2, linestyle=linestyle, marker='o')
         plt.fill_between(prop[i], metric[j - 1], metric[j + 1], color=colors[i % len(colors)], alpha=0.05)
 
     # for i, j in enumerate(range(1, len(metric_supervised), 3)):
     #    plt.plot(prop_supervised[i], metric_supervised[j], color=color_grey, linewidth=2, linestyle=':', alpha=0.5)
 
-    plt.title("Proof of concept - AL on Cifar-10",
+    plt.title(_title,
               fontsize=20, weight='bold', alpha=.75)
     plt.xlabel("Labeled ratio of the dataset", fontsize=20, weight='bold', alpha=.75)
-    plt.ylabel("Top-1 Accuracy (%)", fontsize=20, weight='bold', alpha=.75)
+    plt.ylabel(label_y, fontsize=20, weight='bold', alpha=.75)
     # plt.text(x=0.1, y=91, s='Resnet Fully Supervised', color=color_grey, fontsize=18, rotation=0,
     #         backgroundcolor='#f0f0f0')
     plt.legend(loc='lower right', fontsize=18)
@@ -44,21 +54,28 @@ def plot_metric_dataprop(prop, metric, methods, prop_supervised, metric_supervis
 
 if __name__ == "__main__":
     args = get_arguments()
-    met, ratios = get_batch_metrics(met=args.metric, class_specific=args.class_specific, class_id=args.class_id)
+    metric_label_y = {'acc1': 'Top-1 Accuracy (%)', 'acc5': 'Top-1 Accuracy (%)', 'prec': 'Precision (%)',
+                      'recall': 'Recall (%)', 'f1': 'f1 score'}
+
+    dataset = datasets[args.dataset](root=args.root).get_base_dataset_autoencoder()
+
+    dataset_title = {'cifar10': ' Cifar-10 dataset', 'matek': ' Matek dataset'}
+    post_fix = f' Class Specific (class: {dataset.classes[args.class_id]})' if args.class_specific else ''
+    title = 'SSL-AL on' + dataset_title[args.dataset]
+    met, ratios = get_batch_metrics(met=args.metric, class_specific=args.class_specific, class_id=args.class_id,
+                                    dataset=args.dataset)
 
     plot_metric_dataprop(
         prop=ratios,
         metric=met,
         methods=[
             'Random Sampling',
-            'FixMatch',
-            'Least Confidence',
-            'Learning Loss',
             'Entropy Based',
-            'Density Weighted',
+            'Learning Loss',
             'MC dropout (BALD)',
             'Pseudo Labeling',
             'Auto Encoder',
+            'FixMatch',
             'SimCLR'
         ], prop_supervised=[
             [0.01, 0.06, 0.11, 0.16, 0.21, 0.26, 0.31, 0.36, 0.41, 0.46, 0.51, 0.56, 0.61, 0.66],
@@ -68,7 +85,9 @@ if __name__ == "__main__":
             [91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63, 91.63],
         ], methods_supervised=[
             'Resnet Supervised',
-        ]
+        ],
+        label_y=metric_label_y[args.metric] + post_fix,
+        _title=title
     )
 
 '''

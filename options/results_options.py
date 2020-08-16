@@ -15,9 +15,6 @@ parser.add_argument('--uncertainty-sampling-method', default='least_confidence',
                              'density_weighted', 'mc_dropout'],
                     help='the uncertainty sampling method to use')
 
-parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100'],
-                    help='the dataset to train on')
-
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 
