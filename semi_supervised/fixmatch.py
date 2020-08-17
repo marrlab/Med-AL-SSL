@@ -5,13 +5,12 @@ from data.cifar10_dataset import Cifar10Dataset
 from data.matek_dataset import MatekDataset
 
 import torch
-import torch.nn.functional as F
 import time
 
 import numpy as np
 
 from utils import create_model_optimizer_scheduler, AverageMeter, accuracy, Metrics, perform_sampling, \
-    store_logs, save_checkpoint
+    store_logs, save_checkpoint, get_loss
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -54,6 +53,11 @@ class FixMatch:
         val_loader = DataLoader(dataset=test_dataset, batch_size=self.args.batch_size,
                                 shuffle=True, **self.kwargs)
 
+        criterion_labeled = get_loss(self.args, base_dataset, reduction='mean')
+        criterion_unlabeled = get_loss(self.args, base_dataset, reduction='none')
+
+        criterions = {'labeled': criterion_labeled, 'unlabeled': criterion_unlabeled}
+
         model.zero_grad()
         best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
         acc_ratio = {}
@@ -63,8 +67,9 @@ class FixMatch:
 
         for epoch in range(self.args.start_epoch, self.args.fixmatch_epochs):
             train_loader = zip(labeled_loader, unlabeled_loader)
-            self.train(train_loader, model, optimizer, epoch, len(labeled_loader))
-            acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve = self.validate(val_loader, model)
+            self.train(train_loader, model, optimizer, epoch, len(labeled_loader), criterions)
+            acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve = self.validate(val_loader, model,
+                                                                                           criterions)
 
             is_best = acc > best_acc1
 
@@ -95,7 +100,8 @@ class FixMatch:
                     best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
                     model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_cls,
                                                                                    optimizer='sgd',
-                                                                                   scheduler='cosine_schedule_with_warmup',
+                                                                                   scheduler='cosine_schedule_with_'
+                                                                                             'warmup',
                                                                                    load_optimizer_scheduler=True)
             else:
                 best_acc1 = max(acc, best_acc1)
@@ -121,7 +127,7 @@ class FixMatch:
 
         return best_acc1
 
-    def train(self, train_loader, model, optimizer, epoch, loaders_len):
+    def train(self, train_loader, model, optimizer, epoch, loaders_len, criterions):
         batch_time = AverageMeter()
         losses = AverageMeter()
         top1 = AverageMeter()
@@ -143,14 +149,13 @@ class FixMatch:
             logits_unlabeled_w, logits_unlabeled_s = logits[self.args.batch_size:].chunk(2)
             del logits
 
-            loss_labeled = F.cross_entropy(logits_labeled, data_y, reduction='mean')
+            loss_labeled = criterions['labeled'](logits_labeled, data_y)
 
             pseudo_label = torch.softmax(logits_unlabeled_w.detach_(), dim=-1)
             max_probs, data_y_unlabeled = torch.max(pseudo_label, dim=-1)
             mask = max_probs.ge(self.args.fixmatch_threshold).float()
 
-            loss_unlabeled = (F.cross_entropy(logits_unlabeled_s, data_y_unlabeled,
-                                              reduction='none') * mask).mean()
+            loss_unlabeled = (criterions['unlabeled'](logits_unlabeled_s, data_y_unlabeled) * mask).mean()
 
             loss = loss_labeled + self.args.fixmatch_lambda_u * loss_unlabeled
 
@@ -172,7 +177,7 @@ class FixMatch:
                       .format(epoch, i, loaders_len,
                               batch_time=batch_time, loss=losses))
 
-    def validate(self, val_loader, model):
+    def validate(self, val_loader, model, criterions):
         batch_time = AverageMeter()
         losses = AverageMeter()
         top1 = AverageMeter()
@@ -190,7 +195,7 @@ class FixMatch:
 
                 output, _, _ = model(data_x)
 
-                loss = F.cross_entropy(output, data_y)
+                loss = criterions['labeled'](output, data_y)
 
                 acc = accuracy(output.data, data_y, topk=(1, 5,))
                 losses.update(loss.data.item(), data_x.size(0))

@@ -86,7 +86,7 @@ class AutoEncoder:
 
         model = self.model
 
-        criterion = get_loss(self.args, unlabeled_dataset, unlabeled_indices, dataset_class)
+        criterion = get_loss(self.args, base_dataset)
 
         optimizer = torch.optim.Adam(model.parameters())
 

@@ -51,7 +51,7 @@ class LearningLoss:
         models = {'backbone': model_backbone, 'module': model_module}
         optimizers = {'backbone': optimizer_backbone, 'module': optimizer_module}
 
-        criterion_backbone = get_loss(self.args, unlabeled_dataset, unlabeled_indices, dataset_cl, reduction='none')
+        criterion_backbone = get_loss(self.args, base_dataset, reduction='none')
 
         criterions = {'backbone': criterion_backbone, 'module': loss_module_objective_func}
 

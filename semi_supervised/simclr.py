@@ -98,7 +98,7 @@ class SimCLR:
 
         model = self.model
 
-        criterion = get_loss(self.args, unlabeled_dataset, unlabeled_indices, dataset_class)
+        criterion = get_loss(self.args, base_dataset)
 
         optimizer = torch.optim.Adam(model.parameters())
 
@@ -132,7 +132,7 @@ class SimCLR:
 
                 current_labeled_ratio += self.args.add_labeled_ratio
                 best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
-                if args.reset_model:
+                if self.args.reset_model:
                     model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_class)
                     optimizer = torch.optim.Adam(model.parameters())
             else:

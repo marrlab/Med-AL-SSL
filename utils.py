@@ -296,7 +296,7 @@ def create_model_optimizer_simclr(args, dataset_class):
     args.resume = True
     if args.resume:
         model, _, _ = resume_model(args, model)
-        # args.start_epoch = args.epochs
+        args.start_epoch = args.epochs
 
     if args.simclr_optimizer == 'adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
@@ -344,13 +344,12 @@ def create_model_optimizer_loss_net():
     return model, optimizer
 
 
-def get_loss(args, unlabeled_dataset, unlabeled_indices, dataset_class, reduction='mean'):
+def get_loss(args, base_dataset, reduction='mean'):
     if args.weighted:
-        classes_targets = unlabeled_dataset.targets[unlabeled_indices]
-        classes_samples = [np.sum(classes_targets == i) for i in range(dataset_class.num_classes)]
-        classes_weights = np.log2(len(unlabeled_dataset)) - np.log2(classes_samples)
-        # classes_weights = len(unlabeled_dataset) / np.array(classes_samples)
-        # classes_weights = [100, 100, 50, 150, 150, 10, 150, 150, 20, 150, 10, 50, 5, 150, 100]
+        classes_targets = np.array(base_dataset.targets)
+        classes_samples = [np.sum(classes_targets == i) for i in range(len(base_dataset.classes))]
+        # classes_weights = np.log2(len(base_dataset)) - np.log2(classes_samples)
+        classes_weights = len(base_dataset) / np.array(classes_samples)
         # noinspection PyArgumentList
         criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(classes_weights).cuda(), reduction=reduction)
     else:
