@@ -1,21 +1,152 @@
 import os
 import torchvision
+from sklearn.model_selection import train_test_split
+import numpy as np
+from torchvision import transforms
+from .dataset_utils import WeaklySupervisedDataset
+from utils import TransformsSimCLR, TransformFix, oversampling_indices
 
 
 class JurkatDataset:
-    def __init__(self, root, transforms):
+    def __init__(self, root, labeled_ratio=1, add_labeled_ratio=0, advanced_transforms=True, remove_classes=False,
+                 expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=True):
         self.root = root
-        self.transforms = transforms
         self.train_path = os.path.join(self.root, "jurkat", "train")
         self.test_path = os.path.join(self.root, "jurkat", "test")
+        self.labeled_ratio = labeled_ratio
+        self.jurkat_mean = (0.1935, 0.1511, 0.2428)
+        self.jurkat_std = (0.1672, 0.1786, 0.1780)
+        self.input_size = 32
+        self.expand_labeled = expand_labeled
+        self.expand_unlabeled = expand_unlabeled
+        self.oversampling = oversampling
+
+        if advanced_transforms:
+            self.transform_train = transforms.Compose([
+                transforms.RandomCrop(self.input_size, padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=self.jurkat_mean, std=self.jurkat_std)
+            ])
+            self.transform_test = transforms.Compose([
+                transforms.Resize(size=self.input_size),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=self.jurkat_mean, std=self.jurkat_std)
+            ])
+
+        else:
+            self.transform_train = transforms.Compose([
+                transforms.Resize(size=self.input_size),
+                transforms.ToTensor(),
+            ])
+            self.transform_test = transforms.Compose([
+                transforms.Resize(size=self.input_size),
+                transforms.ToTensor(),
+            ])
+        self.transform_autoencoder = transforms.Compose([
+            transforms.Resize(size=self.input_size),
+            transforms.ToTensor(),
+        ])
+        self.transform_simclr = TransformsSimCLR(size=self.input_size)
+        self.transform_fixmatch = TransformFix(mean=self.jurkat_mean, std=self.jurkat_std, input_size=self.input_size)
+        self.num_classes = 7
+        self.add_labeled_ratio = add_labeled_ratio
+        self.unlabeled_subset_ratio = unlabeled_subset_ratio
+        self.add_labeled_num = None
+        self.unlabeled_subset_num = None
+        self.remove_classes = remove_classes
+        self.classes_to_remove = np.array([0, 1, 2, 3, 4, 6, 7, 9, 11, 13, 14])
 
     def get_dataset(self):
-        train_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=self.transforms
+        base_dataset = torchvision.datasets.ImageFolder(
+            self.train_path, transform=None
         )
+
+        self.add_labeled_num = int(len(base_dataset) * self.add_labeled_ratio)
+
+        labeled_indices, unlabeled_indices = train_test_split(
+            np.arange(len(base_dataset)),
+            test_size=(1 - self.labeled_ratio),
+            shuffle=True,
+            stratify=None)
+
+        self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
 
         test_dataset = torchvision.datasets.ImageFolder(
-            self.test_path, transform=self.transforms
+            self.test_path, transform=self.transform_test
         )
 
-        return train_dataset, test_dataset
+        if self.remove_classes:
+            targets = np.array(base_dataset.targets)[labeled_indices]
+            labeled_indices = labeled_indices[~np.isin(targets, self.remove_classes)]
+
+        if self.oversampling:
+            labeled_indices = oversampling_indices(labeled_indices,
+                                                   np.array(base_dataset.targets)[labeled_indices])
+            unlabeled_indices = oversampling_indices(unlabeled_indices,
+                                                     np.array(base_dataset.targets)[unlabeled_indices])
+
+        labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=self.transform_train)
+        unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_test)
+
+        return base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset
+
+    def get_base_dataset_autoencoder(self):
+        base_dataset = torchvision.datasets.ImageFolder(
+            self.train_path, transform=None
+        )
+
+        if self.oversampling:
+            base_indices = oversampling_indices(np.array(list(range(len(base_dataset)))),
+                                                np.array(base_dataset.targets))
+        else:
+            base_indices = np.array(list(range(len(base_dataset))))
+
+        return WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_autoencoder)
+
+    def get_base_dataset_simclr(self):
+        base_dataset = torchvision.datasets.ImageFolder(
+            self.train_path, transform=None
+        )
+
+        if self.oversampling:
+            base_indices = oversampling_indices(np.array(list(range(len(base_dataset)))),
+                                                np.array(base_dataset.targets))
+        else:
+            base_indices = np.array(list(range(len(base_dataset))))
+
+        return WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_simclr)
+
+    def get_datasets_fixmatch(self, base_dataset, labeled_indices, unlabeled_indices):
+        transform_labeled = transforms.Compose([
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomCrop(size=self.input_size,
+                                  padding=int(self.input_size * 0.125),
+                                  padding_mode='reflect'),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=self.jurkat_mean, std=self.jurkat_std)
+        ])
+
+        expand_labeled = self.expand_labeled // len(labeled_indices)
+        expand_unlabeled = self.expand_unlabeled // len(unlabeled_indices)
+        labeled_indices = \
+            np.hstack([labeled_indices for _ in range(expand_labeled)]) \
+            if len(labeled_indices) < self.expand_labeled else labeled_indices
+        unlabeled_indices = \
+            np.hstack([unlabeled_indices for _ in range(expand_unlabeled)]) \
+            if len(unlabeled_indices) < self.expand_unlabeled else unlabeled_indices
+
+        if len(labeled_indices) < self.expand_labeled:
+            diff = self.expand_labeled - len(labeled_indices)
+            labeled_indices = np.hstack(
+                (labeled_indices, np.random.choice(labeled_indices, diff)))
+
+        if len(unlabeled_indices) < self.expand_unlabeled:
+            diff = self.expand_unlabeled - len(unlabeled_indices)
+            unlabeled_indices = np.hstack(
+                (unlabeled_indices, np.random.choice(unlabeled_indices, diff)))
+
+        labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=transform_labeled)
+        unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_fixmatch)
+
+        return labeled_dataset, unlabeled_dataset

@@ -36,7 +36,7 @@ def plot_metric_dataprop(prop, metric, methods, prop_supervised, metric_supervis
             continue
         linestyle = '-' if methods[i] in resnet else '-'
         plt.errorbar(prop[i], metric[j], yerr=(metric[j + 1]-metric[j - 1])/2, color=colors[i % len(colors)],
-                     label=methods[i], linewidth=2, linestyle=linestyle, marker='o')
+                     label=methods[i], linewidth=2, linestyle=linestyle, marker='o', capsize=3)
         plt.fill_between(prop[i], metric[j - 1], metric[j + 1], color=colors[i % len(colors)], alpha=0.05)
 
     # for i, j in enumerate(range(1, len(metric_supervised), 3)):

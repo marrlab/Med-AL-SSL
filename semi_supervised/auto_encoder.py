@@ -1,4 +1,5 @@
 from data.cifar10_dataset import Cifar10Dataset
+from data.jurkat_dataset import JurkatDataset
 from data.matek_dataset import MatekDataset
 from data.cifar100_dataset import Cifar100Dataset
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
@@ -15,7 +16,8 @@ class AutoEncoder:
     def __init__(self, args, verbose=True):
         self.args = args
         self.verbose = verbose
-        self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset}
+        self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset,
+                         'jurkat': JurkatDataset}
         self.model = None
         self.kwargs = {'num_workers': 2, 'pin_memory': False}
 
@@ -101,7 +103,7 @@ class AutoEncoder:
             acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve = self.validate_classifier(val_loader,
                                                                                                       model, criterion)
 
-            is_best = acc > best_acc1
+            is_best = recall > best_recall1
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
                 acc_ratio.update({np.round(current_labeled_ratio, decimals=2):

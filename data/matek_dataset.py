@@ -4,12 +4,12 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from torchvision import transforms
 from .dataset_utils import WeaklySupervisedDataset
-from utils import TransformsSimCLR, TransformFix
+from utils import TransformsSimCLR, TransformFix, oversampling_indices
 
 
 class MatekDataset:
     def __init__(self, root, labeled_ratio=1, add_labeled_ratio=0, advanced_transforms=True, remove_classes=False,
-                 expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1):
+                 expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=True):
         self.root = root
         self.train_path = os.path.join(self.root, "matek", "train")
         self.test_path = os.path.join(self.root, "matek", "test")
@@ -19,6 +19,7 @@ class MatekDataset:
         self.input_size = 128
         self.expand_labeled = expand_labeled
         self.expand_unlabeled = expand_unlabeled
+        self.oversampling = oversampling
 
         if advanced_transforms:
             self.transform_train = transforms.Compose([
@@ -43,9 +44,9 @@ class MatekDataset:
                 transforms.ToTensor(),
             ])
         self.transform_autoencoder = transforms.Compose([
-                transforms.Resize(size=self.input_size),
-                transforms.ToTensor(),
-            ])
+            transforms.Resize(size=self.input_size),
+            transforms.ToTensor(),
+        ])
         self.transform_simclr = TransformsSimCLR(size=self.input_size)
         self.transform_fixmatch = TransformFix(mean=self.matek_mean, std=self.matek_std, input_size=self.input_size)
         self.num_classes = 15
@@ -75,10 +76,15 @@ class MatekDataset:
             self.test_path, transform=self.transform_test
         )
 
-        targets = np.array(base_dataset.targets)[labeled_indices]
-
         if self.remove_classes:
+            targets = np.array(base_dataset.targets)[labeled_indices]
             labeled_indices = labeled_indices[~np.isin(targets, self.remove_classes)]
+
+        if self.oversampling:
+            labeled_indices = oversampling_indices(labeled_indices,
+                                                   np.array(base_dataset.targets)[labeled_indices])
+            unlabeled_indices = oversampling_indices(unlabeled_indices,
+                                                     np.array(base_dataset.targets)[unlabeled_indices])
 
         labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=self.transform_train)
         unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_test)
@@ -87,17 +93,29 @@ class MatekDataset:
 
     def get_base_dataset_autoencoder(self):
         base_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=self.transform_autoencoder
+            self.train_path, transform=None
         )
 
-        return base_dataset
+        if self.oversampling:
+            base_indices = oversampling_indices(np.array(list(range(len(base_dataset)))),
+                                                np.array(base_dataset.targets))
+        else:
+            base_indices = np.array(list(range(len(base_dataset))))
+
+        return WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_autoencoder)
 
     def get_base_dataset_simclr(self):
         base_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=self.transform_simclr
+            self.train_path, transform=None
         )
 
-        return base_dataset
+        if self.oversampling:
+            base_indices = oversampling_indices(np.array(list(range(len(base_dataset)))),
+                                                np.array(base_dataset.targets))
+        else:
+            base_indices = np.array(list(range(len(base_dataset))))
+
+        return WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_simclr)
 
     def get_datasets_fixmatch(self, base_dataset, labeled_indices, unlabeled_indices):
         transform_labeled = transforms.Compose([
@@ -111,24 +129,22 @@ class MatekDataset:
 
         expand_labeled = self.expand_labeled // len(labeled_indices)
         expand_unlabeled = self.expand_unlabeled // len(unlabeled_indices)
-        labeled_indices = np.hstack(
-            [labeled_indices for _ in range(expand_labeled)])
-        unlabeled_indices = np.hstack(
-            [unlabeled_indices for _ in range(expand_unlabeled)])
+        labeled_indices = \
+            np.hstack([labeled_indices for _ in range(expand_labeled)]) \
+            if len(labeled_indices) < self.expand_labeled else labeled_indices
+        unlabeled_indices = \
+            np.hstack([unlabeled_indices for _ in range(expand_unlabeled)]) \
+            if len(unlabeled_indices) < self.expand_unlabeled else unlabeled_indices
 
         if len(labeled_indices) < self.expand_labeled:
             diff = self.expand_labeled - len(labeled_indices)
             labeled_indices = np.hstack(
                 (labeled_indices, np.random.choice(labeled_indices, diff)))
-        else:
-            assert len(labeled_indices) == self.expand_labeled
 
         if len(unlabeled_indices) < self.expand_unlabeled:
             diff = self.expand_unlabeled - len(unlabeled_indices)
             unlabeled_indices = np.hstack(
                 (unlabeled_indices, np.random.choice(unlabeled_indices, diff)))
-        else:
-            assert len(unlabeled_indices) == self.expand_unlabeled
 
         labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=transform_labeled)
         unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_fixmatch)

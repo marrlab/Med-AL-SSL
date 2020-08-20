@@ -222,11 +222,11 @@ class TransformFix(object):
     def __init__(self, mean, std, input_size=32):
         self.weak = torchvision.transforms.Compose([
             torchvision.transforms.RandomHorizontalFlip(),
-            torchvision.transforms.RandomCrop(size=input_size, padding=int(input_size*0.125), padding_mode='reflect'),
+            torchvision.transforms.RandomCrop(size=input_size, padding=int(input_size * 0.125), padding_mode='reflect'),
         ])
         self.strong = torchvision.transforms.Compose([
             torchvision.transforms.RandomHorizontalFlip(),
-            torchvision.transforms.RandomCrop(size=input_size, padding=int(input_size*0.125), padding_mode='reflect'),
+            torchvision.transforms.RandomCrop(size=input_size, padding=int(input_size * 0.125), padding_mode='reflect'),
             RandAugmentMC(n=2, m=10)
         ])
         self.normalize = torchvision.transforms.Compose([
@@ -253,7 +253,8 @@ def create_model_optimizer_scheduler(args, dataset_class, optimizer='adam', sche
         model = LeNet(num_channels=3, num_classes=dataset_class.num_classes,
                       droprate=args.drop_rate, input_size=dataset_class.input_size)
     elif args.arch == 'resnet':
-        model = resnet18(num_classes=dataset_class.num_classes, input_size=dataset_class.input_size)
+        model = resnet18(num_classes=dataset_class.num_classes, input_size=dataset_class.input_size,
+                         drop_rate=args.drop_rate)
     else:
         raise NotImplementedError
 
@@ -318,14 +319,14 @@ def create_model_optimizer_autoencoder(args, dataset_class):
 
     model = model.cuda()
 
-    args.resume = True
+    # args.resume = True
     if args.resume:
         file = os.path.join(args.checkpoint_path, args.name, 'model_best.pth.tar')
         if os.path.isfile(file):
             print("=> loading checkpoint '{}'".format(file))
             checkpoint = torch.load(file)
             args.start_epoch = checkpoint['epoch']
-            args.start_epoch = args.epochs
+            # args.start_epoch = args.epochs
             model.load_state_dict(checkpoint['state_dict'])
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
@@ -349,7 +350,7 @@ def get_loss(args, base_dataset, reduction='mean'):
         classes_targets = np.array(base_dataset.targets)
         classes_samples = [np.sum(classes_targets == i) for i in range(len(base_dataset.classes))]
         # classes_weights = np.log2(len(base_dataset)) - np.log2(classes_samples)
-        classes_weights = len(base_dataset) / np.array(classes_samples)
+        classes_weights = np.clip(len(base_dataset) / np.array(classes_samples), a_min=0, a_max=50)
         # noinspection PyArgumentList
         criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(classes_weights).cuda(), reduction=reduction)
     else:
@@ -486,6 +487,26 @@ def get_cosine_schedule_with_warmup(optimizer,
 
     # noinspection PyTypeChecker
     return LambdaLR(optimizer, _lr_lambda, last_epoch)
+
+
+# noinspection PyTypeChecker
+def oversampling_indices(indices, targets):
+    oversampled_indices = []
+    num_classes = []
+    masks = []
+
+    for t in np.unique(targets).tolist():
+        mask = targets == t
+        masks.append(mask)
+        num_classes.append(np.sum(mask))
+
+    max_class = np.amax(num_classes)
+
+    for i, t in enumerate(np.unique(targets).tolist()):
+        factor = int(max_class / num_classes[i])
+        oversampled_indices.extend(np.tile(indices[masks[i]], factor).tolist())
+
+    return np.array(oversampled_indices)
 
 
 def print_args(args):

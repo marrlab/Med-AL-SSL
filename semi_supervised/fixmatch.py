@@ -34,7 +34,8 @@ class FixMatch:
                                                        add_labeled_ratio=self.args.add_labeled_ratio,
                                                        advanced_transforms=True,
                                                        expand_labeled=self.args.fixmatch_k_img,
-                                                       expand_unlabeled=self.args.fixmatch_k_img*self.args.fixmatch_mu)
+                                                       expand_unlabeled=self.args.fixmatch_k_img*self.args.fixmatch_mu,
+                                                       oversampling=True)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_cls.get_dataset()
@@ -71,7 +72,7 @@ class FixMatch:
             acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve = self.validate(val_loader, model,
                                                                                            criterions)
 
-            is_best = acc > best_acc1
+            is_best = recall > best_recall1
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
                 acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
@@ -96,8 +97,8 @@ class FixMatch:
                                               shuffle=True, **self.kwargs)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
+                best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
                 if self.args.reset_model:
-                    best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
                     model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_cls,
                                                                                    optimizer='sgd',
                                                                                    scheduler='cosine_schedule_with_'

@@ -1,4 +1,5 @@
 from active_learning.learning_loss import LearningLoss
+from data.jurkat_dataset import JurkatDataset
 from options.train_options import get_arguments
 import os
 import time
@@ -8,7 +9,7 @@ import random
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '5'
+os.environ['CUDA_VISIBLE_DEVICES'] = '4'
 
 import torch
 import torch.cuda
@@ -31,7 +32,7 @@ from semi_supervised.auto_encoder import AutoEncoder
 from semi_supervised.simclr import SimCLR
 
 arguments = get_arguments()
-datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset}
+datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset, 'jurkat': JurkatDataset}
 
 
 def main(args):
@@ -116,7 +117,7 @@ def main(args):
         model = train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args)
         acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve = validate(val_loader, model,
                                                                                   criterion, last_best_epochs, args)
-        is_best = acc > best_acc1
+        is_best = recall > best_recall1
         last_best_epochs = 0 if is_best else last_best_epochs + 1
         best_model = deepcopy(model) if is_best else best_model
 
@@ -280,14 +281,14 @@ if __name__ == '__main__':
             # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
             # ('active_learning', 'density_weighted', 'pseudo_labeling'),
-            # ('active_learning', 'entropy_based', 'pseudo_labeling'),
-            # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
-            # ('active_learning', 'learning_loss', 'pseudo_labeling'),
-            # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
-            # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
+            ('active_learning', 'entropy_based', 'pseudo_labeling'),
+            ('active_learning', 'mc_dropout', 'pseudo_labeling'),
+            ('active_learning', 'learning_loss', 'pseudo_labeling'),
+            ('random_sampling', 'least_confidence', 'pseudo_labeling'),
+            ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
             ('semi_supervised', 'least_confidence', 'simclr'),
             ('semi_supervised', 'least_confidence', 'auto_encoder'),
-            ('semi_supervised', 'least_confidence', 'fixmatch')
+            # ('semi_supervised', 'least_confidence', 'fixmatch')
         ]
 
         for (m, u, s) in states:

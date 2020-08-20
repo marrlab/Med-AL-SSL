@@ -27,7 +27,7 @@ class LearningLoss:
         self.verbose = verbose
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset}
         self.model = None
-        self.kwargs = {'num_workers': 2, 'pin_memory': False}
+        self.kwargs = {'num_workers': 2, 'pin_memory': False, 'drop_last': True}
 
     def main(self):
         dataset_cl = self.datasets[self.args.dataset](root=self.args.root,
@@ -39,10 +39,9 @@ class LearningLoss:
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_cl.get_dataset()
 
-        kwargs = {'num_workers': 2, 'pin_memory': False}
         train_loader, unlabeled_loader, val_loader = create_loaders(self.args, labeled_dataset, unlabeled_dataset,
                                                                     test_dataset, labeled_indices, unlabeled_indices,
-                                                                    kwargs, dataset_cl.unlabeled_subset_num)
+                                                                    self.kwargs, dataset_cl.unlabeled_subset_num)
 
         model_backbone, optimizer_backbone, _ = create_model_optimizer_scheduler(self.args, dataset_cl)
         model_module = LossNet().cuda()
@@ -72,7 +71,7 @@ class LearningLoss:
             acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve = self.validate(val_loader, models,
                                                                                            criterions, last_best_epochs)
 
-            is_best = acc > best_acc1
+            is_best = recall > best_recall1
             last_best_epochs = 0 if is_best else last_best_epochs + 1
             best_model = deepcopy(model_backbone) if is_best else best_model
 
