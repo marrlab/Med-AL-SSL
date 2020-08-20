@@ -59,14 +59,19 @@ class UncertaintySampling:
         models['backbone'].eval()
         models['module'].eval()
         uncertainty = torch.tensor([]).cuda()
+        targets = None
 
         with torch.no_grad():
             for i, (data_x, data_y) in enumerate(unlabeled_loader):
                 data_x = data_x.cuda(non_blocking=True)
+                data_y = data_y.cuda(non_blocking=True)
 
                 output, _, features = models['backbone'](data_x)
                 pred_loss = models['module'](features)
                 pred_loss = pred_loss.view(pred_loss.size(0))
+
+                targets = data_y.cpu().numpy() if targets is None \
+                    else np.concatenate([targets, data_y.cpu().numpy().tolist()])
 
                 uncertainty = torch.cat((uncertainty, pred_loss), 0)
 

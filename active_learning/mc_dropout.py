@@ -1,6 +1,7 @@
 from utils import AverageMeter
 import time
 import torch
+import numpy as np
 
 """
 Bayesian Active Learning by Disagreement (BALD) extension
@@ -26,6 +27,7 @@ class UncertaintySamplingMCDropout:
         batch_time = AverageMeter()
         all_score = None
         all_entropy = None
+        targets = None
 
         end = time.time()
 
@@ -36,11 +38,14 @@ class UncertaintySamplingMCDropout:
 
             for i, (data_x, data_y) in enumerate(unlabeled_loader):
                 data_x = data_x.cuda(non_blocking=True)
+                data_y = data_y.cuda(non_blocking=True)
 
                 with torch.no_grad():
                     output, _, _ = model(data_x)
 
                 scores = output if scores is None else torch.cat([scores, output])
+                targets = data_y.cpu().numpy() if targets is None \
+                    else np.concatenate([targets, data_y.cpu().numpy().tolist()])
 
                 batch_time.update(time.time() - end)
                 end = time.time()

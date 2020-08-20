@@ -2,6 +2,7 @@ from torch.utils.data import DataLoader
 
 from data.cifar100_dataset import Cifar100Dataset
 from data.cifar10_dataset import Cifar10Dataset
+from data.jurkat_dataset import JurkatDataset
 from data.matek_dataset import MatekDataset
 
 import torch
@@ -24,7 +25,8 @@ class FixMatch:
     def __init__(self, args, verbose=True):
         self.args = args
         self.verbose = verbose
-        self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset}
+        self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset,
+                         'jurkat': JurkatDataset}
         self.model = None
         self.kwargs = {'num_workers': 16, 'pin_memory': False}
 

@@ -7,6 +7,7 @@ import torch
 from active_learning.uncertainty_sampling import UncertaintySampling
 from data.cifar100_dataset import Cifar100Dataset
 from data.cifar10_dataset import Cifar10Dataset
+from data.jurkat_dataset import JurkatDataset
 from data.matek_dataset import MatekDataset
 from model.loss_net import LossNet
 from utils import create_loaders, create_model_optimizer_scheduler, create_model_optimizer_loss_net, get_loss, \
@@ -25,7 +26,8 @@ class LearningLoss:
     def __init__(self, args, verbose=True):
         self.args = args
         self.verbose = verbose
-        self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset}
+        self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset,
+                         'jurkat': JurkatDataset}
         self.model = None
         self.kwargs = {'num_workers': 2, 'pin_memory': False, 'drop_last': True}
 
