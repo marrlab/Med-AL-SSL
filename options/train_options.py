@@ -121,7 +121,7 @@ parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs
 
 parser.add_argument('--store-logs', action='store_false', help='store the logs after training')
 
-parser.add_argument('--run-batch', action='store_true', help='run all methods in batch mode')
+parser.add_argument('--run-batch', action='store_false', help='run all methods in batch mode')
 
 parser.add_argument('--reset-model', action='store_true', help='reset models after every labels injection cycle')
 

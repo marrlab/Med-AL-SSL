@@ -1,14 +1,14 @@
 import argparse
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
-parser.add_argument('--metric', default='f1', type=str,
+parser.add_argument('--metric', default='recall', type=str,
                     choices=['acc1', 'acc5', 'prec', 'recall', 'f1'],
                     help='the weakly supervised strategy to use')
 
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
 
-parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100'],
+parser.add_argument('--dataset', default='jurkat', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat'],
                     help='the dataset to train on')
 
 parser.add_argument('--class_specific', action='store_true', help='get metrics for a specific class')

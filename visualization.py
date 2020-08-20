@@ -3,11 +3,12 @@ import matplotlib.style as style
 
 from data.cifar100_dataset import Cifar100Dataset
 from data.cifar10_dataset import Cifar10Dataset
+from data.jurkat_dataset import JurkatDataset
 from data.matek_dataset import MatekDataset
 from results import get_batch_metrics
 from options.visualization_options import get_arguments
 
-datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset}
+datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset, 'jurkat': JurkatDataset}
 
 
 def plot_metric_dataprop(prop, metric, methods, prop_supervised, metric_supervised, methods_supervised, label_y,
@@ -59,7 +60,7 @@ if __name__ == "__main__":
 
     dataset = datasets[args.dataset](root=args.root).get_base_dataset_autoencoder()
 
-    dataset_title = {'cifar10': ' Cifar-10 dataset', 'matek': ' Matek dataset'}
+    dataset_title = {'cifar10': ' Cifar-10 dataset', 'matek': ' Matek dataset', 'jurkat': ' Jurkat dataset'}
     post_fix = f' Class Specific (class: {dataset.classes[args.class_id]})' if args.class_specific else ''
     title = 'SSL-AL on' + dataset_title[args.dataset]
     met, ratios = get_batch_metrics(met=args.metric, class_specific=args.class_specific, class_id=args.class_id,

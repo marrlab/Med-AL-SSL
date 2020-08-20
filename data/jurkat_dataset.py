@@ -23,8 +23,12 @@ class JurkatDataset:
 
         if advanced_transforms:
             self.transform_train = transforms.Compose([
+                transforms.Resize(size=self.input_size),
                 transforms.RandomCrop(self.input_size, padding=4),
                 transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
+                transforms.RandomGrayscale(),
+                transforms.RandomRotation(degrees=90),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=self.jurkat_mean, std=self.jurkat_std)
             ])
