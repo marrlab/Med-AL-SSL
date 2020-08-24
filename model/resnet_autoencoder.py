@@ -175,3 +175,7 @@ class ResnetAutoencoder(nn.Module):
         x = self.encoder(x)
         x = self.classifier(x)
         return x
+
+    def forward_encoder(self, x):
+        x = self.encoder(x)
+        return x

@@ -14,8 +14,8 @@ parser.add_argument('--simclr-train-epochs', default=250, type=int,
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
 
-parser.add_argument('-b', '--batch-size', default=512, type=int,
-                    help='mini-batch size (default: 512)')
+parser.add_argument('-b', '--batch-size', default=384, type=int,
+                    help='mini-batch size (default: 384)')
 
 parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
                     help='initial learning rate')
@@ -81,11 +81,11 @@ parser.add_argument('--mc-dropout-iterations', default=25, type=int,
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
 
-parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
+parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
 
-parser.add_argument('--semi-supervised-method', default='simclr', type=str,
+parser.add_argument('--semi-supervised-method', default='auto_encoder', type=str,
                     choices=['pseudo_labeling', 'auto_encoder', 'simclr', 'fixmatch'],
                     help='the semi supervised method to use')
 
@@ -110,7 +110,7 @@ parser.add_argument('--weighted', action='store_true', help='to use weighted los
 
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
 
-parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat'],
+parser.add_argument('--dataset', default='cifar10', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat'],
                     help='the dataset to train on')
 
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,

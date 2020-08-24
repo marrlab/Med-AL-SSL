@@ -8,7 +8,7 @@ parser.add_argument('--metric', default='recall', type=str,
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
 
-parser.add_argument('--dataset', default='jurkat', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat'],
+parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat'],
                     help='the dataset to train on')
 
 parser.add_argument('--class_specific', action='store_true', help='get metrics for a specific class')

@@ -3,6 +3,17 @@ import torch.nn.functional as F
 import math
 
 
+'''
+ResNet in PyTorch.
+For Pre-activation ResNet, see 'preact_resnet.py'.
+Reference:
+[1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
+    Deep Residual Learning for Image Recognition. arXiv:1512.03385
+
+Courtesy to: https://github.com/kuangliu/pytorch-cifar/blob/master/models/resnet.py
+'''
+
+
 class BasicBlock(nn.Module):
     expansion = 1
 

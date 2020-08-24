@@ -3,18 +3,20 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from torchvision import transforms
 from .dataset_utils import WeaklySupervisedDataset
-from utils import TransformsSimCLR, TransformFix
+from utils import TransformsSimCLR, TransformFix, oversampling_indices
 
 
 class Cifar10Dataset:
     def __init__(self, root, labeled_ratio=1, add_labeled_ratio=0, advanced_transforms=True, remove_classes=False,
-                 expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1):
+                 expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=True, stratified=False):
         self.root = root
         self.labeled_ratio = labeled_ratio
         self.cifar_mean = (0.4914, 0.4822, 0.4465)
         self.cifar_std = (0.2023, 0.1994, 0.2010)
         self.expand_labeled = expand_labeled
         self.expand_unlabeled = expand_unlabeled
+        self.oversampling = oversampling
+        self.stratified = stratified
 
         self.input_size = 32
 
@@ -53,6 +55,7 @@ class Cifar10Dataset:
         self.add_labeled_num = None
         self.unlabeled_subset_num = None
         self.remove_classes = remove_classes
+        self.labeled_class_samples = None
         self.classes_to_remove = np.array([0, 1, 2])
 
     def get_dataset(self):
@@ -61,11 +64,16 @@ class Cifar10Dataset:
 
         self.add_labeled_num = int(len(base_dataset) * self.add_labeled_ratio)
 
-        labeled_indices, unlabeled_indices = train_test_split(
-            np.arange(len(base_dataset)),
-            test_size=(1 - self.labeled_ratio),
-            shuffle=True,
-            stratify=None)
+        if self.stratified:
+            labeled_indices, unlabeled_indices = train_test_split(
+                np.arange(len(base_dataset)),
+                test_size=(1 - self.labeled_ratio),
+                shuffle=True,
+                stratify=None)
+        else:
+            indices = np.arange(len(base_dataset))
+            np.random.shuffle(indices)
+            labeled_indices, unlabeled_indices = indices[:self.add_labeled_num], indices[self.add_labeled_num:]
 
         self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
 
@@ -76,6 +84,13 @@ class Cifar10Dataset:
 
         if self.remove_classes:
             labeled_indices = labeled_indices[~np.isin(targets, self.remove_classes)]
+
+        self.labeled_class_samples = [np.sum(np.array(base_dataset.targets)[labeled_indices] == i)
+                                      for i in range(len(base_dataset.classes))]
+
+        if self.oversampling:
+            labeled_indices = oversampling_indices(labeled_indices,
+                                                   np.array(base_dataset.targets)[labeled_indices])
 
         labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=self.transform_train)
         unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_test)
