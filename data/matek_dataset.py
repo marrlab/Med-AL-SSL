@@ -56,6 +56,7 @@ class MatekDataset:
         self.add_labeled_num = None
         self.unlabeled_subset_num = None
         self.remove_classes = remove_classes
+        self.labeled_class_samples = None
         self.classes_to_remove = np.array([0, 1, 2, 3, 4, 6, 7, 9, 11, 13, 14])
 
     def get_dataset(self):
@@ -85,6 +86,9 @@ class MatekDataset:
         if self.remove_classes:
             targets = np.array(base_dataset.targets)[labeled_indices]
             labeled_indices = labeled_indices[~np.isin(targets, self.remove_classes)]
+
+        self.labeled_class_samples = [np.sum(np.array(base_dataset.targets)[labeled_indices] == i)
+                                      for i in range(len(base_dataset.classes))]
 
         if self.oversampling:
             labeled_indices = oversampling_indices(labeled_indices,

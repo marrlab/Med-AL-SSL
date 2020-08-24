@@ -58,6 +58,7 @@
       <w>topk</w>
       <w>torchscript</w>
       <w>torchvision</w>
+      <w>unstratified</w>
       <w>warmup</w>
       <w>wideresnet</w>
       <w>xent</w>

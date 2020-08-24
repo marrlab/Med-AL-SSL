@@ -56,8 +56,8 @@ class FixMatch:
         val_loader = DataLoader(dataset=test_dataset, batch_size=self.args.batch_size,
                                 shuffle=True, **self.kwargs)
 
-        criterion_labeled = get_loss(self.args, base_dataset, reduction='mean')
-        criterion_unlabeled = get_loss(self.args, base_dataset, reduction='none')
+        criterion_labeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='mean')
+        criterion_unlabeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='none')
 
         criterions = {'labeled': criterion_labeled, 'unlabeled': criterion_unlabeled}
 
@@ -100,12 +100,17 @@ class FixMatch:
 
                 current_labeled_ratio += self.args.add_labeled_ratio
                 best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
+
                 if self.args.reset_model:
                     model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_cls,
                                                                                    optimizer='sgd',
                                                                                    scheduler='cosine_schedule_with_'
                                                                                              'warmup',
                                                                                    load_optimizer_scheduler=True)
+
+                criterion_labeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='mean')
+                criterion_unlabeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='none')
+                criterions = {'labeled': criterion_labeled, 'unlabeled': criterion_unlabeled}
             else:
                 best_acc1 = max(acc, best_acc1)
                 best_prec1 = max(prec, best_prec1)

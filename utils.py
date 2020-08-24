@@ -345,12 +345,11 @@ def create_model_optimizer_loss_net():
     return model, optimizer
 
 
-def get_loss(args, base_dataset, reduction='mean'):
+def get_loss(args, labeled_class_samples, reduction='mean'):
     if args.weighted:
-        classes_targets = np.array(base_dataset.targets)
-        classes_samples = [np.sum(classes_targets == i) for i in range(len(base_dataset.classes))]
-        # classes_weights = np.log2(len(base_dataset)) - np.log2(classes_samples)
-        classes_weights = np.clip(len(base_dataset) / np.array(classes_samples), a_min=0, a_max=50)
+        classes_weights = np.clip(np.sum(labeled_class_samples) / np.array(labeled_class_samples),
+                                  a_min=0, a_max=50)
+
         # noinspection PyArgumentList
         criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(classes_weights).cuda(), reduction=reduction)
     else:

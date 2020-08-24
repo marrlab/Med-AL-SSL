@@ -91,7 +91,7 @@ def main(args):
     if args.resume:
         model, _, _ = resume_model(args, model)
 
-    criterion = get_loss(args, base_dataset)
+    criterion = get_loss(args, dataset_class.labeled_class_samples)
 
     last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start
@@ -140,6 +140,8 @@ def main(args):
 
             if args.reset_model:
                 model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
+
+            criterion = get_loss(args, dataset_class.labeled_class_samples)
         else:
             best_acc1 = max(acc, best_acc1)
             best_prec1 = max(prec, best_prec1)

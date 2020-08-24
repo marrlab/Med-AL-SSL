@@ -62,7 +62,7 @@ parser.add_argument('--labeled-ratio-stop', default=0.25, type=int,
 parser.add_argument('--labeled-warmup-epochs', default=15, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
 
-parser.add_argument('--unlabeled-subset', default=0.05, type=float,
+parser.add_argument('--unlabeled-subset', default=0.15, type=float,
                     help='the subset of the unlabeled data to use, to avoid choosing similar data points')
 
 parser.add_argument('--oversampling', action='store_false', help='perform oversampling for labeled dataset')

@@ -53,7 +53,7 @@ class LearningLoss:
         models = {'backbone': model_backbone, 'module': model_module}
         optimizers = {'backbone': optimizer_backbone, 'module': optimizer_module}
 
-        criterion_backbone = get_loss(self.args, base_dataset, reduction='none')
+        criterion_backbone = get_loss(self.args, dataset_cl.labeled_class_samples, reduction='none')
 
         criterions = {'backbone': criterion_backbone, 'module': loss_module_objective_func}
 
@@ -101,6 +101,9 @@ class LearningLoss:
                     model_module, optimizer_module = create_model_optimizer_loss_net()
                     models = {'backbone': model_backbone, 'module': model_module}
                     optimizers = {'backbone': optimizer_backbone, 'module': optimizer_module}
+
+                criterion_backbone = get_loss(self.args, dataset_cl.labeled_class_samples, reduction='none')
+                criterions = {'backbone': criterion_backbone, 'module': loss_module_objective_func}
             else:
                 best_acc1 = max(acc, best_acc1)
                 best_prec1 = max(prec, best_prec1)
