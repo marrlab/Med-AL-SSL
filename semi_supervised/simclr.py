@@ -31,7 +31,8 @@ class SimCLR:
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,
                                                          labeled_ratio=self.args.labeled_ratio_start,
                                                          add_labeled_ratio=self.args.add_labeled_ratio,
-                                                         advanced_transforms=False)
+                                                         advanced_transforms=False,
+                                                         oversampling=self.args.oversampling)
 
         base_dataset = dataset_class.get_base_dataset_simclr()
 
@@ -89,7 +90,8 @@ class SimCLR:
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,
                                                          labeled_ratio=self.args.labeled_ratio_start,
                                                          add_labeled_ratio=self.args.add_labeled_ratio,
-                                                         advanced_transforms=False)
+                                                         advanced_transforms=False,
+                                                         oversampling=self.args.oversampling)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_class.get_dataset()

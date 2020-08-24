@@ -61,7 +61,7 @@ if __name__ == "__main__":
     dataset = datasets[args.dataset](root=args.root).get_base_dataset_autoencoder()
 
     dataset_title = {'cifar10': ' Cifar-10 dataset', 'matek': ' Matek dataset', 'jurkat': ' Jurkat dataset'}
-    post_fix = f' Class Specific (class: {dataset.classes[args.class_id]})' if args.class_specific else ''
+    post_fix = f' Class Specific (class: {dataset.dataset.classes[args.class_id]})' if args.class_specific else ''
     title = 'SSL-AL on' + dataset_title[args.dataset]
     met, ratios = get_batch_metrics(met=args.metric, class_specific=args.class_specific, class_id=args.class_id,
                                     dataset=args.dataset)

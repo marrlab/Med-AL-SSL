@@ -9,7 +9,7 @@ import random
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '6'
+os.environ['CUDA_VISIBLE_DEVICES'] = '5'
 
 import torch
 import torch.cuda
@@ -68,7 +68,8 @@ def main(args):
                                            labeled_ratio=args.labeled_ratio_start,
                                            add_labeled_ratio=args.add_labeled_ratio,
                                            advanced_transforms=True,
-                                           unlabeled_subset_ratio=args.unlabeled_subset)
+                                           unlabeled_subset_ratio=args.unlabeled_subset,
+                                           oversampling=args.oversampling)
 
     base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
         dataset_class.get_dataset()
@@ -281,14 +282,14 @@ if __name__ == '__main__':
             # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
             # ('active_learning', 'density_weighted', 'pseudo_labeling'),
-            ('active_learning', 'entropy_based', 'pseudo_labeling'),
-            ('active_learning', 'mc_dropout', 'pseudo_labeling'),
-            ('active_learning', 'learning_loss', 'pseudo_labeling'),
-            ('random_sampling', 'least_confidence', 'pseudo_labeling'),
-            ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
-            ('semi_supervised', 'least_confidence', 'simclr'),
-            ('semi_supervised', 'least_confidence', 'auto_encoder'),
-            # ('semi_supervised', 'least_confidence', 'fixmatch')
+            # ('active_learning', 'entropy_based', 'pseudo_labeling'),
+            # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
+            # ('active_learning', 'learning_loss', 'pseudo_labeling'),
+            # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
+            # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
+            # ('semi_supervised', 'least_confidence', 'simclr'),
+            # ('semi_supervised', 'least_confidence', 'auto_encoder'),
+            ('semi_supervised', 'least_confidence', 'fixmatch')
         ]
 
         for (m, u, s) in states:

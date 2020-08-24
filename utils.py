@@ -109,7 +109,7 @@ def create_base_loader(base_dataset, kwargs, batch_size):
     return DataLoader(dataset=base_dataset, batch_size=batch_size, drop_last=True, shuffle=True, **kwargs)
 
 
-def stratified_random_sampling(unlabeled_indices, number):
+def random_sampling(unlabeled_indices, number):
     rng = default_rng()
     samples_indices = rng.choice(unlabeled_indices.shape[0], size=number, replace=False)
 
@@ -420,14 +420,6 @@ def perform_sampling(args, uncertainty_sampler, pseudo_labeler, epoch, model, tr
                                                           unlabeled_loader,
                                                           number=dataset_class.add_labeled_num)
 
-        labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
-                                                                 samples_indices)
-
-        train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset,
-                                                                    test_dataset, labeled_indices,
-                                                                    unlabeled_indices, kwargs,
-                                                                    dataset_class.unlabeled_subset_num)
-
         print(f'Uncertainty Sampling\t '
               f'Current labeled ratio: {current_labeled_ratio + args.add_labeled_ratio}\t'
               f'Model Reset')
@@ -436,40 +428,28 @@ def perform_sampling(args, uncertainty_sampler, pseudo_labeler, epoch, model, tr
                                                                       unlabeled_loader,
                                                                       number=dataset_class.add_labeled_num)
 
-        labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
-                                                                 samples_indices)
-
-        pseudo_labels_acc = np.zeros(samples_indices.shape[0])
-        for i, j in enumerate(samples_indices):
-            if labeled_dataset.targets[j] == samples_targets[i]:
-                pseudo_labels_acc[i] = 1
-            else:
-                labeled_dataset.targets[j] = samples_targets[i]
-
-        train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset,
-                                                                    test_dataset, labeled_indices,
-                                                                    unlabeled_indices, kwargs,
-                                                                    dataset_class.unlabeled_subset_num)
-
         print(f'Pseudo labeling\t '
               f'Current labeled ratio: {current_labeled_ratio + args.add_labeled_ratio}\t'
-              f'Pseudo labeled accuracy: {np.sum(pseudo_labels_acc == 1) / samples_indices.shape[0]}\t'
               f'Model Reset')
 
     else:
-        samples_indices = stratified_random_sampling(unlabeled_indices, number=dataset_class.add_labeled_num)
-
-        labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
-                                                                 samples_indices)
-
-        train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset,
-                                                                    test_dataset, labeled_indices,
-                                                                    unlabeled_indices, kwargs,
-                                                                    dataset_class.unlabeled_subset_num)
+        samples_indices = random_sampling(unlabeled_indices, number=dataset_class.add_labeled_num)
 
         print(f'Random Sampling\t '
               f'Current labeled ratio: {current_labeled_ratio + args.add_labeled_ratio}\t'
               f'Model Reset')
+
+    labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
+                                                             samples_indices)
+
+    if args.oversampling:
+        labeled_indices = oversampling_indices(labeled_indices,
+                                               np.array(labeled_dataset.targets)[labeled_indices])
+
+    train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset,
+                                                                test_dataset, labeled_indices,
+                                                                unlabeled_indices, kwargs,
+                                                                dataset_class.unlabeled_subset_num)
 
     return train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices
 

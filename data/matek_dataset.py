@@ -9,7 +9,7 @@ from utils import TransformsSimCLR, TransformFix, oversampling_indices
 
 class MatekDataset:
     def __init__(self, root, labeled_ratio=1, add_labeled_ratio=0, advanced_transforms=True, remove_classes=False,
-                 expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=True):
+                 expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=True, stratified=False):
         self.root = root
         self.train_path = os.path.join(self.root, "matek", "train")
         self.test_path = os.path.join(self.root, "matek", "test")
@@ -20,6 +20,7 @@ class MatekDataset:
         self.expand_labeled = expand_labeled
         self.expand_unlabeled = expand_unlabeled
         self.oversampling = oversampling
+        self.stratified = stratified
 
         if advanced_transforms:
             self.transform_train = transforms.Compose([
@@ -64,11 +65,16 @@ class MatekDataset:
 
         self.add_labeled_num = int(len(base_dataset) * self.add_labeled_ratio)
 
-        labeled_indices, unlabeled_indices = train_test_split(
-            np.arange(len(base_dataset)),
-            test_size=(1 - self.labeled_ratio),
-            shuffle=True,
-            stratify=None)
+        if self.stratified:
+            labeled_indices, unlabeled_indices = train_test_split(
+                np.arange(len(base_dataset)),
+                test_size=(1 - self.labeled_ratio),
+                shuffle=True,
+                stratify=None)
+        else:
+            indices = np.arange(len(base_dataset))
+            np.random.shuffle(indices)
+            labeled_indices, unlabeled_indices = indices[:self.add_labeled_num], indices[self.add_labeled_num:]
 
         self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
 
@@ -83,8 +89,6 @@ class MatekDataset:
         if self.oversampling:
             labeled_indices = oversampling_indices(labeled_indices,
                                                    np.array(base_dataset.targets)[labeled_indices])
-            unlabeled_indices = oversampling_indices(unlabeled_indices,
-                                                     np.array(base_dataset.targets)[unlabeled_indices])
 
         labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=self.transform_train)
         unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_test)

@@ -65,10 +65,12 @@ parser.add_argument('--labeled-warmup-epochs', default=15, type=int,
 parser.add_argument('--unlabeled-subset', default=0.05, type=float,
                     help='the subset of the unlabeled data to use, to avoid choosing similar data points')
 
+parser.add_argument('--oversampling', action='store_false', help='perform oversampling for labeled dataset')
+
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 
-parser.add_argument('--uncertainty-sampling-method', default='mc_dropout', type=str,
+parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
                              'density_weighted', 'mc_dropout', 'learning_loss'],
                     help='the uncertainty sampling method to use')
@@ -108,7 +110,7 @@ parser.add_argument('--weighted', action='store_true', help='to use weighted los
 
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
 
-parser.add_argument('--dataset', default='jurkat', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat'],
+parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat'],
                     help='the dataset to train on')
 
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,
@@ -121,7 +123,7 @@ parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs
 
 parser.add_argument('--store-logs', action='store_false', help='store the logs after training')
 
-parser.add_argument('--run-batch', action='store_false', help='run all methods in batch mode')
+parser.add_argument('--run-batch', action='store_true', help='run all methods in batch mode')
 
 parser.add_argument('--reset-model', action='store_true', help='reset models after every labels injection cycle')
 
