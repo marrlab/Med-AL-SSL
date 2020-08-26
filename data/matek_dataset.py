@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from torchvision import transforms
 from .dataset_utils import WeaklySupervisedDataset
-from utils import TransformsSimCLR, TransformFix, oversampling_indices
+from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge
 
 
 class MatekDataset:
@@ -66,37 +66,7 @@ class MatekDataset:
             self.train_path, transform=None
         )
 
-        base_targets = np.array(base_dataset.targets)
-        base_classes = base_dataset.classes
-        base_class_to_idx = base_dataset.class_to_idx
-
-        for m in self.merge_classes:
-            class_idx = []
-            for c in m:
-                class_idx.append(base_class_to_idx[c])
-            class_idx = sorted(class_idx, reverse=True)
-            min_i = class_idx[-1]
-
-            class_name = base_classes[min_i]
-
-            for i in class_idx[:-1]:
-                base_targets[base_targets == i] = min_i
-                class_name += '_'
-
-                for j in range(i + 1, len(base_classes)):
-                    base_targets[base_targets == j] = j - 1
-                    base_class_to_idx[base_classes[j]] = j - 1
-
-                class_name += base_classes[i]
-                del base_class_to_idx[base_classes[i]]
-                del base_classes[i]
-
-            base_class_to_idx[class_name] = base_class_to_idx.pop(base_classes[min_i])
-            base_classes[min_i] = class_name
-
-        base_dataset.targets = base_targets.tolist()
-        base_dataset.classes = base_classes
-        base_dataset.class_to_idx = base_class_to_idx
+        base_dataset.targets, base_dataset.classes, base_dataset.class_to_idx = merge(base_dataset, self.merge_classes)
 
         self.add_labeled_num = int(len(base_dataset) * self.add_labeled_ratio)
 
@@ -114,8 +84,11 @@ class MatekDataset:
         self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
 
         test_dataset = torchvision.datasets.ImageFolder(
-            self.test_path, transform=self.transform_test
+            self.test_path, transform=None
         )
+
+        test_dataset.targets, test_dataset.classes, test_dataset.class_to_idx = merge(test_dataset, self.merge_classes)
+        test_dataset = WeaklySupervisedDataset(test_dataset, range(len(test_dataset)), transform=self.transform_test)
 
         if self.remove_classes:
             targets = np.array(base_dataset.targets)[labeled_indices]

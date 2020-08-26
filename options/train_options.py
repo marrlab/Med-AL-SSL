@@ -14,8 +14,8 @@ parser.add_argument('--simclr-train-epochs', default=250, type=int,
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
 
-parser.add_argument('-b', '--batch-size', default=384, type=int,
-                    help='mini-batch size (default: 384)')
+parser.add_argument('-b', '--batch-size', default=128, type=int,
+                    help='mini-batch size (default: 128)')
 
 parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
                     help='initial learning rate')

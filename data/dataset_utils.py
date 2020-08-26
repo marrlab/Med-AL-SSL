@@ -13,7 +13,9 @@ class WeaklySupervisedDataset(Dataset):
         return len(self.indices)
 
     def __getitem__(self, index):
-        img, target = self.dataset[self.indices[index]]
+        img, _ = self.dataset[self.indices[index]]
+        target = self.targets[self.indices[index]]
+
         img = self.transform(img) if self.transform is not None else img
 
         return img, target

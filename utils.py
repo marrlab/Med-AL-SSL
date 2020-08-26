@@ -488,6 +488,38 @@ def oversampling_indices(indices, targets):
     return np.array(oversampled_indices)
 
 
+def merge(base_dataset, merge_classes):
+    base_targets = np.array(base_dataset.targets)
+    base_classes = base_dataset.classes
+    base_class_to_idx = base_dataset.class_to_idx
+
+    for m in merge_classes:
+        class_idx = []
+        for c in m:
+            class_idx.append(base_class_to_idx[c])
+        class_idx = sorted(class_idx, reverse=True)
+        min_i = class_idx[-1]
+
+        class_name = base_classes[min_i]
+
+        for i in class_idx[:-1]:
+            base_targets[base_targets == i] = min_i
+            class_name += '_'
+
+            for j in range(i + 1, len(base_classes)):
+                base_targets[base_targets == j] = j - 1
+                base_class_to_idx[base_classes[j]] = j - 1
+
+            class_name += base_classes[i]
+            del base_class_to_idx[base_classes[i]]
+            del base_classes[i]
+
+        base_class_to_idx[class_name] = base_class_to_idx.pop(base_classes[min_i])
+        base_classes[min_i] = class_name
+
+    return base_targets, base_classes, base_class_to_idx
+
+
 def print_args(args):
     print('Arguments:\n'
           f'Model name: {args.name}\t'
