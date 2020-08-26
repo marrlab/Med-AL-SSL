@@ -21,6 +21,7 @@ class MatekDataset:
         self.expand_unlabeled = expand_unlabeled
         self.oversampling = oversampling
         self.stratified = stratified
+        self.merge_classes = [['NGB', 'NGS'], ['PMO', 'PMB', 'MYB', 'MMZ'], ['LYA', 'LYT']]
 
         if advanced_transforms:
             self.transform_train = transforms.Compose([
@@ -50,7 +51,8 @@ class MatekDataset:
         ])
         self.transform_simclr = TransformsSimCLR(size=self.input_size)
         self.transform_fixmatch = TransformFix(mean=self.matek_mean, std=self.matek_std, input_size=self.input_size)
-        self.num_classes = 15
+        self.merged_classes = 5
+        self.num_classes = 15 - self.merged_classes
         self.add_labeled_ratio = add_labeled_ratio
         self.unlabeled_subset_ratio = unlabeled_subset_ratio
         self.add_labeled_num = None
@@ -64,6 +66,38 @@ class MatekDataset:
             self.train_path, transform=None
         )
 
+        base_targets = np.array(base_dataset.targets)
+        base_classes = base_dataset.classes
+        base_class_to_idx = base_dataset.class_to_idx
+
+        for m in self.merge_classes:
+            class_idx = []
+            for c in m:
+                class_idx.append(base_class_to_idx[c])
+            class_idx = sorted(class_idx, reverse=True)
+            min_i = class_idx[-1]
+
+            class_name = base_classes[min_i]
+
+            for i in class_idx[:-1]:
+                base_targets[base_targets == i] = min_i
+                class_name += '_'
+
+                for j in range(i + 1, len(base_classes)):
+                    base_targets[base_targets == j] = j - 1
+                    base_class_to_idx[base_classes[j]] = j - 1
+
+                class_name += base_classes[i]
+                del base_class_to_idx[base_classes[i]]
+                del base_classes[i]
+
+            base_class_to_idx[class_name] = base_class_to_idx.pop(base_classes[min_i])
+            base_classes[min_i] = class_name
+
+        base_dataset.targets = base_targets.tolist()
+        base_dataset.classes = base_classes
+        base_dataset.class_to_idx = base_class_to_idx
+
         self.add_labeled_num = int(len(base_dataset) * self.add_labeled_ratio)
 
         if self.stratified:
@@ -71,7 +105,7 @@ class MatekDataset:
                 np.arange(len(base_dataset)),
                 test_size=(1 - self.labeled_ratio),
                 shuffle=True,
-                stratify=None)
+                stratify=base_dataset.targets)
         else:
             indices = np.arange(len(base_dataset))
             np.random.shuffle(indices)

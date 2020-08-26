@@ -41,10 +41,6 @@ class Cifar10Dataset:
             ])
 
         self.transform_autoencoder = transforms.Compose([
-                transforms.RandomVerticalFlip(),
-                transforms.RandomGrayscale(),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomCrop(32, padding=4),
                 transforms.ToTensor(),
             ])
         self.transform_simclr = TransformsSimCLR(size=32)

@@ -314,19 +314,19 @@ def create_model_optimizer_simclr(args, dataset_class):
 
 
 def create_model_optimizer_autoencoder(args, dataset_class):
-    model = ResnetAutoencoder(z_dim=32, num_classes=dataset_class.num_classes, drop_rate=args.drop_rate,
+    model = ResnetAutoencoder(z_dim=128, num_classes=dataset_class.num_classes, drop_rate=args.drop_rate,
                               input_size=dataset_class.input_size)
 
     model = model.cuda()
 
-    args.resume = True
+    # args.resume = True
     if args.resume:
         file = os.path.join(args.checkpoint_path, args.name, 'model_best.pth.tar')
         if os.path.isfile(file):
             print("=> loading checkpoint '{}'".format(file))
             checkpoint = torch.load(file)
             args.start_epoch = checkpoint['epoch']
-            args.start_epoch = args.epochs
+            # args.start_epoch = args.epochs
             model.load_state_dict(checkpoint['state_dict'])
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
