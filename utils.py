@@ -137,8 +137,8 @@ class Metrics:
         self.outputs_probs = mini_outputs \
             if self.outputs_probs is None else torch.cat([self.outputs_probs, mini_outputs], dim=0)
 
-    def get_metrics(self):
-        return precision_recall_fscore_support(self.targets, self.outputs, average='macro', zero_division=1)
+    def get_metrics(self, average='macro'):
+        return precision_recall_fscore_support(self.targets, self.outputs, average=average, zero_division=1)
 
     def get_report(self):
         return classification_report(self.targets, self.outputs, zero_division=1)

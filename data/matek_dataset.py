@@ -14,9 +14,10 @@ class MatekDataset:
         self.train_path = os.path.join(self.root, "matek", "train")
         self.test_path = os.path.join(self.root, "matek", "test")
         self.labeled_ratio = labeled_ratio
-        self.matek_mean = (0.8205, 0.7279, 0.8360)
-        self.matek_std = (0.1719, 0.2589, 0.1042)
+        self.matek_mean = (0, 0, 0)
+        self.matek_std = (1, 1, 1)
         self.input_size = 128
+        self.crop_size = 224
         self.expand_labeled = expand_labeled
         self.expand_unlabeled = expand_unlabeled
         self.oversampling = oversampling
@@ -25,8 +26,11 @@ class MatekDataset:
 
         if advanced_transforms:
             self.transform_train = transforms.Compose([
-                transforms.RandomCrop(self.input_size, padding=4),
+                transforms.RandomCrop(self.crop_size),
+                transforms.RandomAffine(degrees=90, translate=(0.2, 0.2)),
+                transforms.Resize(size=self.input_size),
                 transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
             ])
@@ -46,12 +50,17 @@ class MatekDataset:
                 transforms.ToTensor(),
             ])
         self.transform_autoencoder = transforms.Compose([
+            transforms.RandomCrop(self.crop_size),
+            transforms.RandomAffine(degrees=90, translate=(0.2, 0.2)),
             transforms.Resize(size=self.input_size),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
             transforms.ToTensor(),
+            transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
         ])
         self.transform_simclr = TransformsSimCLR(size=self.input_size)
         self.transform_fixmatch = TransformFix(mean=self.matek_mean, std=self.matek_std, input_size=self.input_size)
-        self.merged_classes = 5
+        self.merged_classes = 0
         self.num_classes = 15 - self.merged_classes
         self.add_labeled_ratio = add_labeled_ratio
         self.unlabeled_subset_ratio = unlabeled_subset_ratio
@@ -108,29 +117,33 @@ class MatekDataset:
 
     def get_base_dataset_autoencoder(self):
         base_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=None
+            self.train_path, transform=self.transform_autoencoder
         )
 
+        '''
         if self.oversampling:
             base_indices = oversampling_indices(np.array(list(range(len(base_dataset)))),
                                                 np.array(base_dataset.targets))
         else:
             base_indices = np.array(list(range(len(base_dataset))))
+        '''
 
-        return WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_autoencoder)
+        return base_dataset
 
     def get_base_dataset_simclr(self):
         base_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=None
+            self.train_path, transform=self.transform_simclr
         )
 
+        '''
         if self.oversampling:
             base_indices = oversampling_indices(np.array(list(range(len(base_dataset)))),
                                                 np.array(base_dataset.targets))
         else:
             base_indices = np.array(list(range(len(base_dataset))))
+        '''
 
-        return WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_simclr)
+        return base_dataset
 
     def get_datasets_fixmatch(self, base_dataset, labeled_indices, unlabeled_indices):
         transform_labeled = transforms.Compose([

@@ -9,7 +9,7 @@ import random
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 import torch
 import torch.cuda
@@ -112,12 +112,12 @@ def main(args):
     else:
         print('Starting training..')
 
-    best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
+    best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat, best_micro = 0, 0, 0, 0, 0, None, None
 
     for epoch in range(args.start_epoch, args.epochs):
         model = train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args)
-        acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve = validate(val_loader, model,
-                                                                                  criterion, last_best_epochs, args)
+        acc, acc5, (prec, recall, f1, _), confusion_mat, \
+            roc_auc_curve, micro_metrics = validate(val_loader, model, criterion, last_best_epochs, args)
         is_best = recall > best_recall1
         last_best_epochs = 0 if is_best else last_best_epochs + 1
         best_model = deepcopy(model) if is_best else best_model
@@ -125,7 +125,7 @@ def main(args):
         if epoch > args.labeled_warmup_epochs and epoch % args.add_labeled_epochs == 0:
             acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
                              [best_acc1, best_acc5, best_prec1, best_recall1, best_f1,
-                              best_confusion_mat.tolist(), roc_auc_curve]})
+                             best_confusion_mat.tolist(), roc_auc_curve, best_micro]})
 
             train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                 perform_sampling(args, uncertainty_sampler, pseudo_labeler,
@@ -136,7 +136,8 @@ def main(args):
                                  test_dataset, kwargs, current_labeled_ratio,
                                  best_model)
             current_labeled_ratio += args.add_labeled_ratio
-            best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
+            best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat, best_micro = \
+                0, 0, 0, 0, 0, None, None
 
             if args.reset_model:
                 model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
@@ -149,6 +150,7 @@ def main(args):
             best_acc5 = max(acc5, best_acc5)
             best_f1 = max(f1, best_f1)
             best_confusion_mat = confusion_mat if is_best else best_confusion_mat
+            best_micro = micro_metrics if is_best else best_micro
 
         save_checkpoint(args, {
             'epoch': epoch + 1,
@@ -254,12 +256,13 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
                               last_best_epoch=last_best_epochs))
 
     (prec, recall, f1, _) = metrics.get_metrics()
+    micro_metrics = metrics.get_metrics(average='micro')
     confusion_matrix = metrics.get_confusion_matrix()
     roc_auc_curve = metrics.get_roc_auc_curve()
     print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t * Roc_Auc {2}\t'
           .format(prec, recall, roc_auc_curve, top1=top1, top5=top5))
 
-    return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix, roc_auc_curve
+    return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix, roc_auc_curve, micro_metrics
 
 
 def evaluate(val_loader, model):

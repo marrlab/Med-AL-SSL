@@ -11,9 +11,9 @@ parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/'
 parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat'],
                     help='the dataset to train on')
 
-parser.add_argument('--class_specific', action='store_true', help='get metrics for a specific class')
+parser.add_argument('--class_specific', action='store_false', help='get metrics for a specific class')
 
-parser.add_argument('--class-id', default=2, type=int, help='class id to get the results for')
+parser.add_argument('--class-id', default=6, type=int, help='class id to get the results for')
 
 parser.set_defaults(augment=True)
 

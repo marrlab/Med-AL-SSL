@@ -3,11 +3,12 @@ import numpy as np
 
 
 class WeaklySupervisedDataset(Dataset):
-    def __init__(self, dataset, indices, transform=None):
+    def __init__(self, dataset, indices, transform=None, poisson=False):
         self.transform = transform
         self.indices = indices
         self.dataset = dataset
         self.targets = np.array(dataset.targets)
+        self.poisson = poisson
 
     def __len__(self):
         return len(self.indices)
@@ -17,5 +18,7 @@ class WeaklySupervisedDataset(Dataset):
         target = self.targets[self.indices[index]]
 
         img = self.transform(img) if self.transform is not None else img
+        poisson_noise = np.random.poisson(size=img.shape)
+        img = img + poisson_noise if self.poisson else img
 
         return img, target

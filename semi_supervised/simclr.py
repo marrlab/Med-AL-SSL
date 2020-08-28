@@ -108,22 +108,23 @@ class SimCLR:
 
         acc_ratio = {}
 
-        best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
+        best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat, best_micro = \
+            0, 0, 0, 0, 0, None, None
         self.args.start_epoch = 0
         self.args.weak_supervision_strategy = "random_sampling"
         current_labeled_ratio = self.args.labeled_ratio_start
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
             self.train_classifier(train_loader, model, criterion, optimizer, epoch)
-            acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve = self.validate_classifier(val_loader,
-                                                                                                      model, criterion)
+            acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve, micro_metrics = \
+                self.validate_classifier(val_loader, model, criterion)
 
             is_best = recall > best_recall1
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
                 acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
                                  [best_acc1, best_acc5, best_prec1, best_recall1, best_f1,
-                                  best_confusion_mat.tolist(), roc_auc_curve]})
+                                 best_confusion_mat.tolist(), roc_auc_curve, best_micro]})
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                     perform_sampling(self.args, None, None,
@@ -135,8 +136,8 @@ class SimCLR:
                                      None)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat = 0, 0, 0, 0, 0, None
-
+                best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat, best_micro = \
+                    0, 0, 0, 0, 0, None, None
                 if self.args.reset_model:
                     model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_class)
                     optimizer = torch.optim.Adam(model.parameters())
@@ -149,6 +150,7 @@ class SimCLR:
                 best_acc5 = max(acc5, best_acc5)
                 best_f1 = max(f1, best_f1)
                 best_confusion_mat = confusion_mat if is_best else best_confusion_mat
+                best_micro = micro_metrics if is_best else best_micro
 
             if current_labeled_ratio > self.args.labeled_ratio_stop:
                 break
@@ -233,9 +235,10 @@ class SimCLR:
                           .format(i, len(val_loader), batch_time=batch_time, loss=losses, top1=top1))
 
         (prec, recall, f1, _) = metrics.get_metrics()
+        micro_metrics = metrics.get_metrics(average='micro')
         confusion_matrix = metrics.get_confusion_matrix()
         roc_auc_curve = metrics.get_roc_auc_curve()
         print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t * Roc_Auc {2}\t'
               .format(prec, recall, roc_auc_curve, top1=top1, top5=top5))
 
-        return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix, roc_auc_curve
+        return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix, roc_auc_curve, micro_metrics

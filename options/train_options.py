@@ -14,8 +14,8 @@ parser.add_argument('--simclr-train-epochs', default=250, type=int,
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
 
-parser.add_argument('-b', '--batch-size', default=128, type=int,
-                    help='mini-batch size (default: 128)')
+parser.add_argument('-b', '--batch-size', default=256, type=int,
+                    help='mini-batch size (default: 256)')
 
 parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
                     help='initial learning rate')
@@ -62,7 +62,7 @@ parser.add_argument('--labeled-ratio-stop', default=0.25, type=int,
 parser.add_argument('--labeled-warmup-epochs', default=15, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
 
-parser.add_argument('--unlabeled-subset', default=0.15, type=float,
+parser.add_argument('--unlabeled-subset', default=0.30, type=float,
                     help='the subset of the unlabeled data to use, to avoid choosing similar data points')
 
 parser.add_argument('--oversampling', action='store_false', help='perform oversampling for labeled dataset')
@@ -70,7 +70,7 @@ parser.add_argument('--oversampling', action='store_false', help='perform oversa
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 
-parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
+parser.add_argument('--uncertainty-sampling-method', default='learning_loss', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
                              'density_weighted', 'mc_dropout', 'learning_loss'],
                     help='the uncertainty sampling method to use')
@@ -123,7 +123,7 @@ parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs
 
 parser.add_argument('--store-logs', action='store_false', help='store the logs after training')
 
-parser.add_argument('--run-batch', action='store_false', help='run all methods in batch mode')
+parser.add_argument('--run-batch', action='store_true', help='run all methods in batch mode')
 
 parser.add_argument('--reset-model', action='store_true', help='reset models after every labels injection cycle')
 
