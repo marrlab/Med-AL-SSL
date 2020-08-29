@@ -94,7 +94,8 @@ class AutoEncoder:
 
         optimizer = torch.optim.Adam(model.parameters())
 
-        acc_ratio = {}
+        metrics_per_ratio = {}
+        metrics_per_epoch = {}
         best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat, best_micro = \
             0, 0, 0, 0, 0, None, None
         self.args.start_epoch = 0
@@ -102,16 +103,20 @@ class AutoEncoder:
         current_labeled_ratio = self.args.labeled_ratio_start
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
-            self.train_classifier(train_loader, model, criterion, optimizer, epoch)
-            acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve, micro_metrics = \
+            model, train_loss = self.train_classifier(train_loader, model, criterion, optimizer, epoch)
+            acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve, micro_metrics, val_loss = \
                 self.validate_classifier(val_loader, model, criterion)
 
             is_best = recall > best_recall1
+            metrics_per_epoch.update({epoch: [acc, acc5, prec, recall, f1, confusion_mat.tolist(),
+                                              roc_auc_curve, micro_metrics, train_loss, val_loss]})
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
-                acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
-                                 [best_acc1, best_acc5, best_prec1, best_recall1, best_f1,
-                                 best_confusion_mat.tolist(), roc_auc_curve, best_micro]})
+                metrics_per_ratio.update({np.round(current_labeled_ratio, decimals=2):
+                                              [best_acc1, best_acc5, best_prec1, best_recall1, best_f1,
+                                               best_confusion_mat.tolist() if best_confusion_mat is not None else
+                                               confusion_mat.tolist(),
+                                               roc_auc_curve, best_micro]})
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                     perform_sampling(self.args, None, None,
@@ -143,7 +148,8 @@ class AutoEncoder:
                 break
 
         if self.args.store_logs:
-            store_logs(self.args, acc_ratio)
+            store_logs(self.args, metrics_per_ratio)
+            store_logs(self.args, metrics_per_epoch, epoch_wise=True)
 
         return best_acc1
 
@@ -180,6 +186,8 @@ class AutoEncoder:
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                       .format(epoch, i, len(train_loader), batch_time=batch_time, loss=losses))
+
+        return model, losses.avg
 
     def validate_classifier(self, val_loader, model, criterion):
         batch_time = AverageMeter()
@@ -224,4 +232,4 @@ class AutoEncoder:
         print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t * Roc_Auc {2}\t'
               .format(prec, recall, roc_auc_curve, top1=top1, top5=top5))
 
-        return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix, roc_auc_curve, micro_metrics
+        return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix, roc_auc_curve, micro_metrics, losses.avg

@@ -64,23 +64,28 @@ class FixMatch:
         model.zero_grad()
         best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat, best_micro = \
             0, 0, 0, 0, 0, None, None
-        acc_ratio = {}
+        metrics_per_ratio = {}
+        metrics_per_epoch = {}
         self.args.start_epoch = 0
         self.args.weak_supervision_strategy = "random_sampling"
         current_labeled_ratio = self.args.labeled_ratio_start
 
         for epoch in range(self.args.start_epoch, self.args.fixmatch_epochs):
             train_loader = zip(labeled_loader, unlabeled_loader)
-            self.train(train_loader, model, optimizer, epoch, len(labeled_loader), criterions)
-            acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve, micro_metrics = \
+            model, train_loss = self.train(train_loader, model, optimizer, epoch, len(labeled_loader), criterions)
+            acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve, micro_metrics, val_loss = \
                 self.validate(val_loader, model, criterions)
 
             is_best = recall > best_recall1
+            metrics_per_epoch.update({epoch: [acc, acc5, prec, recall, f1, confusion_mat.tolist(),
+                                              roc_auc_curve, micro_metrics, train_loss, val_loss]})
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
-                acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
-                                 [best_acc1, best_acc5, best_prec1, best_recall1, best_f1,
-                                 best_confusion_mat.tolist(), roc_auc_curve, best_micro]})
+                metrics_per_ratio.update({np.round(current_labeled_ratio, decimals=2):
+                                              [best_acc1, best_acc5, best_prec1, best_recall1, best_f1,
+                                               best_confusion_mat.tolist() if best_confusion_mat is not None else
+                                               confusion_mat.tolist(),
+                                               roc_auc_curve, best_micro]})
 
                 unlabeled_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                     perform_sampling(self.args, None, None,
@@ -133,7 +138,8 @@ class FixMatch:
                 break
 
         if self.args.store_logs:
-            store_logs(self.args, acc_ratio)
+            store_logs(self.args, metrics_per_ratio)
+            store_logs(self.args, metrics_per_epoch, epoch_wise=True)
 
         return best_acc1
 
@@ -187,6 +193,8 @@ class FixMatch:
                       .format(epoch, i, loaders_len,
                               batch_time=batch_time, loss=losses))
 
+        return model, losses.avg
+
     def validate(self, val_loader, model, criterions):
         batch_time = AverageMeter()
         losses = AverageMeter()
@@ -230,4 +238,4 @@ class FixMatch:
         print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t * Roc_Auc {2}\t'
               .format(prec, recall, roc_auc_curve, top1=top1, top5=top5))
 
-        return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix, roc_auc_curve, micro_metrics
+        return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix, roc_auc_curve, micro_metrics, losses.avg

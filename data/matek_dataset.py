@@ -9,7 +9,8 @@ from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge
 
 class MatekDataset:
     def __init__(self, root, labeled_ratio=1, add_labeled_ratio=0, advanced_transforms=True, remove_classes=False,
-                 expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=True, stratified=False):
+                 expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=True, stratified=False,
+                 merged=True):
         self.root = root
         self.train_path = os.path.join(self.root, "matek", "train")
         self.test_path = os.path.join(self.root, "matek", "test")
@@ -22,6 +23,7 @@ class MatekDataset:
         self.expand_unlabeled = expand_unlabeled
         self.oversampling = oversampling
         self.stratified = stratified
+        self.merged = merged
         self.merge_classes = [['NGB', 'NGS'], ['PMO', 'PMB', 'MYB', 'MMZ'], ['LYA', 'LYT']]
 
         if advanced_transforms:
@@ -60,7 +62,7 @@ class MatekDataset:
         ])
         self.transform_simclr = TransformsSimCLR(size=self.input_size)
         self.transform_fixmatch = TransformFix(mean=self.matek_mean, std=self.matek_std, input_size=self.input_size)
-        self.merged_classes = 0
+        self.merged_classes = 5 if self.merged else 0
         self.num_classes = 15 - self.merged_classes
         self.add_labeled_ratio = add_labeled_ratio
         self.unlabeled_subset_ratio = unlabeled_subset_ratio
@@ -75,7 +77,9 @@ class MatekDataset:
             self.train_path, transform=None
         )
 
-        base_dataset.targets, base_dataset.classes, base_dataset.class_to_idx = merge(base_dataset, self.merge_classes)
+        if self.merged:
+            base_dataset.targets, base_dataset.classes, base_dataset.class_to_idx = \
+                merge(base_dataset, self.merge_classes)
 
         self.add_labeled_num = int(len(base_dataset) * self.add_labeled_ratio)
 
@@ -96,7 +100,9 @@ class MatekDataset:
             self.test_path, transform=None
         )
 
-        test_dataset.targets, test_dataset.classes, test_dataset.class_to_idx = merge(test_dataset, self.merge_classes)
+        if self.merged:
+            test_dataset.targets, test_dataset.classes, test_dataset.class_to_idx = \
+                merge(test_dataset, self.merge_classes)
         test_dataset = WeaklySupervisedDataset(test_dataset, range(len(test_dataset)), transform=self.transform_test)
 
         if self.remove_classes:

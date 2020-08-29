@@ -62,7 +62,8 @@ class LearningLoss:
 
         last_best_epochs = 0
         current_labeled_ratio = self.args.labeled_ratio_start
-        acc_ratio = {}
+        metrics_per_ratio = {}
+        metrics_per_epoch = {}
         best_model = deepcopy(model_backbone)
 
         print_args(self.args)
@@ -70,18 +71,22 @@ class LearningLoss:
         best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat, best_micro = \
             0, 0, 0, 0, 0, None, None
         for epoch in range(self.args.start_epoch, self.args.epochs):
-            models = self.train(train_loader, models, optimizers, criterions, epoch, last_best_epochs)
-            acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve, micro_metrics = \
+            models, train_loss = self.train(train_loader, models, optimizers, criterions, epoch, last_best_epochs)
+            acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve, micro_metrics, val_loss = \
                 self.validate(val_loader, models, criterions, last_best_epochs)
 
             is_best = recall > best_recall1
             last_best_epochs = 0 if is_best else last_best_epochs + 1
             best_model = deepcopy(model_backbone) if is_best else best_model
+            metrics_per_epoch.update({epoch: [acc, acc5, prec, recall, f1, confusion_mat.tolist(),
+                                              roc_auc_curve, micro_metrics, train_loss, val_loss]})
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
-                acc_ratio.update({np.round(current_labeled_ratio, decimals=2):
-                                      [best_acc1, best_acc5, best_prec1, best_recall1, best_f1,
-                                       best_confusion_mat.tolist(), roc_auc_curve, best_micro]})
+                metrics_per_ratio.update({np.round(current_labeled_ratio, decimals=2):
+                                              [best_acc1, best_acc5, best_prec1, best_recall1, best_f1,
+                                               best_confusion_mat.tolist() if best_confusion_mat is not None else
+                                               confusion_mat.tolist(),
+                                               roc_auc_curve, best_micro]})
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                     perform_sampling(self.args, uncertainty_sampler, None,
@@ -123,7 +128,8 @@ class LearningLoss:
             }, is_best)
 
         if self.args.store_logs:
-            store_logs(self.args, acc_ratio)
+            store_logs(self.args, metrics_per_ratio)
+            store_logs(self.args, metrics_per_epoch, epoch_wise=True)
 
         return best_acc1
 
@@ -173,7 +179,7 @@ class LearningLoss:
                       .format(epoch, i, len(train_loader), batch_time=batch_time, loss=losses,
                               last_best_epoch=last_best_epochs))
 
-        return models
+        return models, losses.avg
 
     def validate(self, val_loader, models, criterions, last_best_epochs):
         batch_time = AverageMeter()
@@ -221,4 +227,4 @@ class LearningLoss:
         print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t * Roc_Auc {2}\t'
               .format(prec, recall, roc_auc_curve, top1=top1, top5=top5))
 
-        return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix, roc_auc_curve, micro_metrics
+        return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix, roc_auc_curve, micro_metrics, losses.avg

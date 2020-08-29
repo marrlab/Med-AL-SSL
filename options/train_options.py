@@ -48,7 +48,7 @@ parser.add_argument('--name', default=' ', type=str,
                     help='name of experiment')
 
 parser.add_argument('--add-labeled-epochs', default=20, type=int,
-                    help='if the test accuracy stays stable for add-labeled-epochs epochs then add new data')
+                    help='add labeled data through sampling strategy after epochs')
 
 parser.add_argument('--add-labeled-ratio', default=0.025, type=int,
                     help='what percentage of labeled data to be added')
@@ -81,7 +81,7 @@ parser.add_argument('--mc-dropout-iterations', default=25, type=int,
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
 
-parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
+parser.add_argument('--weak-supervision-strategy', default='random_sampling', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
 
@@ -123,7 +123,7 @@ parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs
 
 parser.add_argument('--store-logs', action='store_false', help='store the logs after training')
 
-parser.add_argument('--run-batch', action='store_true', help='run all methods in batch mode')
+parser.add_argument('--run-batch', action='store_false', help='run all methods in batch mode')
 
 parser.add_argument('--reset-model', action='store_true', help='reset models after every labels injection cycle')
 

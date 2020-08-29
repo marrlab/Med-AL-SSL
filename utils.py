@@ -1,6 +1,6 @@
 from datetime import datetime
 
-import json
+import pandas as pd
 import numpy as np
 import os
 import shutil
@@ -55,6 +55,26 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+
+
+class LossPerClassMeter(object):
+    def __init__(self, classes_num):
+        self.classes_num = classes_num
+        self.avg = [0 for _ in range(classes_num)]
+        self.sum = [0 for _ in range(classes_num)]
+        self.count = [0 for _ in range(classes_num)]
+
+    def reset(self):
+        self.avg = [0 for _ in range(self.classes_num)]
+        self.sum = [0 for _ in range(self.classes_num)]
+        self.count = [0 for _ in range(self.classes_num)]
+
+    def update(self, losses, targets):
+        for i in range(self.classes_num):
+            self.sum[i] += np.sum(losses[targets == i])
+            self.count[i] += np.sum(targets == i)
+            # noinspection PyTypeChecker
+            self.avg[i] = self.sum[i] / (self.count[i] + 1e-6)
 
 
 class View(nn.Module):
@@ -140,8 +160,9 @@ class Metrics:
     def get_metrics(self, average='macro'):
         return precision_recall_fscore_support(self.targets, self.outputs, average=average, zero_division=1)
 
-    def get_report(self):
-        return classification_report(self.targets, self.outputs, zero_division=1)
+    def get_report(self, target_names):
+        return classification_report(self.targets, self.outputs,
+                                     zero_division=1, output_dict=True, target_names=target_names)
 
     def get_confusion_matrix(self):
         return confusion_matrix(self.targets, self.outputs)
@@ -532,16 +553,10 @@ def print_args(args):
           f'Dataset root: {args.root}')
 
 
-def store_logs(args, acc_ratio):
-    filename = '{0}-{1}-seed:{2}'.format(datetime.now().strftime("%d.%m.%Y"), args.name, args.seed)
+def store_logs(args, logs_df, epoch_wise=False):
+    if epoch_wise:
+        filename = '{0}-{1}-seed:{2}-epoch'.format(datetime.now().strftime("%d.%m.%Y"), args.name, args.seed)
+    else:
+        filename = '{0}-{1}-seed:{2}'.format(datetime.now().strftime("%d.%m.%Y"), args.name, args.seed)
 
-    file = dict()
-    file.update({'name': args.name})
-    file.update({'time': str(datetime.now())})
-    file.update({'seed': args.seed})
-    file.update({'dataset': args.dataset})
-    file.update({'metrics': acc_ratio})
-    file.update({'other args': vars(args)})
-
-    with open(os.path.join(args.log_path, filename), 'w') as fp:
-        json.dump(file, fp, indent=4, sort_keys=True)
+    logs_df.to_csv(os.path.join(args.log_path, filename))
