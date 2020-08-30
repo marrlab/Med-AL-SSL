@@ -314,10 +314,10 @@ def create_model_optimizer_simclr(args, dataset_class):
 
     model = model.cuda()
 
-    # args.resume = True
+    args.resume = True
     if args.resume:
         model, _, _ = resume_model(args, model)
-        # args.start_epoch = args.epochs
+        args.start_epoch = args.epochs
 
     if args.simclr_optimizer == 'adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)

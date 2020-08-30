@@ -3,11 +3,13 @@ from data.jurkat_dataset import JurkatDataset
 from data.matek_dataset import MatekDataset
 from data.cifar100_dataset import Cifar100Dataset
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
-    store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder
+    store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder, LossPerClassMeter
 import time
 import torch
 import torch.nn as nn
 import numpy as np
+import pandas as pd
+from copy import deepcopy
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -90,33 +92,31 @@ class AutoEncoder:
 
         model = self.model
 
-        criterion = get_loss(self.args, dataset_class.labeled_class_samples)
+        criterion = get_loss(self.args, dataset_class.labeled_class_samples, reduction='none')
 
         optimizer = torch.optim.Adam(model.parameters())
 
         metrics_per_ratio = {}
         metrics_per_epoch = {}
-        best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat, best_micro = \
-            0, 0, 0, 0, 0, None, None
+
+        best_recall, best_report = 0, None
+        best_model = deepcopy(model)
+
         self.args.start_epoch = 0
         self.args.weak_supervision_strategy = "random_sampling"
         current_labeled_ratio = self.args.labeled_ratio_start
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
-            model, train_loss = self.train_classifier(train_loader, model, criterion, optimizer, epoch)
-            acc, acc5, (prec, recall, f1, _), confusion_mat, roc_auc_curve, micro_metrics, val_loss = \
-                self.validate_classifier(val_loader, model, criterion)
+            train_loss = self.train_classifier(train_loader, model, criterion, optimizer, epoch)
+            val_loss, val_report = self.validate_classifier(val_loader, model, criterion)
 
-            is_best = recall > best_recall1
-            metrics_per_epoch.update({epoch: [acc, acc5, prec, recall, f1, confusion_mat.tolist(),
-                                              roc_auc_curve, micro_metrics, train_loss, val_loss]})
+            is_best = val_report['macro avg']['recall'] > best_recall
+
+            val_report = pd.concat([val_report, train_loss, val_loss], axis=1)
+            metrics_per_epoch = pd.concat([metrics_per_epoch, val_report])
 
             if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
-                metrics_per_ratio.update({np.round(current_labeled_ratio, decimals=2):
-                                              [best_acc1, best_acc5, best_prec1, best_recall1, best_f1,
-                                               best_confusion_mat.tolist() if best_confusion_mat is not None else
-                                               confusion_mat.tolist(),
-                                               roc_auc_curve, best_micro]})
+                metrics_per_ratio = pd.concat([metrics_per_ratio, best_report])
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                     perform_sampling(self.args, None, None,
@@ -128,21 +128,16 @@ class AutoEncoder:
                                      None)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_acc1, best_acc5, best_prec1, best_recall1, best_f1, best_confusion_mat, best_micro = \
-                    0, 0, 0, 0, 0, None, None
+                best_recall, best_report = 0, None
 
                 if self.args.reset_model:
                     model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
 
                 criterion = get_loss(self.args, dataset_class.labeled_class_samples)
             else:
-                best_acc1 = max(acc, best_acc1)
-                best_prec1 = max(prec, best_prec1)
-                best_recall1 = max(recall, best_recall1)
-                best_acc5 = max(acc5, best_acc5)
-                best_f1 = max(f1, best_f1)
-                best_confusion_mat = confusion_mat if is_best else best_confusion_mat
-                best_micro = micro_metrics if is_best else best_micro
+                best_recall = val_report['macro avg']['recall'] if is_best else best_recall
+                best_report = val_report if is_best else best_report
+                best_model = deepcopy(model) if is_best else best_model
 
             if current_labeled_ratio > self.args.labeled_ratio_stop:
                 break
@@ -151,12 +146,13 @@ class AutoEncoder:
             store_logs(self.args, metrics_per_ratio)
             store_logs(self.args, metrics_per_epoch, epoch_wise=True)
 
-        return best_acc1
+        return best_recall
 
     def train_classifier(self, train_loader, model, criterion, optimizer, epoch):
         batch_time = AverageMeter()
         losses = AverageMeter()
         top1 = AverageMeter()
+        losses_per_class = LossPerClassMeter(len(train_loader.dataset.dataset.classes))
 
         end = time.time()
 
@@ -169,6 +165,9 @@ class AutoEncoder:
             output = model.forward_classifier(data_x)
 
             loss = criterion(output, data_y)
+
+            losses_per_class.update(loss.cpu().detach().numpy(), data_y.cpu().numpy())
+            loss = torch.sum(loss) / loss.size(0)
 
             acc = accuracy(output.data, data_y, topk=(1,))[0]
             losses.update(loss.data.item(), data_x.size(0))
@@ -187,7 +186,8 @@ class AutoEncoder:
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                       .format(epoch, i, len(train_loader), batch_time=batch_time, loss=losses))
 
-        return model, losses.avg
+        return pd.DataFrame.from_dict({f'{k}-train-loss': losses_per_class.avg[i]
+                                       for i, k in enumerate(train_loader.dataset.dataset.classes)}, orient='index').T
 
     def validate_classifier(self, val_loader, model, criterion):
         batch_time = AverageMeter()
@@ -195,6 +195,7 @@ class AutoEncoder:
         top1 = AverageMeter()
         top5 = AverageMeter()
         metrics = Metrics()
+        losses_per_class = LossPerClassMeter(len(val_loader.dataset.dataset.classes))
 
         model.eval()
 
@@ -208,6 +209,9 @@ class AutoEncoder:
                 output = model.forward_classifier(data_x)
 
                 loss = criterion(output, data_y)
+
+                losses_per_class.update(loss.cpu().detach().numpy(), data_y.cpu().numpy())
+                loss = torch.sum(loss) / loss.size(0)
 
                 acc = accuracy(output.data, data_y, topk=(1, 5,))
                 losses.update(loss.data.item(), data_x.size(0))
@@ -225,11 +229,10 @@ class AutoEncoder:
                           'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
                           .format(i, len(val_loader), batch_time=batch_time, loss=losses, top1=top1))
 
-        (prec, recall, f1, _) = metrics.get_metrics()
-        micro_metrics = metrics.get_metrics(average='micro')
-        confusion_matrix = metrics.get_confusion_matrix()
-        roc_auc_curve = metrics.get_roc_auc_curve()
-        print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t * Roc_Auc {2}\t'
-              .format(prec, recall, roc_auc_curve, top1=top1, top5=top5))
+        report = metrics.get_report(target_names=val_loader.dataset.dataset.classes)
+        print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t'
+              .format(report['macro avg']['precision'], report['macro avg']['recall'], top1=top1, top5=top5))
 
-        return top1.avg, top5.avg, (prec, recall, f1, _), confusion_matrix, roc_auc_curve, micro_metrics, losses.avg
+        return pd.DataFrame.from_dict({f'{k}-val-loss': losses_per_class.avg[i]
+                                       for i, k in enumerate(val_loader.dataset.dataset.classes)}, orient='index').T, \
+            pd.DataFrame.from_dict(report)
