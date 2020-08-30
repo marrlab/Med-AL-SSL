@@ -96,8 +96,8 @@ parser.add_argument('--simclr-temperature', default=0.1, type=float, help='the t
 
 parser.add_argument('--simclr-normalize', action='store_false', help='normalize the hidden feat vectors in simclr')
 
-parser.add_argument('--simclr-batch-size', default=1024, type=int,
-                    help='mini-batch size for simclr (default: 1024)')
+parser.add_argument('--simclr-batch-size', default=768, type=int,
+                    help='mini-batch size for simclr (default: 768)')
 
 parser.add_argument('--simclr-arch', default='resnet', type=str, choices=['lenet', 'resnet'],
                     help='which encoder architecture to use for simclr')

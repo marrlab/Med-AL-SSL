@@ -1,6 +1,5 @@
 from datetime import datetime
 
-import pandas as pd
 import numpy as np
 import os
 import shutil
@@ -315,10 +314,10 @@ def create_model_optimizer_simclr(args, dataset_class):
 
     model = model.cuda()
 
-    args.resume = True
+    # args.resume = True
     if args.resume:
         model, _, _ = resume_model(args, model)
-        args.start_epoch = args.epochs
+        # args.start_epoch = args.epochs
 
     if args.simclr_optimizer == 'adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
@@ -340,14 +339,14 @@ def create_model_optimizer_autoencoder(args, dataset_class):
 
     model = model.cuda()
 
-    # args.resume = True
+    args.resume = True
     if args.resume:
         file = os.path.join(args.checkpoint_path, args.name, 'model_best.pth.tar')
         if os.path.isfile(file):
             print("=> loading checkpoint '{}'".format(file))
             checkpoint = torch.load(file)
             args.start_epoch = checkpoint['epoch']
-            # args.start_epoch = args.epochs
+            args.start_epoch = args.epochs
             model.load_state_dict(checkpoint['state_dict'])
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))

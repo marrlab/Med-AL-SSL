@@ -10,7 +10,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '6'
+os.environ['CUDA_VISIBLE_DEVICES'] = '7'
 
 import torch
 import torch.cuda
@@ -255,12 +255,12 @@ if __name__ == '__main__':
             # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
             # ('active_learning', 'density_weighted', 'pseudo_labeling'),
-            ('active_learning', 'entropy_based', 'pseudo_labeling'),
-            ('active_learning', 'mc_dropout', 'pseudo_labeling'),
+            # ('active_learning', 'entropy_based', 'pseudo_labeling'),
+            # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
             # ('active_learning', 'learning_loss', 'pseudo_labeling'),
-            ('random_sampling', 'least_confidence', 'pseudo_labeling'),
-            ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
-            # ('semi_supervised', 'least_confidence', 'simclr'),
+            # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
+            # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
+            ('semi_supervised', 'least_confidence', 'simclr'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),
             # ('semi_supervised', 'least_confidence', 'fixmatch')
         ]
