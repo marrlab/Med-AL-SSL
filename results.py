@@ -48,7 +48,7 @@ def ratio_class_wise_metrics(metric, classes, dataset):
     return metrics_log
 
 
-def ratio_metrics(metric, dataset, weighted=False):
+def ratio_metrics(metric, dataset, cls):
     logs = os.listdir(args.log_path)
     dump_log = []
     for i, method in enumerate(methods):
@@ -57,7 +57,6 @@ def ratio_metrics(metric, dataset, weighted=False):
             if method not in filename or 'epoch' in filename or dataset not in filename or 'ae-loss' in filename:
                 continue
             df = pd.read_csv(os.path.join(args.log_path, filename), index_col=0)
-            cls = 'weighted avg' if weighted else 'macro avg'
             dump_log[i].append(df[cls][metric].tolist())
 
     metrics_log = []

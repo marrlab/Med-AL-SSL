@@ -2,8 +2,12 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
 parser.add_argument('--metric', default='recall', type=str,
-                    choices=['acc1', 'acc5', 'prec', 'recall', 'f1'],
-                    help='the weakly supervised strategy to use')
+                    choices=['precision', 'recall', 'f1-score'],
+                    help='the class wise metric to display')
+
+parser.add_argument('--metric-ratio', default='accuracy', type=str,
+                    choices=['macro avg', 'weighted avg', 'accuracy'],
+                    help='the overall metric mode')
 
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')

@@ -91,7 +91,7 @@ class AutoEncoder:
                 'best_prec1': best_loss,
             }, is_best)
 
-        if self.args.store_logs:
+        if self.args.store_logs and not self.args.resume:
             store_logs(self.args, pd.DataFrame(training_loss_log, columns=['bce', 'l1', 'l2', 'ssim']), ae=True)
 
         self.model = model
