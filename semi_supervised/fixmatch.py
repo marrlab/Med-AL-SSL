@@ -67,8 +67,8 @@ class FixMatch:
         best_recall, best_report = 0, None
         best_model = deepcopy(model)
 
-        metrics_per_ratio = {}
-        metrics_per_epoch = {}
+        metrics_per_ratio = pd.DataFrame([])
+        metrics_per_epoch = pd.DataFrame([])
         self.args.start_epoch = 0
         self.args.weak_supervision_strategy = "random_sampling"
         current_labeled_ratio = self.args.labeled_ratio_start
@@ -76,7 +76,7 @@ class FixMatch:
         for epoch in range(self.args.start_epoch, self.args.fixmatch_epochs):
             train_loader = zip(labeled_loader, unlabeled_loader)
             train_loss = self.train(train_loader, model, optimizer, epoch, len(labeled_loader), criterions,
-                                    base_dataset.dataset.classes)
+                                    base_dataset.classes)
             val_loss, val_report = self.validate(val_loader, model, criterions)
 
             is_best = val_report['macro avg']['recall'] > best_recall
@@ -114,7 +114,7 @@ class FixMatch:
                                                                                              'warmup',
                                                                                    load_optimizer_scheduler=True)
 
-                criterion_labeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='mean')
+                criterion_labeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='none')
                 criterion_unlabeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='none')
                 criterions = {'labeled': criterion_labeled, 'unlabeled': criterion_unlabeled}
             else:

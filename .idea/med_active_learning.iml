@@ -5,6 +5,9 @@
     <orderEntry type="jdk" jdkName="Remote Python 3.6.10 (sftp://qasima@131.159.10.232:22/home/qasima/.simclr_venv/bin/python3.6)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
+  <component name="PackageRequirementsSettings">
+    <option name="versionSpecifier" value="Greater or equal (&gt;=x.y.z)" />
+  </component>
   <component name="PyDocumentationSettings">
     <option name="renderExternalDocumentation" value="true" />
   </component>

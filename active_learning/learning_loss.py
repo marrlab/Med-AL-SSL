@@ -60,8 +60,8 @@ class LearningLoss:
 
         last_best_epochs = 0
         current_labeled_ratio = self.args.labeled_ratio_start
-        metrics_per_ratio = {}
-        metrics_per_epoch = {}
+        metrics_per_ratio = pd.DataFrame([])
+        metrics_per_epoch = pd.DataFrame([])
 
         print_args(self.args)
 

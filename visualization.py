@@ -135,7 +135,7 @@ if __name__ == "__main__":
     ratio_class_wise_metrics_log = ratio_class_wise_metrics(args.metric, dataset.classes, args.dataset)
     plot_ratio_class_wise_metrics(ratio_class_wise_metrics_log, dataset.classes, y_label, ratios)
 
-    ratio_metrics_logs = ratio_metrics(args.metric, args.dataset, weighted=True)
+    ratio_metrics_logs = ratio_metrics(args.metric, args.dataset, weighted=False)
     plot_ratio_metrics(ratios, ratio_metrics_logs, y_label)
 
     epoch_class_wise_log = epoch_class_wise_loss(dataset.classes, methods[args.method_id], args.dataset)

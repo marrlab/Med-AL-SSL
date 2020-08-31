@@ -108,8 +108,8 @@ class SimCLR:
 
         optimizer = torch.optim.Adam(model.parameters())
 
-        metrics_per_ratio = {}
-        metrics_per_epoch = {}
+        metrics_per_ratio = pd.DataFrame([])
+        metrics_per_epoch = pd.DataFrame([])
 
         best_recall, best_report = 0, None
         best_model = deepcopy(model)
@@ -146,7 +146,7 @@ class SimCLR:
                     model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_class)
                     optimizer = torch.optim.Adam(model.parameters())
 
-                criterion = get_loss(self.args, dataset_class.labeled_class_samples)
+                criterion = get_loss(self.args, dataset_class.labeled_class_samples, reduction='none')
             else:
                 best_recall = val_report['macro avg']['recall'] if is_best else best_recall
                 best_report = val_report if is_best else best_report

@@ -10,7 +10,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '7'
+os.environ['CUDA_VISIBLE_DEVICES'] = '6'
 
 import torch
 import torch.cuda
@@ -57,8 +57,8 @@ def main(args):
         best_acc = simclr.train_validate_classifier()
         return best_acc
     elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'fixmatch':
-        simclr = FixMatch(args)
-        best_acc = simclr.main()
+        fixmatch = FixMatch(args)
+        best_acc = fixmatch.main()
         return best_acc
     elif args.weak_supervision_strategy == 'active_learning' and args.uncertainty_sampling_method == 'learning_loss':
         learning_loss = LearningLoss(args)
@@ -260,9 +260,9 @@ if __name__ == '__main__':
             # ('active_learning', 'learning_loss', 'pseudo_labeling'),
             # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
-            ('semi_supervised', 'least_confidence', 'simclr'),
+            # ('semi_supervised', 'least_confidence', 'simclr'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),
-            # ('semi_supervised', 'least_confidence', 'fixmatch')
+            ('semi_supervised', 'least_confidence', 'fixmatch')
         ]
 
         for (m, u, s) in states:
