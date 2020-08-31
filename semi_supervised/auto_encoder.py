@@ -10,7 +10,7 @@ import torch.nn as nn
 import numpy as np
 import pandas as pd
 from copy import deepcopy
-from pytorch_msssim import ssim
+from pytorch_msssim import SSIM
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -34,7 +34,15 @@ class AutoEncoder:
 
         train_loader = create_base_loader(base_dataset, self.kwargs, self.args.batch_size)
 
-        criterion = nn.BCELoss().cuda()
+        training_loss_log = []
+
+        bce_loss = nn.BCELoss().cuda()
+        l1_loss = nn.L1Loss()
+        l2_loss = nn.MSELoss()
+        ssim_loss = SSIM(size_average=True, data_range=1.0, nonnegative_ssim=True)
+
+        criterions = {'bce': bce_loss, 'l1': l1_loss, 'l2': l2_loss, 'ssim': ssim_loss}
+
         model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
 
         best_loss = np.inf
@@ -43,13 +51,18 @@ class AutoEncoder:
             model.train()
             batch_time = AverageMeter()
             losses = AverageMeter()
+            losses_sum = np.zeros(len(criterions.keys()))
 
             end = time.time()
             for i, (data_x, data_y) in enumerate(train_loader):
                 data_x = data_x.cuda(non_blocking=True)
 
                 output = model(data_x)
-                loss = criterion(output, data_x)
+
+                losses_alt = np.array([v(output, data_x).cpu().detach().data.item() for v in criterions.values()])
+                losses_alt[-1] = 1 - losses_alt[-1]
+                losses_sum = losses_sum + losses_alt
+                loss = criterions['l2'](output, data_x)
 
                 losses.update(loss.data.item(), data_x.size(0))
 
@@ -66,6 +79,9 @@ class AutoEncoder:
                           'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                           .format(epoch, i, len(train_loader), batch_time=batch_time, loss=losses))
 
+            losses_avg = losses_sum / len(train_loader)
+            training_loss_log.append(losses_avg.tolist())
+
             is_best = best_loss > losses.avg
             best_loss = min(best_loss, losses.avg)
 
@@ -74,6 +90,9 @@ class AutoEncoder:
                 'state_dict': model.state_dict(),
                 'best_prec1': best_loss,
             }, is_best)
+
+        if self.args.store_logs:
+            store_logs(self.args, pd.DataFrame(training_loss_log, columns=['bce', 'l1', 'l2', 'ssim']), ae=True)
 
         self.model = model
         return model

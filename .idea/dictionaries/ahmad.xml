@@ -54,6 +54,7 @@
       <w>simclr</w>
       <w>softmax</w>
       <w>solarize</w>
+      <w>ssim</w>
       <w>steplr</w>
       <w>topk</w>
       <w>torchscript</w>

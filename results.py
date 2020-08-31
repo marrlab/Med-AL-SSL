@@ -23,7 +23,7 @@ def ratio_class_wise_metrics(metric, classes, dataset):
     for i, method in enumerate(methods):
         dump_log.append([])
         for filename in logs:
-            if method not in filename or 'epoch' in filename or dataset not in filename:
+            if method not in filename or 'epoch' in filename or dataset not in filename or 'ae-loss' in filename:
                 continue
             df = pd.read_csv(os.path.join(args.log_path, filename), index_col=0)
             for j, cls in enumerate(classes):
@@ -54,7 +54,7 @@ def ratio_metrics(metric, dataset, weighted=False):
     for i, method in enumerate(methods):
         dump_log.append([])
         for filename in logs:
-            if method not in filename or 'epoch' in filename or dataset not in filename:
+            if method not in filename or 'epoch' in filename or dataset not in filename or 'ae-loss' in filename:
                 continue
             df = pd.read_csv(os.path.join(args.log_path, filename), index_col=0)
             cls = 'weighted avg' if weighted else 'macro avg'
@@ -83,7 +83,7 @@ def epoch_class_wise_loss(classes, method, dataset):
     for i, cls in enumerate(classes):
         dump_log.append([[], []])
         for filename in logs:
-            if method not in filename or 'epoch' not in filename or dataset not in filename:
+            if method not in filename or 'epoch' not in filename or dataset not in filename or 'ae-loss' in filename:
                 continue
             df = pd.read_csv(os.path.join(args.log_path, filename), index_col=0)
             dump_log[i][0].append(df[f'{cls}-train-loss']['0'].tolist())
@@ -101,3 +101,17 @@ def epoch_class_wise_loss(classes, method, dataset):
         metrics_log[i][1].extend(mean.tolist())
 
     return metrics_log
+
+
+def ae_loss():
+    logs = os.listdir(args.log_path)
+    dump_log = []
+
+    for filename in logs:
+        if 'ae-loss' not in filename:
+            continue
+        df = pd.read_csv(os.path.join(args.log_path, filename), index_col=0)
+        for col in df.columns:
+            dump_log.append(df[col].tolist())
+
+    return dump_log

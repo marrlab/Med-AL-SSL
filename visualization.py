@@ -5,7 +5,7 @@ from data.cifar100_dataset import Cifar100Dataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
 from data.matek_dataset import MatekDataset
-from results import ratio_metrics, ratio_class_wise_metrics, epoch_class_wise_loss
+from results import ratio_metrics, ratio_class_wise_metrics, epoch_class_wise_loss, ae_loss
 from options.visualization_options import get_arguments
 
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset, 'jurkat': JurkatDataset}
@@ -85,11 +85,6 @@ def plot_ratio_metrics(prop, metric, label_y):
 
 
 def plot_epoch_class_wise_loss(values, classes, label_y, epochs):
-    """
-    plot the accuracy vs data proportion being used, graph
-    credits to: Alex Olteanu (https://www.dataquest.io/blog/making-538-plots/) for the plot style
-    :return: None
-    """
     fig = plt.figure(figsize=(20, 7))
     style.use('fivethirtyeight')
 
@@ -115,8 +110,25 @@ def plot_epoch_class_wise_loss(values, classes, label_y, epochs):
     ax_main.spines['right'].set_color('none')
     ax_main.tick_params(labelcolor='w', top=False, bottom=False, left=False, right=False)
 
-    ax_main.set_xlabel("Labeled ratio of the dataset", fontsize=20, weight='bold', alpha=.75)
+    ax_main.set_xlabel("Epochs", fontsize=20, weight='bold', alpha=.75)
     ax_main.set_ylabel(label_y, fontsize=15, weight='bold', alpha=.75)
+    plt.show()
+
+
+def plot_ae_loss(losses, logs, epochs):
+    plt.figure(figsize=(15, 10))
+    style.use('fivethirtyeight')
+
+    colors = [[0, 0, 0, 1], [230 / 255, 159 / 255, 0, 1], [86 / 255, 180 / 255, 233 / 255, 1],
+              [0, 158 / 255, 115 / 255, 1], [213 / 255, 94 / 255, 0, 1], [0, 114 / 255, 178 / 255, 1],
+              [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1], [211 / 255, 95 / 255, 183 / 255, 1],
+              [238 / 255, 136 / 255, 102 / 255, 1]]
+
+    for i, log in enumerate(logs):
+        plt.plot(epochs, log, color=colors[i], label=losses[i], linewidth=2)
+
+    plt.xlabel("Epochs", fontsize=20, weight='bold', alpha=.75)
+    plt.ylabel("Loss Value", fontsize=20, weight='bold', alpha=.75)
     plt.show()
 
 
@@ -141,3 +153,6 @@ if __name__ == "__main__":
     epoch_class_wise_log = epoch_class_wise_loss(dataset.classes, methods[args.method_id], args.dataset)
     plot_epoch_class_wise_loss(epoch_class_wise_log, dataset.classes, y_label_alt,
                                list(range(len(epoch_class_wise_log[0][0]))))
+
+    ae_loss_logs = ae_loss()
+    plot_ae_loss(losses=['bce', 'l1', 'l2', 'ssim'], logs=ae_loss_logs, epochs=list(range(len(ae_loss_logs[0]))))
