@@ -5,7 +5,7 @@ import time
 import numpy as np
 
 
-class UncertaintySampling:
+class UncertaintySamplingEntropyBased:
     """
     Active Learning methods to sample for uncertainty
     Credits to: https://github.com/rmunro/pytorch_active_learning

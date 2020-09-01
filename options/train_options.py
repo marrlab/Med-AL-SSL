@@ -14,7 +14,7 @@ parser.add_argument('--simclr-train-epochs', default=250, type=int,
 parser.add_argument('--start-epoch', default=0, type=int,
                     help='manual epoch number (useful on restarts)')
 
-parser.add_argument('-b', '--batch-size', default=128, type=int,
+parser.add_argument('-b', '--batch-size', default=256, type=int,
                     help='mini-batch size (default: 256)')
 
 parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
@@ -70,18 +70,21 @@ parser.add_argument('--oversampling', action='store_false', help='perform oversa
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 
-parser.add_argument('--uncertainty-sampling-method', default='learning_loss', type=str,
+parser.add_argument('--uncertainty-sampling-method', default='augmentations_based', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
-                             'density_weighted', 'mc_dropout', 'learning_loss'],
+                             'density_weighted', 'mc_dropout', 'learning_loss', 'augmentations_based'],
                     help='the uncertainty sampling method to use')
 
 parser.add_argument('--mc-dropout-iterations', default=25, type=int,
                     help='number of iterations for mc dropout')
 
+parser.add_argument('--augmentations_based_iterations', default=25, type=int,
+                    help='number of iterations for augmentations based uncertainty sampling')
+
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
 
-parser.add_argument('--weak-supervision-strategy', default='random_sampling', type=str,
+parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
 
@@ -123,7 +126,7 @@ parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs
 
 parser.add_argument('--store-logs', action='store_false', help='store the logs after training')
 
-parser.add_argument('--run-batch', action='store_false', help='run all methods in batch mode')
+parser.add_argument('--run-batch', action='store_true', help='run all methods in batch mode')
 
 parser.add_argument('--reset-model', action='store_true', help='reset models after every labels injection cycle')
 

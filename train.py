@@ -1,3 +1,4 @@
+from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
 from active_learning.learning_loss import LearningLoss
 from data.jurkat_dataset import JurkatDataset
 from options.train_options import get_arguments
@@ -10,7 +11,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '6'
 
 import torch
 import torch.cuda
@@ -26,7 +27,7 @@ from data.cifar100_dataset import Cifar100Dataset
 from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, \
     create_model_optimizer_scheduler, get_loss, resume_model, set_model_name, perform_sampling, LossPerClassMeter
 from utils import Metrics, store_logs
-from active_learning.uncertainty_sampling import UncertaintySampling
+from active_learning.entropy_based import UncertaintySamplingEntropyBased
 from active_learning.mc_dropout import UncertaintySamplingMCDropout
 from semi_supervised.pseudo_labeling import PseudoLabeling
 from semi_supervised.auto_encoder import AutoEncoder
@@ -65,12 +66,25 @@ def main(args):
         best_acc = learning_loss.main()
         return best_acc
 
+    if args.uncertainty_sampling_method == 'mc_dropout':
+        uncertainty_sampler = UncertaintySamplingMCDropout()
+    elif args.uncertainty_sampling_method == 'augmentations_based':
+        uncertainty_sampler = UncertaintySamplingAugmentationBased()
+        args.unlabeled_augmentations = True
+    else:
+        uncertainty_sampler = UncertaintySamplingEntropyBased(verbose=True,
+                                                              uncertainty_sampling_method=args.
+                                                              uncertainty_sampling_method)
+
     dataset_class = datasets[args.dataset](root=args.root,
                                            labeled_ratio=args.labeled_ratio_start,
                                            add_labeled_ratio=args.add_labeled_ratio,
                                            advanced_transforms=True,
                                            unlabeled_subset_ratio=args.unlabeled_subset,
-                                           oversampling=args.oversampling)
+                                           oversampling=args.oversampling,
+                                           unlabeled_augmentations=True if args.weak_supervision_strategy ==
+                                           'active_learning' and args.
+                                           uncertainty_sampling_method == 'augmentations_based' else False)
 
     base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
         dataset_class.get_dataset()
@@ -80,11 +94,6 @@ def main(args):
                                                                 labeled_indices, unlabeled_indices, kwargs,
                                                                 dataset_class.unlabeled_subset_num)
 
-    if args.uncertainty_sampling_method == 'mc_dropout':
-        uncertainty_sampler = UncertaintySamplingMCDropout()
-    else:
-        uncertainty_sampler = UncertaintySampling(verbose=True,
-                                                  uncertainty_sampling_method=args.uncertainty_sampling_method)
     pseudo_labeler = PseudoLabeling()
 
     model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)

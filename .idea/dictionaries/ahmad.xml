@@ -6,6 +6,7 @@
       <w>avgpool</w>
       <w>backgroundcolor</w>
       <w>bmvc</w>
+      <w>brightfield</w>
       <w>checkpointing</w>
       <w>cifar</w>
       <w>concated</w>
@@ -27,6 +28,7 @@
       <w>inplanes</w>
       <w>interm</w>
       <w>jurkat</w>
+      <w>kmeans</w>
       <w>komodakis</w>
       <w>labelerm</w>
       <w>lenet</w>
@@ -35,6 +37,7 @@
       <w>matek</w>
       <w>maxk</w>
       <w>maxpool</w>
+      <w>multiclass</w>
       <w>nblock</w>
       <w>nblocks</w>
       <w>nesterov</w>

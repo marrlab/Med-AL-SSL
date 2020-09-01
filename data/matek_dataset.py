@@ -10,7 +10,7 @@ from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge
 class MatekDataset:
     def __init__(self, root, labeled_ratio=1, add_labeled_ratio=0, advanced_transforms=True, remove_classes=False,
                  expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=True, stratified=False,
-                 merged=True):
+                 merged=True, unlabeled_augmentations=False):
         self.root = root
         self.train_path = os.path.join(self.root, "matek", "train")
         self.test_path = os.path.join(self.root, "matek", "test")
@@ -69,6 +69,7 @@ class MatekDataset:
         self.add_labeled_num = None
         self.unlabeled_subset_num = None
         self.remove_classes = remove_classes
+        self.unlabeled_augmentations = unlabeled_augmentations
         self.labeled_class_samples = None
         self.classes_to_remove = np.array([0, 1, 2, 3, 4, 6, 7, 9, 11, 13, 14])
 
@@ -117,7 +118,11 @@ class MatekDataset:
                                                    np.array(base_dataset.targets)[labeled_indices])
 
         labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=self.transform_train)
-        unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_test)
+
+        if self.unlabeled_augmentations:
+            unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_train)
+        else:
+            unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_test)
 
         return base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset
 

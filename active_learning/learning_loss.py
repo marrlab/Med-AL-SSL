@@ -1,7 +1,7 @@
 import time
 import torch
 
-from active_learning.uncertainty_sampling import UncertaintySampling
+from active_learning.entropy_based import UncertaintySamplingEntropyBased
 from data.cifar100_dataset import Cifar100Dataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
@@ -55,8 +55,9 @@ class LearningLoss:
 
         criterions = {'backbone': criterion_backbone, 'module': loss_module_objective_func}
 
-        uncertainty_sampler = UncertaintySampling(verbose=True,
-                                                  uncertainty_sampling_method=self.args.uncertainty_sampling_method)
+        uncertainty_sampler = UncertaintySamplingEntropyBased(verbose=True,
+                                                              uncertainty_sampling_method=self.args.
+                                                              uncertainty_sampling_method)
 
         last_best_epochs = 0
         current_labeled_ratio = self.args.labeled_ratio_start
