@@ -31,6 +31,8 @@ class MatekDataset:
                 transforms.RandomCrop(self.crop_size),
                 transforms.RandomAffine(degrees=90, translate=(0.2, 0.2)),
                 transforms.Resize(size=self.input_size),
+                transforms.RandomGrayscale(),
+                transforms.RandomErasing(),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),

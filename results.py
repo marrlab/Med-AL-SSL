@@ -10,6 +10,7 @@ methods = [
     'entropy_based',
     'learning_loss',
     'mc_dropout',
+    'augmentations_based',
     'pseudo_labeling',
     'auto_encoder',
     'fixmatch',

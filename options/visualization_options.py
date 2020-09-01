@@ -5,7 +5,7 @@ parser.add_argument('--metric', default='recall', type=str,
                     choices=['precision', 'recall', 'f1-score'],
                     help='the class wise metric to display')
 
-parser.add_argument('--metric-ratio', default='accuracy', type=str,
+parser.add_argument('--metric-ratio', default='macro avg', type=str,
                     choices=['macro avg', 'weighted avg', 'accuracy'],
                     help='the overall metric mode')
 

@@ -22,6 +22,7 @@ methods = [
     'entropy_based',
     'learning_loss',
     'mc_dropout',
+    'augmentations_based',
     'pseudo_labeling',
     'auto_encoder',
     'fixmatch',
@@ -46,7 +47,7 @@ def plot_ratio_class_wise_metrics(metric, classes, label_y, prop):
             linestyle = '-'
             ax.errorbar(prop, metric[j][i][1], yerr=(metric[j][i][0]-metric[j][i][2])/2, color=colors[j % len(colors)],
                         label=methods[j], linewidth=2, linestyle=linestyle, marker='o', capsize=3)
-            ax.fill_between(prop, metric[j][i][0], metric[j][i][2], color=colors[i % len(colors)], alpha=0.05)
+            # ax.fill_between(prop, metric[j][i][0], metric[j][i][2], color=colors[i % len(colors)], alpha=0.05)
             ax.set_title(classes[i])
 
     ax_main.spines['top'].set_color('none')
@@ -125,6 +126,8 @@ def plot_ae_loss(losses, logs, epochs):
               [238 / 255, 136 / 255, 102 / 255, 1]]
 
     for i, log in enumerate(logs):
+        if i >= len(losses):
+            break
         plt.plot(epochs, log, color=colors[i], label=losses[i], linewidth=2)
 
     plt.xlabel("Epochs", fontsize=20, weight='bold', alpha=.75)

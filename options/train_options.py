@@ -70,7 +70,10 @@ parser.add_argument('--oversampling', action='store_false', help='perform oversa
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 
-parser.add_argument('--uncertainty-sampling-method', default='augmentations_based', type=str,
+parser.add_argument('--loss', default='fl', type=str, choices=['ce', 'fl'],
+                    help='the loss to be used. ce = cross entropy and fl = focal loss')
+
+parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
                              'density_weighted', 'mc_dropout', 'learning_loss', 'augmentations_based'],
                     help='the uncertainty sampling method to use')
@@ -99,8 +102,8 @@ parser.add_argument('--simclr-temperature', default=0.1, type=float, help='the t
 
 parser.add_argument('--simclr-normalize', action='store_false', help='normalize the hidden feat vectors in simclr')
 
-parser.add_argument('--simclr-batch-size', default=768, type=int,
-                    help='mini-batch size for simclr (default: 768)')
+parser.add_argument('--simclr-batch-size', default=1024, type=int,
+                    help='mini-batch size for simclr (default: 1024)')
 
 parser.add_argument('--simclr-arch', default='resnet', type=str, choices=['lenet', 'resnet'],
                     help='which encoder architecture to use for simclr')
@@ -113,7 +116,7 @@ parser.add_argument('--weighted', action='store_true', help='to use weighted los
 
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
 
-parser.add_argument('--dataset', default='jurkat', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat'],
+parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat'],
                     help='the dataset to train on')
 
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,

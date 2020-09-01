@@ -25,6 +25,8 @@ from model.simclr_arch import SimCLRArch
 from model.wideresnet import WideResNet
 from augmentations.randaugment import RandAugmentMC
 
+import torch.nn.functional as F
+
 
 def save_checkpoint(args, state, is_best, filename='checkpoint.pth.tar', best_model_filename='model_best.pth.tar'):
     directory = os.path.join(args.checkpoint_path, args.name)
@@ -339,14 +341,14 @@ def create_model_optimizer_autoencoder(args, dataset_class):
 
     model = model.cuda()
 
-    args.resume = True
+    # args.resume = True
     if args.resume:
         file = os.path.join(args.checkpoint_path, args.name, 'model_best.pth.tar')
         if os.path.isfile(file):
             print("=> loading checkpoint '{}'".format(file))
             checkpoint = torch.load(file)
             args.start_epoch = checkpoint['epoch']
-            args.start_epoch = args.epochs
+            # args.start_epoch = args.epochs
             model.load_state_dict(checkpoint['state_dict'])
             print("=> loaded checkpoint '{}' (epoch {})"
                   .format(args.resume, checkpoint['epoch']))
@@ -366,14 +368,20 @@ def create_model_optimizer_loss_net():
 
 
 def get_loss(args, labeled_class_samples, reduction='mean'):
-    if args.weighted:
-        classes_weights = np.clip(np.sum(labeled_class_samples) / np.array(labeled_class_samples),
-                                  a_min=0, a_max=50)
+    if args.loss == 'ce':
+        if args.weighted:
+            classes_weights = np.clip(np.sum(labeled_class_samples) / np.array(labeled_class_samples),
+                                      a_min=0, a_max=50)
 
-        # noinspection PyArgumentList
-        criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(classes_weights).cuda(), reduction=reduction)
+            # noinspection PyArgumentList
+            criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(classes_weights).cuda(), reduction=reduction)
+        else:
+            criterion = nn.CrossEntropyLoss(reduction=reduction).cuda()
     else:
-        criterion = nn.CrossEntropyLoss(reduction=reduction).cuda()
+        if reduction == 'mean':
+            criterion = FocalLoss(gamma=2, alpha=0.25, reduction=True)
+        else:
+            criterion = FocalLoss(gamma=2, alpha=0.25, reduction=False)
 
     return criterion
 
@@ -538,6 +546,28 @@ def merge(base_dataset, merge_classes):
         base_classes[min_i] = class_name
 
     return base_targets, base_classes, base_class_to_idx
+
+
+class FocalLoss(nn.Module):
+    def __init__(self, gamma=0, alpha=None, reduction=True):
+        super(FocalLoss, self).__init__()
+        self.gamma = gamma
+        self.alpha = alpha
+        self.size_average = reduction
+
+    def forward(self, outputs, data_y):
+        logpt = - F.cross_entropy(outputs, data_y, reduction='none')
+        pt = torch.exp(logpt)
+
+        # noinspection PyTypeChecker
+        focal_loss = -((1 - pt) ** self.gamma) * logpt
+
+        balanced_focal_loss = self.alpha * focal_loss
+
+        if self.size_average:
+            return balanced_focal_loss.mean()
+        else:
+            return balanced_focal_loss
 
 
 def print_args(args):

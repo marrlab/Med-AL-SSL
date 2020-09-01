@@ -34,6 +34,7 @@
       <w>lenet</w>
       <w>linestyle</w>
       <w>logits</w>
+      <w>logpt</w>
       <w>matek</w>
       <w>maxk</w>
       <w>maxpool</w>

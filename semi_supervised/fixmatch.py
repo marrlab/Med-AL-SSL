@@ -38,7 +38,7 @@ class FixMatch:
                                                        advanced_transforms=True,
                                                        expand_labeled=self.args.fixmatch_k_img,
                                                        expand_unlabeled=self.args.fixmatch_k_img*self.args.fixmatch_mu,
-                                                       oversampling=self.args.oversampling)
+                                                       oversampling=False)  # TODO: Check this out
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_cls.get_dataset()
