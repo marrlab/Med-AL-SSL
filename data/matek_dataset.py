@@ -32,11 +32,12 @@ class MatekDataset:
                 transforms.RandomAffine(degrees=90, translate=(0.2, 0.2)),
                 transforms.Resize(size=self.input_size),
                 transforms.RandomGrayscale(),
-                transforms.RandomErasing(),
+                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
+                transforms.Normalize(mean=self.matek_mean, std=self.matek_std),
+                transforms.RandomErasing(),
             ])
             self.transform_test = transforms.Compose([
                 transforms.Resize(size=self.input_size),

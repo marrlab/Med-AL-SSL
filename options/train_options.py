@@ -87,11 +87,11 @@ parser.add_argument('--augmentations_based_iterations', default=25, type=int,
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
 
-parser.add_argument('--weak-supervision-strategy', default='active_learning', type=str,
+parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
                     choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
 
-parser.add_argument('--semi-supervised-method', default='auto_encoder', type=str,
+parser.add_argument('--semi-supervised-method', default='fixmatch', type=str,
                     choices=['pseudo_labeling', 'auto_encoder', 'simclr', 'fixmatch'],
                     help='the semi supervised method to use')
 
@@ -129,7 +129,7 @@ parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs
 
 parser.add_argument('--store-logs', action='store_false', help='store the logs after training')
 
-parser.add_argument('--run-batch', action='store_true', help='run all methods in batch mode')
+parser.add_argument('--run-batch', action='store_false', help='run all methods in batch mode')
 
 parser.add_argument('--reset-model', action='store_true', help='reset models after every labels injection cycle')
 
