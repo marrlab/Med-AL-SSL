@@ -142,7 +142,7 @@ parser.add_argument('--fixmatch-lambda-u', default=2, type=float,
 parser.add_argument('--fixmatch-threshold', default=0.95, type=float,
                     help='pseudo label threshold')
 
-parser.add_argument('--fixmatch-k-img', default=16384, type=int,
+parser.add_argument('--fixmatch-k-img', default=8192, type=int,
                     help='number of labeled examples')
 
 parser.add_argument('--fixmatch-epochs', default=1000, type=int,

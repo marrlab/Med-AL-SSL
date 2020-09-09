@@ -64,7 +64,7 @@ class FixMatch:
 
         model.zero_grad()
 
-        best_recall, best_report = 0, None
+        best_recall, best_report, last_best_epochs = 0, None, 0
         best_model = deepcopy(model)
 
         metrics_per_ratio = pd.DataFrame([])
@@ -76,15 +76,16 @@ class FixMatch:
         for epoch in range(self.args.start_epoch, self.args.fixmatch_epochs):
             train_loader = zip(labeled_loader, unlabeled_loader)
             train_loss = self.train(train_loader, model, optimizer, epoch, len(labeled_loader), criterions,
-                                    base_dataset.classes)
-            val_loss, val_report = self.validate(val_loader, model, criterions)
+                                    base_dataset.classes, last_best_epochs)
+            val_loss, val_report = self.validate(val_loader, model, last_best_epochs, criterions)
 
             is_best = val_report['macro avg']['recall'] > best_recall
+            last_best_epochs = 0 if is_best else last_best_epochs + 1
 
             val_report = pd.concat([val_report, train_loss, val_loss], axis=1)
             metrics_per_epoch = pd.concat([metrics_per_epoch, val_report])
 
-            if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
+            if epoch > self.args.labeled_warmup_epochs and last_best_epochs > self.args.add_labeled_epochs:
                 metrics_per_ratio = pd.concat([metrics_per_ratio, best_report])
 
                 unlabeled_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
@@ -105,7 +106,7 @@ class FixMatch:
                                               shuffle=True, **self.kwargs)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_recall, best_report = 0, None
+                best_recall, best_report, last_best_epochs = 0, None, 0
 
                 if self.args.reset_model:
                     model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_cls,
@@ -139,7 +140,7 @@ class FixMatch:
 
         return best_recall
 
-    def train(self, train_loader, model, optimizer, epoch, loaders_len, criterions, classes):
+    def train(self, train_loader, model, optimizer, epoch, loaders_len, criterions, classes, last_best_epochs):
         batch_time = AverageMeter()
         losses = AverageMeter()
         top1 = AverageMeter()
@@ -190,13 +191,14 @@ class FixMatch:
                 print('Epoch Classifier: [{0}][{1}/{2}]\t'
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
+                      'Last best epoch {last_best_epoch}'
                       .format(epoch, i, loaders_len,
-                              batch_time=batch_time, loss=losses))
+                              batch_time=batch_time, loss=losses, last_best_epoch=last_best_epochs))
 
         return pd.DataFrame.from_dict({f'{k}-train-loss': losses_per_class.avg[i]
                                        for i, k in enumerate(classes)}, orient='index').T
 
-    def validate(self, val_loader, model, criterions):
+    def validate(self, val_loader, model, last_best_epochs, criterions):
         batch_time = AverageMeter()
         losses = AverageMeter()
         top1 = AverageMeter()
@@ -234,7 +236,9 @@ class FixMatch:
                           'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                           'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                           'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                          .format(i, len(val_loader), batch_time=batch_time, loss=losses, top1=top1))
+                          'Last best epoch {last_best_epoch}'
+                          .format(i, len(val_loader), batch_time=batch_time, loss=losses, top1=top1,
+                                  last_best_epoch=last_best_epochs))
 
         report = metrics.get_report(target_names=val_loader.dataset.dataset.classes)
         print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t'

@@ -119,7 +119,7 @@ class AutoEncoder:
         metrics_per_ratio = pd.DataFrame([])
         metrics_per_epoch = pd.DataFrame([])
 
-        best_recall, best_report = 0, None
+        best_recall, best_report, last_best_epochs = 0, None, 0
         best_model = deepcopy(model)
 
         self.args.start_epoch = 0
@@ -127,15 +127,16 @@ class AutoEncoder:
         current_labeled_ratio = self.args.labeled_ratio_start
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
-            train_loss = self.train_classifier(train_loader, model, criterion, optimizer, epoch)
-            val_loss, val_report = self.validate_classifier(val_loader, model, criterion)
+            train_loss = self.train_classifier(train_loader, model, criterion, optimizer, last_best_epochs, epoch)
+            val_loss, val_report = self.validate_classifier(val_loader, model, last_best_epochs, criterion)
 
             is_best = val_report['macro avg']['recall'] > best_recall
+            last_best_epochs = 0 if is_best else last_best_epochs + 1
 
             val_report = pd.concat([val_report, train_loss, val_loss], axis=1)
             metrics_per_epoch = pd.concat([metrics_per_epoch, val_report])
 
-            if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
+            if epoch > self.args.labeled_warmup_epochs and last_best_epochs > self.args.add_labeled_epochs:
                 metrics_per_ratio = pd.concat([metrics_per_ratio, best_report])
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
@@ -148,7 +149,7 @@ class AutoEncoder:
                                      None)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_recall, best_report = 0, None
+                best_recall, best_report, last_best_epochs = 0, None, 0
 
                 if self.args.reset_model:
                     model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
@@ -168,7 +169,7 @@ class AutoEncoder:
 
         return best_recall
 
-    def train_classifier(self, train_loader, model, criterion, optimizer, epoch):
+    def train_classifier(self, train_loader, model, criterion, optimizer, last_best_epochs, epoch):
         batch_time = AverageMeter()
         losses = AverageMeter()
         top1 = AverageMeter()
@@ -204,12 +205,14 @@ class AutoEncoder:
                 print('Epoch Classifier: [{0}][{1}/{2}]\t'
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                      .format(epoch, i, len(train_loader), batch_time=batch_time, loss=losses))
+                      'Last best epoch {last_best_epoch}'
+                      .format(epoch, i, len(train_loader), batch_time=batch_time, loss=losses,
+                              last_best_epoch=last_best_epochs))
 
         return pd.DataFrame.from_dict({f'{k}-train-loss': losses_per_class.avg[i]
                                        for i, k in enumerate(train_loader.dataset.dataset.classes)}, orient='index').T
 
-    def validate_classifier(self, val_loader, model, criterion):
+    def validate_classifier(self, val_loader, model, last_best_epochs, criterion):
         batch_time = AverageMeter()
         losses = AverageMeter()
         top1 = AverageMeter()
@@ -247,7 +250,9 @@ class AutoEncoder:
                           'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                           'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
                           'Acc@1 {top1.val:.3f} ({top1.avg:.3f})\t'
-                          .format(i, len(val_loader), batch_time=batch_time, loss=losses, top1=top1))
+                          'Last best epoch {last_best_epoch}'
+                          .format(i, len(val_loader), batch_time=batch_time, loss=losses, top1=top1,
+                                  last_best_epoch=last_best_epochs))
 
         report = metrics.get_report(target_names=val_loader.dataset.dataset.classes)
         print(' * Acc@1 {top1.avg:.3f}\t * Prec {0}\t * Recall {1} * Acc@5 {top5.avg:.3f}\t'

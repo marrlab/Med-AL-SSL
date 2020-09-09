@@ -11,7 +11,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '6'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 import torch
 import torch.cuda
@@ -103,7 +103,6 @@ def main(args):
 
     criterion = get_loss(args, dataset_class.labeled_class_samples, reduction='none')
 
-    last_best_epochs = 0
     current_labeled_ratio = args.labeled_ratio_start
     metrics_per_ratio = pd.DataFrame([])
     metrics_per_epoch = pd.DataFrame([])
@@ -113,7 +112,7 @@ def main(args):
 
     print('Starting training..')
 
-    best_recall, best_report = 0, None
+    best_recall, best_report, last_best_epochs = 0, None, 0
 
     for epoch in range(args.start_epoch, args.epochs):
         train_loss = train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args)
@@ -125,7 +124,7 @@ def main(args):
         val_report = pd.concat([val_report, train_loss, val_loss], axis=1)
         metrics_per_epoch = pd.concat([metrics_per_epoch, val_report])
 
-        if epoch > args.labeled_warmup_epochs and epoch % args.add_labeled_epochs == 0:
+        if epoch > args.labeled_warmup_epochs and last_best_epochs > args.add_labeled_epochs:
             metrics_per_ratio = pd.concat([metrics_per_ratio, best_report])
 
             train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
@@ -137,7 +136,7 @@ def main(args):
                                  test_dataset, kwargs, current_labeled_ratio,
                                  best_model)
             current_labeled_ratio += args.add_labeled_ratio
-            best_recall, best_report = 0, None
+            best_recall, best_report, last_best_epochs = 0, None, 0
 
             if args.reset_model:
                 model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
@@ -264,12 +263,12 @@ if __name__ == '__main__':
             # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
             # ('active_learning', 'density_weighted', 'pseudo_labeling'),
-            # ('active_learning', 'entropy_based', 'pseudo_labeling'),
-            # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
-            ('active_learning', 'learning_loss', 'pseudo_labeling'),
-            # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
-            # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
-            # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
+            ('active_learning', 'entropy_based', 'pseudo_labeling'),
+            ('active_learning', 'mc_dropout', 'pseudo_labeling'),
+            # ('active_learning', 'learning_loss', 'pseudo_labeling'),
+            ('active_learning', 'augmentations_based', 'pseudo_labeling'),
+            ('random_sampling', 'least_confidence', 'pseudo_labeling'),
+            ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'simclr'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),
             # ('semi_supervised', 'least_confidence', 'fixmatch')

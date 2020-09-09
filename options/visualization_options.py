@@ -1,7 +1,7 @@
 import argparse
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
-parser.add_argument('--metric', default='recall', type=str,
+parser.add_argument('--metric', default='precision', type=str,
                     choices=['precision', 'recall', 'f1-score'],
                     help='the class wise metric to display')
 

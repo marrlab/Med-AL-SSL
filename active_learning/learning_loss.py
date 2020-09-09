@@ -59,14 +59,13 @@ class LearningLoss:
                                                               uncertainty_sampling_method=self.args.
                                                               uncertainty_sampling_method)
 
-        last_best_epochs = 0
         current_labeled_ratio = self.args.labeled_ratio_start
         metrics_per_ratio = pd.DataFrame([])
         metrics_per_epoch = pd.DataFrame([])
 
         print_args(self.args)
 
-        best_recall, best_report = 0, None
+        best_recall, best_report, last_best_epochs = 0, None, 0
         best_model = deepcopy(models['backbone'])
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
@@ -79,7 +78,7 @@ class LearningLoss:
             val_report = pd.concat([val_report, train_loss, val_loss], axis=1)
             metrics_per_epoch = pd.concat([metrics_per_epoch, val_report])
 
-            if epoch > self.args.labeled_warmup_epochs and epoch % self.args.add_labeled_epochs == 0:
+            if epoch > self.args.labeled_warmup_epochs and last_best_epochs > self.args.add_labeled_epochs:
                 metrics_per_ratio = pd.concat([metrics_per_ratio, best_report])
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
@@ -92,7 +91,7 @@ class LearningLoss:
                                      None)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_recall, best_report = 0, None
+                best_recall, best_report, last_best_epochs = 0, None, 0
 
                 if self.args.reset_model:
                     model_backbone, optimizer_backbone, scheduler_backbone = \

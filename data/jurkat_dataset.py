@@ -34,7 +34,8 @@ class JurkatDataset:
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=self.jurkat_mean, std=self.jurkat_std)
+                transforms.Normalize(mean=self.jurkat_mean, std=self.jurkat_std),
+                transforms.RandomErasing(scale=(0.02, 0.2), ratio=(0.3, 0.9))
             ])
             self.transform_test = transforms.Compose([
                 transforms.Resize(size=self.input_size),
