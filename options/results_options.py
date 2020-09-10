@@ -2,7 +2,7 @@ import argparse
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
 
-parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs_backup/01.09.2020', type=str,
+parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.set_defaults(augment=True)

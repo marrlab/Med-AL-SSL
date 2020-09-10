@@ -76,7 +76,7 @@ def plot_ratio_metrics(prop, metric, label_y):
         linestyle = '-'
         plt.errorbar(prop, metric[i][1], yerr=(metric[i][0]-metric[i][2])/2, color=colors[i % len(colors)],
                      label=method, linewidth=2, linestyle=linestyle, marker='o', capsize=3)
-        plt.fill_between(prop, metric[i][1], metric[i][2], color=colors[i % len(colors)], alpha=0.05)
+        plt.fill_between(prop, metric[i][0], metric[i][2], color=colors[i % len(colors)], alpha=0.05)
 
     plt.xlabel("Labeled ratio of the dataset", fontsize=20, weight='bold', alpha=.75)
     plt.ylabel(label_y, fontsize=20, weight='bold', alpha=.75)

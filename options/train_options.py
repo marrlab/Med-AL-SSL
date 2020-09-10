@@ -112,7 +112,7 @@ parser.add_argument('--simclr-base-lr', default=0.25, type=float, help='base lea
 parser.add_argument('--simclr-optimizer', default='adam', type=str, choices=['adam', 'lars'],
                     help='which optimizer to use for simclr')
 
-parser.add_argument('--weighted', action='store_true', help='to use weighted loss or not')
+parser.add_argument('--weighted', action='store_false', help='to use weighted loss or not')
 
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
 

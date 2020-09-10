@@ -1,6 +1,5 @@
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
 from active_learning.learning_loss import LearningLoss
-from data.jurkat_dataset import JurkatDataset
 from options.train_options import get_arguments
 import os
 import time
@@ -24,6 +23,10 @@ import numpy as np
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.cifar100_dataset import Cifar100Dataset
+from data.jurkat_dataset import JurkatDataset
+from data.config.matek_config import set_matek_configs
+from data.config.jurkat_config import set_jurkat_configs
+
 from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, \
     create_model_optimizer_scheduler, get_loss, resume_model, set_model_name, perform_sampling, LossPerClassMeter
 from utils import Metrics, store_logs
@@ -35,6 +38,7 @@ from semi_supervised.simclr import SimCLR
 
 arguments = get_arguments()
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset, 'jurkat': JurkatDataset}
+configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs}
 
 
 def main(args):
@@ -46,6 +50,7 @@ def main(args):
     torch.manual_seed(args.seed)
 
     args.name = set_model_name(args)
+    args = configs[args.dataset](args)
 
     if args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'auto_encoder':
         auto_encoder = AutoEncoder(args)
@@ -263,15 +268,15 @@ if __name__ == '__main__':
             # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
             # ('active_learning', 'density_weighted', 'pseudo_labeling'),
-            ('active_learning', 'entropy_based', 'pseudo_labeling'),
-            ('active_learning', 'mc_dropout', 'pseudo_labeling'),
-            # ('active_learning', 'learning_loss', 'pseudo_labeling'),
-            ('active_learning', 'augmentations_based', 'pseudo_labeling'),
-            ('random_sampling', 'least_confidence', 'pseudo_labeling'),
-            ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
-            # ('semi_supervised', 'least_confidence', 'simclr'),
+            # ('active_learning', 'entropy_based', 'pseudo_labeling'),
+            # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
+            ('active_learning', 'learning_loss', 'pseudo_labeling'),
+            # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
+            # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
+            # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
+            ('semi_supervised', 'least_confidence', 'simclr'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),
-            # ('semi_supervised', 'least_confidence', 'fixmatch')
+            ('semi_supervised', 'least_confidence', 'fixmatch')
         ]
 
         for (m, u, s) in states:

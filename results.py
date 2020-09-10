@@ -93,12 +93,12 @@ def epoch_class_wise_loss(classes, method, dataset):
 
     for i, cls in enumerate(classes):
         metrics_log.append([[], []])
-        dump = np.array(dump_log[i][0])
-        mean = dump.mean(axis=0)
-        metrics_log[i][0].extend(mean.tolist())
-        dump = np.array(dump_log[i][1])
-        mean = dump.mean(axis=0)
-        metrics_log[i][1].extend(mean.tolist())
+        dump = np.array(dump_log[i][0][0])
+        # mean = dump.mean(axis=0)
+        metrics_log[i][0].extend(dump.tolist())
+        dump = np.array(dump_log[i][1][0])
+        # mean = dump.mean(axis=0)
+        metrics_log[i][1].extend(dump.tolist())
 
     return metrics_log
 
