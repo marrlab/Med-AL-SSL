@@ -29,7 +29,7 @@ class FixMatch:
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset,
                          'jurkat': JurkatDataset}
         self.model = None
-        self.kwargs = {'num_workers': 16, 'pin_memory': False}
+        self.kwargs = {'num_workers': 16, 'pin_memory': False, 'drop_last': True}
 
     def main(self):
         dataset_cls = self.datasets[self.args.dataset](root=self.args.root,
