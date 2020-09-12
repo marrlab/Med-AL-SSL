@@ -9,6 +9,8 @@ from results import ratio_metrics, ratio_class_wise_metrics, epoch_class_wise_lo
 from options.visualization_options import get_arguments
 
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset, 'jurkat': JurkatDataset}
+ratios = {'matek': [0.05, 0.075, 0.1, 0.125, 0.15, 0.175, 0.2, 0.225, 0.25],
+          'jurkat': [0.005, 0.03, 0.055, 0.08, 0.105, 0.13, 0.155, 0.18]}
 
 """
 plot the accuracy vs data proportion being used, graph
@@ -138,7 +140,7 @@ def plot_ae_loss(losses, logs, epochs):
 
 if __name__ == "__main__":
     args = get_arguments()
-    ratios = [0.05, 0.075, 0.1, 0.125, 0.15, 0.175, 0.2, 0.225, 0.25]
+    ratio = ratios[args.dataset]
     dataset_class = datasets[args.dataset](root=args.root, labeled_ratio=0.025, add_labeled_ratio=0.025,
                                            unlabeled_subset_ratio=0.3)
 
@@ -149,10 +151,10 @@ if __name__ == "__main__":
     y_label_alt = f'Losses for {methods[args.method_id]} on {dataset_title[args.dataset]}'
 
     ratio_class_wise_metrics_log = ratio_class_wise_metrics(args.metric, dataset.classes, args.dataset)
-    plot_ratio_class_wise_metrics(ratio_class_wise_metrics_log, dataset.classes, y_label, ratios)
+    plot_ratio_class_wise_metrics(ratio_class_wise_metrics_log, dataset.classes, y_label, ratio)
 
     ratio_metrics_logs = ratio_metrics(args.metric, args.dataset, cls=args.metric_ratio)
-    plot_ratio_metrics(ratios, ratio_metrics_logs, y_label)
+    plot_ratio_metrics(ratio, ratio_metrics_logs, y_label)
 
     epoch_class_wise_log = epoch_class_wise_loss(dataset.classes, methods[args.method_id], args.dataset)
     plot_epoch_class_wise_loss(epoch_class_wise_log, dataset.classes, y_label_alt,

@@ -10,15 +10,15 @@ from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge
 class JurkatDataset:
     def __init__(self, root, labeled_ratio=1, add_labeled_ratio=0, advanced_transforms=True, remove_classes=False,
                  expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=True, stratified=False,
-                 merged=True, unlabeled_augmentations=False):
+                 merged=False, unlabeled_augmentations=False):
         self.root = root
         self.train_path = os.path.join(self.root, "jurkat", "train")
         self.test_path = os.path.join(self.root, "jurkat", "test")
         self.labeled_ratio = labeled_ratio
         self.jurkat_mean = (0, 0, 0)
         self.jurkat_std = (1, 1, 1)
-        self.input_size = 32
-        self.crop_size = 50
+        self.input_size = 64
+        self.crop_size = 64
         self.expand_labeled = expand_labeled
         self.expand_unlabeled = expand_unlabeled
         self.oversampling = oversampling
