@@ -160,5 +160,5 @@ if __name__ == "__main__":
     plot_epoch_class_wise_loss(epoch_class_wise_log, dataset.classes, y_label_alt,
                                list(range(len(epoch_class_wise_log[0][0]))))
 
-    ae_loss_logs = ae_loss()
+    ae_loss_logs = ae_loss(args.dataset)
     plot_ae_loss(losses=['bce', 'l1', 'l2', 'ssim'], logs=ae_loss_logs, epochs=list(range(len(ae_loss_logs[0]))))

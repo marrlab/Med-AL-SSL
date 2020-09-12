@@ -76,6 +76,7 @@ def ratio_metrics(metric, dataset, cls):
     return metrics_log
 
 
+# noinspection PyTypeChecker
 def epoch_class_wise_loss(classes, method, dataset):
     logs = os.listdir(args.log_path)
     dump_log = []
@@ -94,21 +95,19 @@ def epoch_class_wise_loss(classes, method, dataset):
     for i, cls in enumerate(classes):
         metrics_log.append([[], []])
         dump = np.array(dump_log[i][0][0])
-        # mean = dump.mean(axis=0)
         metrics_log[i][0].extend(dump.tolist())
         dump = np.array(dump_log[i][1][0])
-        # mean = dump.mean(axis=0)
         metrics_log[i][1].extend(dump.tolist())
 
     return metrics_log
 
 
-def ae_loss():
+def ae_loss(dataset):
     logs = os.listdir(args.log_path)
     dump_log = []
 
     for filename in logs:
-        if 'ae-loss' not in filename:
+        if 'ae-loss' not in filename or dataset not in filename:
             continue
         df = pd.read_csv(os.path.join(args.log_path, filename), index_col=0)
         for col in df.columns:
