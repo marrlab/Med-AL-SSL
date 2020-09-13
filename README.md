@@ -7,8 +7,8 @@ Repository for implementation of active learning and semi-supervised learning al
 * Ratio Sampling
 * Maximum Entropy Sampling
 * MC dropout
-* Learning Loss for Active Learning (In progress)
-* Virtual Adversarial Active Learning (In progress)
+* Learning Loss for Active Learning
+* IALE: Imitating Active Learner Ensembles (In progress)
 
 ## Semi-Supervised Learning algorithms
 * Pseudo Labeling
@@ -18,7 +18,15 @@ Repository for implementation of active learning and semi-supervised learning al
 
 ## Requirements
 ```
-pytorch
+numpy>=1.18.5
+torch>=1.4.0
+torchvision>=0.5.0
+sklearn>=0.0
+scikit-learn>=0.23.1
+pandas>=1.0.4
+torchlars>=0.1.2
+Pillow>=7.1.2
+matplotlib>=3.2.1
 ```
 
 ## Usage
