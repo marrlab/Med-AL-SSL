@@ -1,7 +1,7 @@
+from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
-from data.matek_dataset import MatekDataset
-from data.cifar100_dataset import Cifar100Dataset
+from data.plasmodium_dataset import PlasmodiumDataset
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
     store_logs, NTXent, get_loss, perform_sampling, \
     create_model_optimizer_simclr, LossPerClassMeter
@@ -24,7 +24,7 @@ class SimCLR:
     def __init__(self, args, verbose=True):
         self.args = args
         self.verbose = verbose
-        self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset,
+        self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
                          'jurkat': JurkatDataset}
         self.model = None
         self.kwargs = {'num_workers': 16, 'pin_memory': False}

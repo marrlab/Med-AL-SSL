@@ -12,7 +12,8 @@ parser.add_argument('--metric-ratio', default='macro avg', type=str,
 parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
 
-parser.add_argument('--dataset', default='jurkat', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat'],
+parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat',
+                                                                     'plasmodium'],
                     help='the dataset to train on')
 
 parser.add_argument('--method-id', default=4, type=int, help='the id of the method')

@@ -116,7 +116,8 @@ parser.add_argument('--weighted', action='store_false', help='to use weighted lo
 
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
 
-parser.add_argument('--dataset', default='jurkat', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat'],
+parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat',
+                                                                     'plasmodium'],
                     help='the dataset to train on')
 
 parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,

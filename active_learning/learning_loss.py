@@ -2,10 +2,10 @@ import time
 import torch
 
 from active_learning.entropy_based import UncertaintySamplingEntropyBased
-from data.cifar100_dataset import Cifar100Dataset
+from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
-from data.matek_dataset import MatekDataset
+from data.plasmodium_dataset import PlasmodiumDataset
 from model.loss_net import LossNet
 from utils import create_loaders, create_model_optimizer_scheduler, create_model_optimizer_loss_net, get_loss, \
     print_args, loss_module_objective_func, AverageMeter, accuracy, Metrics, store_logs, save_checkpoint, \
@@ -24,7 +24,7 @@ class LearningLoss:
     def __init__(self, args, verbose=True):
         self.args = args
         self.verbose = verbose
-        self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset,
+        self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
                          'jurkat': JurkatDataset}
         self.model = None
         self.kwargs = {'num_workers': 2, 'pin_memory': False, 'drop_last': True}

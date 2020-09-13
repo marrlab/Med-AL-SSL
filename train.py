@@ -22,10 +22,11 @@ import numpy as np
 
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
-from data.cifar100_dataset import Cifar100Dataset
 from data.jurkat_dataset import JurkatDataset
+from data.plasmodium_dataset import PlasmodiumDataset
 from data.config.matek_config import set_matek_configs
 from data.config.jurkat_config import set_jurkat_configs
+from data.config.plasmodium_config import set_plasmodium_configs
 
 from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, \
     create_model_optimizer_scheduler, get_loss, resume_model, set_model_name, perform_sampling, LossPerClassMeter
@@ -37,8 +38,8 @@ from semi_supervised.auto_encoder import AutoEncoder
 from semi_supervised.simclr import SimCLR
 
 arguments = get_arguments()
-datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset, 'jurkat': JurkatDataset}
-configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs}
+datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset, 'jurkat': JurkatDataset}
+configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs, 'plasmodium': set_plasmodium_configs}
 
 
 def main(args):
