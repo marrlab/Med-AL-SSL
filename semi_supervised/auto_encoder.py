@@ -62,7 +62,7 @@ class AutoEncoder:
                 losses_alt = np.array([v(output, data_x).cpu().detach().data.item() for v in criterions.values()])
                 losses_alt[-1] = 1 - losses_alt[-1]
                 losses_sum = losses_sum + losses_alt
-                loss = criterions['l2'](output, data_x) + criterions['ssim'](output, data_x)
+                loss = criterions['l2'](output, data_x) + (1 - criterions['ssim'](output, data_x))
 
                 losses.update(loss.data.item(), data_x.size(0))
 
