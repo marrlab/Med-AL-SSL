@@ -1,16 +1,20 @@
 import matplotlib.pyplot as plt
 import matplotlib.style as style
 
-from data.cifar100_dataset import Cifar100Dataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
 from data.matek_dataset import MatekDataset
+from data.plasmodium_dataset import PlasmodiumDataset
 from results import ratio_metrics, ratio_class_wise_metrics, epoch_class_wise_loss, ae_loss
 from options.visualization_options import get_arguments
 
-datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'cifar100': Cifar100Dataset, 'jurkat': JurkatDataset}
+datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset, 'jurkat': JurkatDataset}
 ratios = {'matek': [0.05, 0.075, 0.1, 0.125, 0.15, 0.175, 0.2, 0.225, 0.25],
-          'jurkat': [0.005, 0.03, 0.055, 0.08, 0.105, 0.13, 0.155, 0.18]}
+          'jurkat': [0.005, 0.03, 0.055, 0.08, 0.105, 0.13, 0.155, 0.18],
+          'plasmodium': [0.025, 0.05, 0.075, 0.1, 0.125, 0.15, 0.175, 0.2, 0.225]}
+plot_configs = {'matek': (2, 5),
+                'jurkat': (2, 4),
+                'plasmodium': (1, 2)}
 
 """
 plot the accuracy vs data proportion being used, graph
@@ -32,7 +36,7 @@ methods = [
 ]
 
 
-def plot_ratio_class_wise_metrics(metric, classes, label_y, prop):
+def plot_ratio_class_wise_metrics(metric, classes, label_y, prop, plot_config):
     fig = plt.figure(figsize=(20, 7))
     style.use('fivethirtyeight')
 
@@ -42,7 +46,7 @@ def plot_ratio_class_wise_metrics(metric, classes, label_y, prop):
               [238 / 255, 136 / 255, 102 / 255, 1]]
     ax_main = fig.add_subplot(111)
     for i, cls in enumerate(classes):
-        ax = fig.add_subplot(2, 5, i+1)
+        ax = fig.add_subplot(plot_config[0], plot_config[1], i+1)
         for j, method in enumerate(methods):
             if len(metric[j]) == 0:
                 continue
@@ -87,7 +91,7 @@ def plot_ratio_metrics(prop, metric, label_y):
     plt.show()
 
 
-def plot_epoch_class_wise_loss(values, classes, label_y, epochs):
+def plot_epoch_class_wise_loss(values, classes, label_y, epochs, plot_config):
     fig = plt.figure(figsize=(20, 7))
     style.use('fivethirtyeight')
 
@@ -97,7 +101,7 @@ def plot_epoch_class_wise_loss(values, classes, label_y, epochs):
               [238 / 255, 136 / 255, 102 / 255, 1]]
     ax_main = fig.add_subplot(111)
     for i, cls in enumerate(classes):
-        ax = fig.add_subplot(2, 5, i+1)
+        ax = fig.add_subplot(plot_config[0], plot_config[1], i+1)
         if len(values[i]) == 0:
             continue
         linestyle = '-'
@@ -146,19 +150,21 @@ if __name__ == "__main__":
 
     dataset, _, _, _, _, _ = dataset_class.get_dataset()
 
-    dataset_title = {'cifar10': ' cifar-10 dataset', 'matek': ' matek dataset', 'jurkat': ' jurkat dataset'}
+    dataset_title = {'cifar10': ' cifar-10 dataset', 'matek': ' matek dataset', 'jurkat': ' jurkat dataset',
+                     'plasmodium': ' plasmodium dataset'}
     y_label = f'{args.metric} on {dataset_title[args.dataset]}'
     y_label_alt = f'Losses for {methods[args.method_id]} on {dataset_title[args.dataset]}'
 
     ratio_class_wise_metrics_log = ratio_class_wise_metrics(args.metric, dataset.classes, args.dataset)
-    plot_ratio_class_wise_metrics(ratio_class_wise_metrics_log, dataset.classes, y_label, ratio)
+    plot_ratio_class_wise_metrics(ratio_class_wise_metrics_log, dataset.classes, y_label, ratio,
+                                  plot_configs[args.dataset])
 
     ratio_metrics_logs = ratio_metrics(args.metric, args.dataset, cls=args.metric_ratio)
     plot_ratio_metrics(ratio, ratio_metrics_logs, y_label)
 
     epoch_class_wise_log = epoch_class_wise_loss(dataset.classes, methods[args.method_id], args.dataset)
     plot_epoch_class_wise_loss(epoch_class_wise_log, dataset.classes, y_label_alt,
-                               list(range(len(epoch_class_wise_log[0][0]))))
+                               list(range(len(epoch_class_wise_log[0][0]))), plot_configs[args.dataset])
 
     ae_loss_logs = ae_loss(args.dataset)
     plot_ae_loss(losses=['bce', 'l1', 'l2', 'ssim'], logs=ae_loss_logs, epochs=list(range(len(ae_loss_logs[0]))))

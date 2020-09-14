@@ -17,8 +17,8 @@ class PlasmodiumDataset:
         self.labeled_ratio = labeled_ratio
         self.plasmodium_mean = (0, 0, 0)
         self.plasmodium_std = (1, 1, 1)
-        self.input_size = 64
-        self.crop_size = 100
+        self.input_size = 32
+        self.crop_size = 36
         self.expand_labeled = expand_labeled
         self.expand_unlabeled = expand_unlabeled
         self.oversampling = oversampling
@@ -28,9 +28,10 @@ class PlasmodiumDataset:
 
         if advanced_transforms:
             self.transform_train = transforms.Compose([
+                transforms.Resize(size=(42, 42)),
                 transforms.RandomCrop(self.crop_size),
                 transforms.RandomAffine(degrees=90, translate=(0.2, 0.2)),
-                transforms.Resize(size=self.input_size),
+                transforms.Resize(size=(self.input_size, self.input_size)),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),
@@ -38,24 +39,24 @@ class PlasmodiumDataset:
                 transforms.RandomErasing(scale=(0.02, 0.2), ratio=(0.3, 0.9)),
             ])
             self.transform_test = transforms.Compose([
-                transforms.Resize(size=self.input_size),
+                transforms.Resize(size=(self.input_size, self.input_size)),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=self.plasmodium_mean, std=self.plasmodium_std)
             ])
 
         else:
             self.transform_train = transforms.Compose([
-                transforms.Resize(size=self.input_size),
+                transforms.Resize(size=(self.input_size, self.input_size)),
                 transforms.ToTensor(),
             ])
             self.transform_test = transforms.Compose([
-                transforms.Resize(size=self.input_size),
+                transforms.Resize(size=(self.input_size, self.input_size)),
                 transforms.ToTensor(),
             ])
         self.transform_autoencoder = transforms.Compose([
             transforms.RandomCrop(self.crop_size),
             transforms.RandomAffine(degrees=90, translate=(0.2, 0.2)),
-            transforms.Resize(size=self.input_size),
+            transforms.Resize(size=(self.input_size, self.input_size)),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
             transforms.ToTensor(),

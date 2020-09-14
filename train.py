@@ -10,7 +10,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 import torch
 import torch.cuda
@@ -235,7 +235,7 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
             losses_per_class.update(loss.cpu().detach().numpy(), data_y.cpu().numpy())
             loss = torch.sum(loss) / loss.size(0)
 
-            acc = accuracy(output.data, data_y, topk=(1, 5,))
+            acc = accuracy(output.data, data_y, topk=(1, 2,))
             losses.update(loss.data.item(), data_x.size(0))
             top1.update(acc[0].item(), data_x.size(0))
             top5.update(acc[1].item(), data_x.size(0))
@@ -271,13 +271,13 @@ if __name__ == '__main__':
             # ('active_learning', 'density_weighted', 'pseudo_labeling'),
             # ('active_learning', 'entropy_based', 'pseudo_labeling'),
             # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
-            # ('active_learning', 'learning_loss', 'pseudo_labeling'),
+            ('active_learning', 'learning_loss', 'pseudo_labeling'),
             # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
             # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'simclr'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),
-            ('semi_supervised', 'least_confidence', 'fixmatch')
+            # ('semi_supervised', 'least_confidence', 'fixmatch')
         ]
 
         for (m, u, s) in states:

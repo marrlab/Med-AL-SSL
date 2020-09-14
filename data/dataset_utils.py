@@ -18,6 +18,7 @@ class WeaklySupervisedDataset(Dataset):
         target = self.targets[self.indices[index]]
 
         img = self.transform(img) if self.transform is not None else img
+        # print(img.shape)
         poisson_noise = np.random.poisson(size=img.shape) if type(img) is not tuple else \
             np.random.poisson(size=img[0].shape)
         img = img + poisson_noise if self.poisson else img

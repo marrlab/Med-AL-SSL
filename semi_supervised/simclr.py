@@ -233,7 +233,7 @@ class SimCLR:
                 losses_per_class.update(loss.cpu().detach().numpy(), data_y.cpu().numpy())
                 loss = torch.sum(loss) / loss.size(0)
 
-                acc = accuracy(output.data, data_y, topk=(1, 5,))
+                acc = accuracy(output.data, data_y, topk=(1, 2,))
                 losses.update(loss.data.item(), data_x.size(0))
                 top1.update(acc[0].item(), data_x.size(0))
                 top5.update(acc[1].item(), data_x.size(0))
