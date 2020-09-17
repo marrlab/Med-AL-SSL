@@ -10,7 +10,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import torch
 import torch.cuda
@@ -36,6 +36,7 @@ from active_learning.mc_dropout import UncertaintySamplingMCDropout
 from semi_supervised.pseudo_labeling import PseudoLabeling
 from semi_supervised.auto_encoder import AutoEncoder
 from semi_supervised.simclr import SimCLR
+from semi_supervised.auto_encoder_cl import AutoEncoderCl
 
 arguments = get_arguments()
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset, 'jurkat': JurkatDataset}
@@ -58,11 +59,9 @@ def main(args):
         auto_encoder.train()
         best_acc = auto_encoder.train_validate_classifier()
         return best_acc
-    elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'auto_encoder_non_feat':
-        args.name = f"{args.dataset}@{args.arch}@auto_encoder_non_feat"
-        auto_encoder = AutoEncoder(args, train_feat=False)
-        auto_encoder.train()
-        best_acc = auto_encoder.train_validate_classifier()
+    elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'auto_encoder_cl':
+        auto_encoder_cl = AutoEncoderCl(args)
+        best_acc = auto_encoder_cl.main()
         return best_acc
     elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'simclr':
         simclr = SimCLR(args)
@@ -282,8 +281,8 @@ if __name__ == '__main__':
             # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'simclr'),
-            ('semi_supervised', 'least_confidence', 'auto_encoder'),
-            # ('semi_supervised', 'least_confidence', 'auto_encoder_non_feat'),
+            # ('semi_supervised', 'least_confidence', 'auto_encoder'),
+            ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
             # ('semi_supervised', 'least_confidence', 'fixmatch')
         ]
 

@@ -92,7 +92,7 @@ parser.add_argument('--weak-supervision-strategy', default='semi_supervised', ty
                     help='the weakly supervised strategy to use')
 
 parser.add_argument('--semi-supervised-method', default='fixmatch', type=str,
-                    choices=['pseudo_labeling', 'auto_encoder', 'simclr', 'fixmatch'],
+                    choices=['pseudo_labeling', 'auto_encoder', 'simclr', 'fixmatch', 'auto_encoder_cl'],
                     help='the semi supervised method to use')
 
 parser.add_argument('--pseudo-labeling-threshold', default=0.9, type=int,

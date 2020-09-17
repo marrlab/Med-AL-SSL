@@ -142,18 +142,20 @@ class MatekDataset:
 
         return base_dataset
 
+
+    # TODO: put this back to how it was
     def get_base_dataset_simclr(self):
         base_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=self.transform_simclr
+            self.train_path, transform=None
         )
 
-        '''
         if self.oversampling:
             base_indices = oversampling_indices(np.array(list(range(len(base_dataset)))),
                                                 np.array(base_dataset.targets))
         else:
             base_indices = np.array(list(range(len(base_dataset))))
-        '''
+
+        base_dataset = WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_simclr)
 
         return base_dataset
 

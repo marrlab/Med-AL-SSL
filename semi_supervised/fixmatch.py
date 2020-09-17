@@ -36,6 +36,7 @@ class FixMatch:
                                                        labeled_ratio=self.args.labeled_ratio_start,
                                                        add_labeled_ratio=self.args.add_labeled_ratio,
                                                        advanced_transforms=True,
+                                                       unlabeled_subset_ratio=self.args.unlabeled_subset,
                                                        expand_labeled=self.args.fixmatch_k_img,
                                                        expand_unlabeled=self.args.fixmatch_k_img*self.args.fixmatch_mu,
                                                        oversampling=self.args.oversampling)
