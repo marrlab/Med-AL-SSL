@@ -16,13 +16,14 @@ torch.autograd.set_detect_anomaly(True)
 
 
 class AutoEncoder:
-    def __init__(self, args, verbose=True):
+    def __init__(self, args, verbose=True, train_feat=True):
         self.args = args
         self.verbose = verbose
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
                          'jurkat': JurkatDataset}
         self.model = None
         self.kwargs = {'num_workers': 2, 'pin_memory': False}
+        self.train_feat = train_feat
 
     def train(self):
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,
@@ -183,7 +184,14 @@ class AutoEncoder:
             data_x = data_x.cuda(non_blocking=True)
             data_y = data_y.cuda(non_blocking=True)
 
-            output = model.forward_classifier(data_x)
+            if self.train_feat:
+                output = model.forward_encoder_classifier(data_x)
+            else:
+                model.eval()
+                with torch.no_grad():
+                    h = model.forward_encoder(data_x)
+                model.train()
+                output = model.forward_classifier(h)
 
             loss = criterion(output, data_y)
 
@@ -229,7 +237,11 @@ class AutoEncoder:
                 data_x = data_x.cuda(non_blocking=True)
                 data_y = data_y.cuda(non_blocking=True)
 
-                output = model.forward_classifier(data_x)
+                if self.train_feat:
+                    output = model.forward_encoder_classifier(data_x)
+                else:
+                    h = model.forward_encoder(data_x)
+                    output = model.forward_classifier(h)
 
                 loss = criterion(output, data_y)
 

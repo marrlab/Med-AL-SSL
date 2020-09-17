@@ -58,6 +58,12 @@ def main(args):
         auto_encoder.train()
         best_acc = auto_encoder.train_validate_classifier()
         return best_acc
+    elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'auto_encoder_non_feat':
+        args.name = f"{args.dataset}@{args.arch}@auto_encoder_non_feat"
+        auto_encoder = AutoEncoder(args, train_feat=False)
+        auto_encoder.train()
+        best_acc = auto_encoder.train_validate_classifier()
+        return best_acc
     elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'simclr':
         simclr = SimCLR(args)
         simclr.train()
@@ -276,8 +282,9 @@ if __name__ == '__main__':
             # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'simclr'),
-            # ('semi_supervised', 'least_confidence', 'auto_encoder'),
-            ('semi_supervised', 'least_confidence', 'fixmatch')
+            ('semi_supervised', 'least_confidence', 'auto_encoder'),
+            # ('semi_supervised', 'least_confidence', 'auto_encoder_non_feat'),
+            # ('semi_supervised', 'least_confidence', 'fixmatch')
         ]
 
         for (m, u, s) in states:
