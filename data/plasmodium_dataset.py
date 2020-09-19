@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from torchvision import transforms
 from .dataset_utils import WeaklySupervisedDataset
-from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge
+from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge, remove
 
 
 class PlasmodiumDataset:
@@ -82,8 +82,10 @@ class PlasmodiumDataset:
         )
 
         if self.merged:
-            base_dataset.targets, base_dataset.classes, base_dataset.class_to_idx = \
-                merge(base_dataset, self.merge_classes)
+            base_dataset = merge(base_dataset, self.merge_classes)
+
+        if self.remove_classes:
+            base_dataset = remove(base_dataset, self.classes_to_remove)
 
         self.add_labeled_num = int(len(base_dataset) * self.add_labeled_ratio)
 
@@ -96,6 +98,7 @@ class PlasmodiumDataset:
         else:
             indices = np.arange(len(base_dataset))
             np.random.shuffle(indices)
+            self.add_labeled_num = int(indices.shape[0] * self.labeled_ratio)
             labeled_indices, unlabeled_indices = indices[:self.add_labeled_num], indices[self.add_labeled_num:]
 
         self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
@@ -105,13 +108,9 @@ class PlasmodiumDataset:
         )
 
         if self.merged:
-            test_dataset.targets, test_dataset.classes, test_dataset.class_to_idx = \
-                merge(test_dataset, self.merge_classes)
-        test_dataset = WeaklySupervisedDataset(test_dataset, range(len(test_dataset)), transform=self.transform_test)
+            test_dataset = merge(test_dataset, self.merge_classes)
 
-        if self.remove_classes:
-            targets = np.array(base_dataset.targets)[labeled_indices]
-            labeled_indices = labeled_indices[~np.isin(targets, self.remove_classes)]
+        test_dataset = WeaklySupervisedDataset(test_dataset, range(len(test_dataset)), transform=self.transform_test)
 
         self.labeled_class_samples = [np.sum(np.array(base_dataset.targets)[labeled_indices] == i)
                                       for i in range(len(base_dataset.classes))]

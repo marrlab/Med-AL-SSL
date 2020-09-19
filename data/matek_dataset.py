@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from torchvision import transforms
 from .dataset_utils import WeaklySupervisedDataset
-from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge
+from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge, remove
 
 
 class MatekDataset:
@@ -80,10 +80,10 @@ class MatekDataset:
         )
 
         if self.merged:
-            base_dataset.targets, base_dataset.classes, base_dataset.class_to_idx = \
-                merge(base_dataset, self.merge_classes)
+            base_dataset = merge(base_dataset, self.merge_classes)
 
-        self.add_labeled_num = int(len(base_dataset) * self.add_labeled_ratio)
+        if self.remove_classes:
+            base_dataset = remove(base_dataset, self.classes_to_remove)
 
         if self.stratified:
             labeled_indices, unlabeled_indices = train_test_split(
@@ -94,6 +94,7 @@ class MatekDataset:
         else:
             indices = np.arange(len(base_dataset))
             np.random.shuffle(indices)
+            self.add_labeled_num = int(indices.shape[0] * self.labeled_ratio)
             labeled_indices, unlabeled_indices = indices[:self.add_labeled_num], indices[self.add_labeled_num:]
 
         self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
@@ -103,13 +104,9 @@ class MatekDataset:
         )
 
         if self.merged:
-            test_dataset.targets, test_dataset.classes, test_dataset.class_to_idx = \
-                merge(test_dataset, self.merge_classes)
-        test_dataset = WeaklySupervisedDataset(test_dataset, range(len(test_dataset)), transform=self.transform_test)
+            test_dataset = merge(test_dataset, self.merge_classes)
 
-        if self.remove_classes:
-            targets = np.array(base_dataset.targets)[labeled_indices]
-            labeled_indices = labeled_indices[~np.isin(targets, self.remove_classes)]
+        test_dataset = WeaklySupervisedDataset(test_dataset, range(len(test_dataset)), transform=self.transform_test)
 
         self.labeled_class_samples = [np.sum(np.array(base_dataset.targets)[labeled_indices] == i)
                                       for i in range(len(base_dataset.classes))]
@@ -142,13 +139,12 @@ class MatekDataset:
 
         return base_dataset
 
-
-    # TODO: put this back to how it was
     def get_base_dataset_simclr(self):
         base_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=None
+            self.train_path, transform=self.transform_simclr
         )
 
+        '''
         if self.oversampling:
             base_indices = oversampling_indices(np.array(list(range(len(base_dataset)))),
                                                 np.array(base_dataset.targets))
@@ -156,17 +152,20 @@ class MatekDataset:
             base_indices = np.array(list(range(len(base_dataset))))
 
         base_dataset = WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_simclr)
+        '''
 
         return base_dataset
 
     def get_datasets_fixmatch(self, base_dataset, labeled_indices, unlabeled_indices):
         transform_labeled = transforms.Compose([
+            transforms.RandomCrop(self.crop_size),
+            transforms.RandomAffine(degrees=90, translate=(0.2, 0.2)),
+            transforms.Resize(size=self.input_size),
             transforms.RandomHorizontalFlip(),
-            transforms.RandomCrop(size=self.input_size,
-                                  padding=int(self.input_size * 0.125),
-                                  padding_mode='reflect'),
+            transforms.RandomVerticalFlip(),
             transforms.ToTensor(),
-            transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
+            transforms.Normalize(mean=self.matek_mean, std=self.matek_std),
+            transforms.RandomErasing(scale=(0.02, 0.2), ratio=(0.3, 0.9)),
         ])
 
         expand_labeled = self.expand_labeled // len(labeled_indices)

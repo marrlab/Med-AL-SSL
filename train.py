@@ -93,6 +93,8 @@ def main(args):
                                            advanced_transforms=True,
                                            unlabeled_subset_ratio=args.unlabeled_subset,
                                            oversampling=args.oversampling,
+                                           merged=args.merged,
+                                           remove_classes=args.remove_classes,
                                            unlabeled_augmentations=True if args.weak_supervision_strategy ==
                                            'active_learning' and args.
                                            uncertainty_sampling_method == 'augmentations_based' else False)
@@ -274,15 +276,15 @@ if __name__ == '__main__':
             # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
             # ('active_learning', 'density_weighted', 'pseudo_labeling'),
-            # ('active_learning', 'entropy_based', 'pseudo_labeling'),
+            ('active_learning', 'entropy_based', 'pseudo_labeling'),
             # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
             # ('active_learning', 'learning_loss', 'pseudo_labeling'),
-            # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
-            # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
+            ('active_learning', 'augmentations_based', 'pseudo_labeling'),
+            ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'simclr'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),
-            ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
+            # ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
             # ('semi_supervised', 'least_confidence', 'fixmatch')
         ]
 

@@ -5,13 +5,17 @@ from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
 from data.matek_dataset import MatekDataset
 from data.plasmodium_dataset import PlasmodiumDataset
+from data.config.matek_config import set_matek_configs
+from data.config.jurkat_config import set_jurkat_configs
+from data.config.plasmodium_config import set_plasmodium_configs
 from results import ratio_metrics, ratio_class_wise_metrics, epoch_class_wise_loss, ae_loss
 from options.visualization_options import get_arguments
 
+import numpy as np
+
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset, 'jurkat': JurkatDataset}
-ratios = {'matek': [0.05, 0.075, 0.1, 0.125, 0.15, 0.175, 0.2, 0.225, 0.25],
-          'jurkat': [0.005, 0.03, 0.055, 0.08, 0.105, 0.13, 0.155, 0.18],
-          'plasmodium': [0.025, 0.05, 0.075, 0.1, 0.125, 0.15, 0.175, 0.2, 0.225]}
+configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs, 'plasmodium': set_plasmodium_configs}
+
 plot_configs = {'matek': (2, 5),
                 'jurkat': (2, 4),
                 'plasmodium': (1, 2)}
@@ -144,9 +148,13 @@ def plot_ae_loss(losses, logs, epochs):
 
 if __name__ == "__main__":
     args = get_arguments()
-    ratio = ratios[args.dataset]
-    dataset_class = datasets[args.dataset](root=args.root, labeled_ratio=0.025, add_labeled_ratio=0.025,
-                                           unlabeled_subset_ratio=0.3)
+    args = configs[args.dataset](args)
+
+    ratio = [i for i in np.arange(args.labeled_ratio_start, args.labeled_ratio_stop + args.add_labeled_ratio,
+                                  args.add_labeled_ratio)]
+
+    dataset_class = datasets[args.dataset](root=args.root, oversampling=args.oversampling, merged=args.merged,
+                                           remove_classes=args.remove_classes)
 
     dataset, _, _, _, _, _ = dataset_class.get_dataset()
 

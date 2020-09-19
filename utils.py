@@ -545,7 +545,38 @@ def merge(base_dataset, merge_classes):
         base_class_to_idx[class_name] = base_class_to_idx.pop(base_classes[min_i])
         base_classes[min_i] = class_name
 
-    return base_targets, base_classes, base_class_to_idx
+    base_dataset.targets = base_targets
+    base_dataset.classes = base_classes
+    base_dataset.class_to_idx = base_class_to_idx
+
+    return base_dataset
+
+
+def remove(base_dataset, classes_to_remove):
+    base_targets = np.array(base_dataset.targets)
+    base_samples = np.array(base_dataset.samples)
+    base_imgs = np.array(base_dataset.imgs)
+    base_classes = base_dataset.classes
+    base_class_to_idx = base_dataset.class_to_idx
+    base_samples = base_samples[~np.isin(base_targets, classes_to_remove)]
+    base_imgs = base_imgs[~np.isin(base_targets, classes_to_remove)]
+    base_targets = base_targets[~np.isin(base_targets, classes_to_remove)]
+
+    for r in np.sort(classes_to_remove)[::-1]:
+        del base_class_to_idx[base_classes[r]]
+        del base_classes[r]
+
+    for i, t in enumerate(np.unique(base_targets)):
+        base_targets[base_targets == t] = i
+        base_class_to_idx[base_classes[i]] = i
+
+    base_dataset.samples = base_samples.tolist()
+    base_dataset.targets = base_targets.tolist()
+    base_dataset.imgs = base_imgs.tolist()
+    base_dataset.classes = base_classes
+    base_dataset.class_to_idx = base_class_to_idx
+
+    return base_dataset
 
 
 class FocalLoss(nn.Module):

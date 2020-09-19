@@ -47,7 +47,7 @@ parser.add_argument('--resume', action='store_true', help='flag to be set if an 
 parser.add_argument('--name', default=' ', type=str,
                     help='name of experiment')
 
-parser.add_argument('--add-labeled-epochs', default=20, type=int,
+parser.add_argument('--add-labeled-epochs', default=10, type=int,
                     help='add labeled data through sampling strategy after epochs')
 
 parser.add_argument('--add-labeled-ratio', default=0.025, type=int,
@@ -65,12 +65,18 @@ parser.add_argument('--labeled-warmup-epochs', default=15, type=int,
 parser.add_argument('--unlabeled-subset', default=0.30, type=float,
                     help='the subset of the unlabeled data to use, to avoid choosing similar data points')
 
-parser.add_argument('--oversampling', action='store_false', help='perform oversampling for labeled dataset')
+parser.add_argument('--oversampling', action='store_true', help='perform oversampling for labeled dataset')
+
+parser.add_argument('--merged', action='store_true',
+                    help='to merge certain classes in the dataset (see dataset scripts to see which classes)')
+
+parser.add_argument('--remove_classes', action='store_false',
+                    help='to remove certain classes in the dataset (see dataset scripts to see which classes)')
 
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 
-parser.add_argument('--loss', default='fl', type=str, choices=['ce', 'fl'],
+parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
@@ -112,7 +118,7 @@ parser.add_argument('--simclr-base-lr', default=0.25, type=float, help='base lea
 parser.add_argument('--simclr-optimizer', default='adam', type=str, choices=['adam', 'lars'],
                     help='which optimizer to use for simclr')
 
-parser.add_argument('--weighted', action='store_false', help='to use weighted loss or not')
+parser.add_argument('--weighted', action='store_true', help='to use weighted loss or not')
 
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
 

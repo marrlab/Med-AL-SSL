@@ -34,8 +34,10 @@ class SimCLR:
                                                          labeled_ratio=self.args.labeled_ratio_start,
                                                          add_labeled_ratio=self.args.add_labeled_ratio,
                                                          advanced_transforms=False,
-                                                         unlabeled_subset_ratio=self.args.unlabeled_subset,
-                                                         oversampling=self.args.oversampling)
+                                                         merged=self.args.merged,
+                                                         remove_classes=self.args.remove_classes,
+                                                         oversampling=self.args.oversamplng,
+                                                         unlabeled_subset_ratio=self.args.unlabeled_subset)
 
         base_dataset = dataset_class.get_base_dataset_simclr()
 
@@ -94,8 +96,10 @@ class SimCLR:
                                                          labeled_ratio=self.args.labeled_ratio_start,
                                                          add_labeled_ratio=self.args.add_labeled_ratio,
                                                          advanced_transforms=True,
-                                                         unlabeled_subset_ratio=self.args.unlabeled_subset,
-                                                         oversampling=self.args.oversampling)
+                                                         merged=self.args.merged,
+                                                         remove_classes=self.args.remove_classes,
+                                                         oversampling=self.args.oversamplng,
+                                                         unlabeled_subset_ratio=self.args.unlabeled_subset)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_class.get_dataset()
