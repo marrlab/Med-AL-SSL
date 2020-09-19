@@ -76,7 +76,7 @@ parser.add_argument('--remove_classes', action='store_false',
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 
-parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
+parser.add_argument('--loss', default='fl', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,

@@ -81,11 +81,19 @@ class PlasmodiumDataset:
             self.train_path, transform=None
         )
 
+        test_dataset = torchvision.datasets.ImageFolder(
+            self.test_path, transform=None
+        )
+
         if self.merged:
             base_dataset = merge(base_dataset, self.merge_classes)
+            test_dataset = merge(test_dataset, self.merge_classes)
 
         if self.remove_classes:
             base_dataset = remove(base_dataset, self.classes_to_remove)
+            test_dataset = remove(test_dataset, self.classes_to_remove)
+
+        test_dataset = WeaklySupervisedDataset(test_dataset, range(len(test_dataset)), transform=self.transform_test)
 
         self.add_labeled_num = int(len(base_dataset) * self.add_labeled_ratio)
 
@@ -102,15 +110,6 @@ class PlasmodiumDataset:
             labeled_indices, unlabeled_indices = indices[:self.add_labeled_num], indices[self.add_labeled_num:]
 
         self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
-
-        test_dataset = torchvision.datasets.ImageFolder(
-            self.test_path, transform=None
-        )
-
-        if self.merged:
-            test_dataset = merge(test_dataset, self.merge_classes)
-
-        test_dataset = WeaklySupervisedDataset(test_dataset, range(len(test_dataset)), transform=self.transform_test)
 
         self.labeled_class_samples = [np.sum(np.array(base_dataset.targets)[labeled_indices] == i)
                                       for i in range(len(base_dataset.classes))]
