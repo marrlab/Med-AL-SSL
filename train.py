@@ -153,6 +153,8 @@ def main(args):
 
             if args.reset_model:
                 model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
+            else:
+                model = best_model
 
             criterion = get_loss(args, dataset_class.labeled_class_samples, reduction='none')
         else:

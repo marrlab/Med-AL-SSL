@@ -73,6 +73,8 @@ class MatekDataset:
         self.unlabeled_augmentations = unlabeled_augmentations
         self.labeled_class_samples = None
         self.classes_to_remove = np.array([0, 1, 2, 3, 4, 6, 7, 9, 11, 13, 14])
+        self.num_classes = self.num_classes - self.classes_to_remove.shape[0] \
+            if self.remove_classes else self.num_classes
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.ImageFolder(

@@ -150,7 +150,7 @@ if __name__ == "__main__":
     args = get_arguments()
     args = configs[args.dataset](args)
 
-    ratio = [i for i in np.arange(args.labeled_ratio_start, args.labeled_ratio_stop + args.add_labeled_ratio,
+    ratio = [i for i in np.arange(args.labeled_ratio_start, args.labeled_ratio_stop + args.add_labeled_ratio - 0.01,
                                   args.add_labeled_ratio)]
 
     dataset_class = datasets[args.dataset](root=args.root, oversampling=args.oversampling, merged=args.merged,

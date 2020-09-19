@@ -47,7 +47,7 @@ parser.add_argument('--resume', action='store_true', help='flag to be set if an 
 parser.add_argument('--name', default=' ', type=str,
                     help='name of experiment')
 
-parser.add_argument('--add-labeled-epochs', default=10, type=int,
+parser.add_argument('--add-labeled-epochs', default=20, type=int,
                     help='add labeled data through sampling strategy after epochs')
 
 parser.add_argument('--add-labeled-ratio', default=0.025, type=int,

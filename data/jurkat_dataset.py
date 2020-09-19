@@ -73,6 +73,8 @@ class JurkatDataset:
         self.unlabeled_augmentations = unlabeled_augmentations
         self.labeled_class_samples = None
         self.classes_to_remove = np.array([0, 3, 4, 6])
+        self.num_classes = self.num_classes - self.classes_to_remove.shape[0] \
+            if self.remove_classes else self.num_classes
 
     @staticmethod
     def check_file_jurkat(path):
@@ -87,7 +89,7 @@ class JurkatDataset:
         )
 
         test_dataset = torchvision.datasets.ImageFolder(
-            self.test_path, transform=None
+            self.test_path, transform=None, is_valid_file=self.check_file_jurkat,
         )
 
         if self.merged:
