@@ -125,6 +125,8 @@ class UncertaintySamplingEntropyBased:
                       .format(self.uncertainty_sampling_method, epoch, i, len(unlabeled_loader), batch_time=batch_time))
 
         if self.uncertainty_sampling_method == 'entropy_based':
+            # print(samples[samples.argsort()[:number]].cpu().numpy().tolist())
+            # print(np.array(targets)[samples.argsort(descending=True)[:number].cpu().numpy()].tolist())
             return samples.argsort(descending=True)[:number]
         else:
             return samples.argsort()[:number]

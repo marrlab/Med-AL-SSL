@@ -62,4 +62,7 @@ class UncertaintySamplingAugmentationBased:
         for j in range(all_max_classes.size(0)):
             scores[j] = torch.sum(all_max_classes[j] == all_modes[j])
 
+        # print(scores[scores.argsort()[:number]].cpu().numpy().tolist())
+        # print(np.array(targets)[scores.argsort()[:number].cpu().numpy()].tolist())
+
         return scores.argsort()[:number]
