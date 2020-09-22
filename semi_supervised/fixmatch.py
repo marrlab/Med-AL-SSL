@@ -38,7 +38,7 @@ class FixMatch:
                                                        advanced_transforms=True,
                                                        merged=self.args.merged,
                                                        remove_classes=self.args.remove_classes,
-                                                       oversampling=self.args.oversamplng,
+                                                       oversampling=self.args.oversampling,
                                                        unlabeled_subset_ratio=self.args.unlabeled_subset,
                                                        expand_labeled=self.args.fixmatch_k_img,
                                                        expand_unlabeled=self.args.fixmatch_k_img*self.args.fixmatch_mu)

@@ -37,7 +37,7 @@ class AutoEncoderCl:
                                                          advanced_transforms=True,
                                                          merged=self.args.merged,
                                                          remove_classes=self.args.remove_classes,
-                                                         oversampling=self.args.oversamplng,
+                                                         oversampling=self.args.oversampling,
                                                          unlabeled_subset_ratio=self.args.unlabeled_subset)
 
         _, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \

@@ -67,7 +67,7 @@ parser.add_argument('--unlabeled-subset', default=0.3, type=float,
 
 parser.add_argument('--oversampling', action='store_true', help='perform oversampling for labeled dataset')
 
-parser.add_argument('--merged', action='store_true',
+parser.add_argument('--merged', action='store_false',
                     help='to merge certain classes in the dataset (see dataset scripts to see which classes)')
 
 parser.add_argument('--remove_classes', action='store_false',
@@ -118,7 +118,7 @@ parser.add_argument('--simclr-base-lr', default=0.25, type=float, help='base lea
 parser.add_argument('--simclr-optimizer', default='adam', type=str, choices=['adam', 'lars'],
                     help='which optimizer to use for simclr')
 
-parser.add_argument('--weighted', action='store_true', help='to use weighted loss or not')
+parser.add_argument('--weighted', action='store_false', help='to use weighted loss or not')
 
 parser.add_argument('--eval', action='store_true', help='only perform evaluation and exit')
 
@@ -140,10 +140,10 @@ parser.add_argument('--run-batch', action='store_false', help='run all methods i
 
 parser.add_argument('--reset-model', action='store_true', help='reset models after every labels injection cycle')
 
-parser.add_argument('--fixmatch-mu', default=5, type=int,
+parser.add_argument('--fixmatch-mu', default=7, type=int,
                     help='coefficient of unlabeled batch size i.e. mu.B from paper')
 
-parser.add_argument('--fixmatch-lambda-u', default=2, type=float,
+parser.add_argument('--fixmatch-lambda-u', default=1, type=float,
                     help='coefficient of unlabeled loss')
 
 parser.add_argument('--fixmatch-threshold', default=0.95, type=float,
@@ -160,6 +160,9 @@ parser.add_argument('--fixmatch-warmup', default=0, type=int,
 
 parser.add_argument('--learning-loss-weight', default=1.0, type=float,
                     help='the weight for the loss network, loss term in the objective function')
+
+parser.add_argument('--dlctcs-loss-weight', default=100, type=float,
+                    help='the weight for classification loss in dlctcs')
 
 parser.set_defaults(augment=True)
 

@@ -371,7 +371,7 @@ def get_loss(args, labeled_class_samples, reduction='mean'):
     if args.loss == 'ce':
         if args.weighted:
             classes_weights = np.clip(np.sum(labeled_class_samples) / np.array(labeled_class_samples),
-                                      a_min=0, a_max=50)
+                                      a_min=1, a_max=50)
 
             # noinspection PyArgumentList
             criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(classes_weights).cuda(), reduction=reduction)
@@ -556,6 +556,7 @@ def remove(base_dataset, classes_to_remove):
     base_targets = np.array(base_dataset.targets)
     base_samples = np.array(base_dataset.samples)
     base_imgs = np.array(base_dataset.imgs)
+    classes_to_remove = np.array(classes_to_remove)
     base_classes = base_dataset.classes
     base_class_to_idx = base_dataset.class_to_idx
     base_samples = base_samples[~np.isin(base_targets, classes_to_remove)]

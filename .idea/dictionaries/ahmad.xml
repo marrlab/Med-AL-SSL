@@ -21,8 +21,10 @@
       <w>denseblock</w>
       <w>denselayer</w>
       <w>densenet</w>
+      <w>dlctcs</w>
       <w>downsample</w>
       <w>droprate</w>
+      <w>dtctcs</w>
       <w>exponentials</w>
       <w>fivethirtyeight</w>
       <w>fixmatch</w>

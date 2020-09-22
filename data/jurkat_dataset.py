@@ -73,7 +73,7 @@ class JurkatDataset:
         self.unlabeled_augmentations = unlabeled_augmentations
         self.labeled_class_samples = None
         self.classes_to_remove = np.array([0, 3, 4, 6])
-        self.num_classes = self.num_classes - self.classes_to_remove.shape[0] \
+        self.num_classes = self.num_classes - len(self.classes_to_remove) \
             if self.remove_classes else self.num_classes
 
     @staticmethod
@@ -92,11 +92,11 @@ class JurkatDataset:
             self.test_path, transform=None, is_valid_file=self.check_file_jurkat,
         )
 
-        if self.merged:
+        if self.merged and len(self.merge_classes) > 0:
             base_dataset = merge(base_dataset, self.merge_classes)
             test_dataset = merge(test_dataset, self.merge_classes)
 
-        if self.remove_classes:
+        if self.remove_classes and len(self.classes_to_remove) > 0:
             base_dataset = remove(base_dataset, self.classes_to_remove)
             test_dataset = remove(test_dataset, self.classes_to_remove)
 
@@ -139,12 +139,23 @@ class JurkatDataset:
             self.train_path, transform=self.transform_autoencoder, is_valid_file=self.check_file_jurkat,
         )
 
+        if self.merged and len(self.merge_classes) > 0:
+            base_dataset = merge(base_dataset, self.merge_classes)
+
+        if self.remove_classes and len(self.classes_to_remove) > 0:
+            base_dataset = remove(base_dataset, self.classes_to_remove)
+
         return base_dataset
 
     def get_base_dataset_simclr(self):
         base_dataset = torchvision.datasets.ImageFolder(
             self.train_path, transform=self.transform_simclr, is_valid_file=self.check_file_jurkat,
         )
+        if self.merged and len(self.merge_classes) > 0:
+            base_dataset = merge(base_dataset, self.merge_classes)
+
+        if self.remove_classes and len(self.classes_to_remove) > 0:
+            base_dataset = remove(base_dataset, self.classes_to_remove)
 
         return base_dataset
 
