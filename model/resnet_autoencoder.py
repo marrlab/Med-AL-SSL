@@ -8,6 +8,83 @@ Resnet-based autoencoder, modified version of: https://github.com/julianstastny/
 """
 
 
+class DoubleConv(nn.Module):
+
+    def __init__(self, in_channels, out_channels, mid_channels=None):
+        super().__init__()
+        if not mid_channels:
+            mid_channels = out_channels
+        self.double_conv = nn.Sequential(
+            nn.Conv2d(in_channels, mid_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(mid_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True)
+        )
+
+    def forward(self, x):
+        return self.double_conv(x)
+
+
+class Up(nn.Module):
+    def __init__(self, in_channels, out_channels, bilinear=True):
+        super().__init__()
+
+        if bilinear:
+            self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+            self.conv = DoubleConv(in_channels, out_channels, in_channels // 2)
+        else:
+            self.up = nn.ConvTranspose2d(in_channels, in_channels // 2, kernel_size=2, stride=2)
+            self.conv = DoubleConv(in_channels, out_channels)
+
+    def forward(self, x1, x2):
+        x1 = self.up(x1)
+        # input is CHW
+        diffY = x2.size()[2] - x1.size()[2]
+        diffX = x2.size()[3] - x1.size()[3]
+
+        x1 = F.pad(x1, [diffX // 2, diffX - diffX // 2,
+                        diffY // 2, diffY - diffY // 2])
+        # if you have padding issues, see
+        # https://github.com/HaiyongJiang/U-Net-Pytorch-Unstructured-Buggy/commit/0e854509c2cea854e247a9c615f175f76fbb2e3a
+        # https://github.com/xiaopeng-liao/Pytorch-UNet/commit/8ebac70e633bac59fc22bb5195e513d5832fb3bd
+        x = torch.cat([x2, x1], dim=1)
+        return self.conv(x)
+
+
+class OutConv(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(OutConv, self).__init__()
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
+
+    def forward(self, x):
+        return self.conv(x)
+
+
+class UnetDec(nn.Module):
+    def __init__(self, bilinear=False, out_channels=3, z_dim=128):
+        super(UnetDec, self).__init__()
+
+        self.linear = nn.Linear(z_dim, 512)
+        factor = 2 if bilinear else 1
+        self.up1 = Up(512, 256 // factor, bilinear)
+        self.up2 = Up(256, 128 // factor, bilinear)
+        self.up3 = Up(128, 64 // factor, bilinear)
+        self.up4 = Up(64, 64, bilinear)
+        self.outc = OutConv(64, out_channels)
+
+    def forward(self, z, layer_outputs):
+        x = self.linear(z)
+        x = x.view(x.size(0), 512, 1, 1)
+        x = self.up1(x, layer_outputs['layer4'])
+        x = self.up2(x, layer_outputs['layer3'])
+        x = self.up3(x, layer_outputs['layer2'])
+        x = self.up4(x, layer_outputs['layer1'])
+        logits = self.outc(x)
+        return logits
+
+
 class ResizeConv2d(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, scale_factor, mode='nearest'):
         super().__init__()
@@ -102,16 +179,16 @@ class ResNet18Enc(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        x = torch.relu(self.bn1(self.conv1(x)))
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
+        x1 = torch.relu(self.bn1(self.conv1(x)))
+        x2 = self.layer1(x1)
+        x3 = self.layer2(x2)
+        x4 = self.layer3(x3)
+        x = self.layer4(x4)
         x = F.avg_pool2d(x, 4)
         x = x.view(x.size(0), -1)
         x = self.linear(x)
 
-        return x
+        return x, {'layer1': x1, 'layer2':  x2, 'layer3':  x3, 'layer4':  x4}
 
 
 class ResNet18Dec(nn.Module):
@@ -156,7 +233,7 @@ class ResnetAutoencoder(nn.Module):
     def __init__(self, z_dim, drop_rate, num_classes, input_size=32):
         super().__init__()
         self.encoder = ResNet18Enc(z_dim=z_dim, input_size=input_size)
-        self.decoder = ResNet18Dec(z_dim=z_dim, input_size=input_size)
+        self.decoder = UnetDec(z_dim=z_dim)
 
         self.classifier = nn.Sequential(
             nn.Dropout(p=drop_rate, inplace=False),
@@ -167,18 +244,18 @@ class ResnetAutoencoder(nn.Module):
         )
 
     def forward(self, x):
-        z = self.encoder(x)
-        x = self.decoder(z)
+        z, layer_outputs = self.encoder(x)
+        x = self.decoder(z, layer_outputs)
         return x
 
     def forward_encoder_classifier(self, x):
-        x = self.encoder(x)
-        x = self.classifier(x)
+        z, layer_outputs = self.encoder(x)
+        x = self.classifier(z)
         return x
 
     def forward_encoder(self, x):
-        x = self.encoder(x)
-        return x
+        z, layer_outputs = self.encoder(x)
+        return z
 
     def forward_classifier(self, x):
         x = self.classifier(x)

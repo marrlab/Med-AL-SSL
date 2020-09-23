@@ -272,11 +272,13 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
+            # TODO: ALWAYS CHANGE THE LOG DIR
             # ('active_learning', 'least_confidence', 'pseudo_labeling'),
             # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
-            ('active_learning', 'entropy_based', 'pseudo_labeling'),
+            # ('active_learning', 'entropy_based', 'pseudo_labeling'),
             # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
+            # TODO: ALWAYS CHANGE THE LOG DIR
             # ('active_learning', 'learning_loss', 'pseudo_labeling'),
             # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
             # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
@@ -284,7 +286,8 @@ if __name__ == '__main__':
             # ('semi_supervised', 'least_confidence', 'simclr'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
-            # ('semi_supervised', 'least_confidence', 'fixmatch')
+            # TODO: ALWAYS CHANGE THE LOG DIR
+            ('semi_supervised', 'least_confidence', 'fixmatch')
         ]
 
         for (m, u, s) in states:

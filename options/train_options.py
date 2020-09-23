@@ -8,7 +8,7 @@ parser.add_argument('--epochs', default=1000, type=int,
 parser.add_argument('--autoencoder-train-epochs', default=20, type=int,
                     help='number of total epochs to run')
 
-parser.add_argument('--simclr-train-epochs', default=250, type=int,
+parser.add_argument('--simclr-train-epochs', default=200, type=int,
                     help='number of total epochs to run')
 
 parser.add_argument('--start-epoch', default=0, type=int,
@@ -42,7 +42,14 @@ parser.add_argument('--drop-rate', default=0.15, type=float,
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentation (default: True)')
 
-parser.add_argument('--resume', action='store_true', help='flag to be set if an existed model is to be loaded')
+parser.add_argument('--resume', action='store_true',
+                    help='flag to be set if an existing model is to be loaded')
+
+parser.add_argument('--simclr-resume', action='store_false',
+                    help='flag to be set if an existing simclr model is to be loaded')
+
+parser.add_argument('--autoencoder-resume', action='store_false',
+                    help='flag to be set if an existing autoencoder model is to be loaded')
 
 parser.add_argument('--name', default=' ', type=str,
                     help='name of experiment')
@@ -76,8 +83,11 @@ parser.add_argument('--remove_classes', action='store_false',
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 
-parser.add_argument('--loss', default='fl', type=str, choices=['ce', 'fl'],
+parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
+
+parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs_alt_ce_no_over/', type=str,
+                    help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
@@ -130,9 +140,6 @@ parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learni
                     help='the directory root for saving/resuming checkpoints from')
 
 parser.add_argument('--seed', default=9999, type=int, choices=[6666, 9999, 2323, 5555], help='the random seed to set')
-
-parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs/', type=str,
-                    help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--store-logs', action='store_false', help='store the logs after training')
 

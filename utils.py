@@ -316,8 +316,7 @@ def create_model_optimizer_simclr(args, dataset_class):
 
     model = model.cuda()
 
-    args.resume = True
-    if args.resume:
+    if args.simclr_resume:
         model, _, _ = resume_model(args, model)
         args.start_epoch = args.epochs
 
@@ -341,8 +340,7 @@ def create_model_optimizer_autoencoder(args, dataset_class):
 
     model = model.cuda()
 
-    args.resume = True
-    if args.resume:
+    if args.autoencoder_resume:
         file = os.path.join(args.checkpoint_path, args.name, 'model_best.pth.tar')
         if os.path.isfile(file):
             print("=> loading checkpoint '{}'".format(file))
