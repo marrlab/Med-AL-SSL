@@ -4,7 +4,11 @@ import torch.nn.functional as F
 import math
 
 """
-Resnet-based autoencoder, modified version of: https://github.com/julianstastny/VAE-ResNet18-PyTorch
+Resnet and Unet based autoencoder
+Resnet18 encoder and Unet decoder
+
+Resnet: https://arxiv.org/abs/1512.03385
+Unet: https://arxiv.org/abs/1505.04597
 """
 
 
@@ -53,26 +57,19 @@ class Up(nn.Module):
         return self.conv(x)
 
 
-class OutConv(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super(OutConv, self).__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
-
-    def forward(self, x):
-        return self.conv(x)
-
-
 class UnetDec(nn.Module):
-    def __init__(self, bilinear=False, out_channels=3, z_dim=128):
+    def __init__(self, bilinear=False, nc=3, z_dim=128, input_size=32):
         super(UnetDec, self).__init__()
 
         self.linear = nn.Linear(z_dim, 512)
+        self.input_size = input_size
         factor = 2 if bilinear else 1
         self.up1 = Up(512, 256 // factor, bilinear)
         self.up2 = Up(256, 128 // factor, bilinear)
         self.up3 = Up(128, 64 // factor, bilinear)
-        self.up4 = Up(64, 64, bilinear)
-        self.outc = OutConv(64, out_channels)
+        self.up4 = Up(128, 64, bilinear=True)
+        self.outc = nn.ConvTranspose2d(64, nc, kernel_size=3, stride=int(math.log2(input_size) - 4), padding=1,
+                                       bias=False)
 
     def forward(self, z, layer_outputs):
         x = self.linear(z)
@@ -81,8 +78,9 @@ class UnetDec(nn.Module):
         x = self.up2(x, layer_outputs['layer3'])
         x = self.up3(x, layer_outputs['layer2'])
         x = self.up4(x, layer_outputs['layer1'])
-        logits = self.outc(x)
-        return logits
+        x = self.outc(x)
+        x = F.pad(x, [self.input_size - x.size(2), 0, self.input_size - x.size(3), 0])
+        return torch.sigmoid(x)
 
 
 class ResizeConv2d(nn.Module):
@@ -233,7 +231,7 @@ class ResnetAutoencoder(nn.Module):
     def __init__(self, z_dim, drop_rate, num_classes, input_size=32):
         super().__init__()
         self.encoder = ResNet18Enc(z_dim=z_dim, input_size=input_size)
-        self.decoder = UnetDec(z_dim=z_dim)
+        self.decoder = UnetDec(z_dim=z_dim, input_size=input_size)
 
         self.classifier = nn.Sequential(
             nn.Dropout(p=drop_rate, inplace=False),
