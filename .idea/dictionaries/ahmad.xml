@@ -5,6 +5,7 @@
       <w>autoencoder</w>
       <w>avgpool</w>
       <w>backgroundcolor</w>
+      <w>batchbald</w>
       <w>bilinear</w>
       <w>bmvc</w>
       <w>brightfield</w>
@@ -26,6 +27,8 @@
       <w>downsample</w>
       <w>droprate</w>
       <w>dtctcs</w>
+      <w>dtype</w>
+      <w>entropies</w>
       <w>exponentials</w>
       <w>fivethirtyeight</w>
       <w>fixmatch</w>
