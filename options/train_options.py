@@ -5,7 +5,7 @@ parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imag
 parser.add_argument('--epochs', default=1000, type=int,
                     help='number of total epochs to run')
 
-parser.add_argument('--autoencoder-train-epochs', default=20, type=int,
+parser.add_argument('--autoencoder-train-epochs', default=80, type=int,
                     help='number of total epochs to run')
 
 parser.add_argument('--simclr-train-epochs', default=200, type=int,
@@ -48,7 +48,7 @@ parser.add_argument('--resume', action='store_true',
 parser.add_argument('--simclr-resume', action='store_false',
                     help='flag to be set if an existing simclr model is to be loaded')
 
-parser.add_argument('--autoencoder-resume', action='store_true',
+parser.add_argument('--autoencoder-resume', action='store_false',
                     help='flag to be set if an existing autoencoder model is to be loaded')
 
 parser.add_argument('--name', default=' ', type=str,
@@ -72,7 +72,7 @@ parser.add_argument('--labeled-warmup-epochs', default=15, type=int,
 parser.add_argument('--unlabeled-subset', default=0.3, type=float,
                     help='the subset of the unlabeled data to use, to avoid choosing similar data points')
 
-parser.add_argument('--oversampling', action='store_true', help='perform oversampling for labeled dataset')
+parser.add_argument('--oversampling', action='store_false', help='perform oversampling for labeled dataset')
 
 parser.add_argument('--merged', action='store_false',
                     help='to merge certain classes in the dataset (see dataset scripts to see which classes)')
@@ -83,10 +83,10 @@ parser.add_argument('--remove_classes', action='store_false',
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 
-parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
+parser.add_argument('--loss', default='fl', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
-parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs_alt_ce_no_over/', type=str,
+parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs_alt_fl_with_over/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
@@ -108,7 +108,8 @@ parser.add_argument('--weak-supervision-strategy', default='semi_supervised', ty
                     help='the weakly supervised strategy to use')
 
 parser.add_argument('--semi-supervised-method', default='fixmatch', type=str,
-                    choices=['pseudo_labeling', 'auto_encoder', 'simclr', 'fixmatch', 'auto_encoder_cl'],
+                    choices=['pseudo_labeling', 'auto_encoder', 'simclr', 'fixmatch', 'auto_encoder_cl',
+                             'auto_encoder_no_feat'],
                     help='the semi supervised method to use')
 
 parser.add_argument('--pseudo-labeling-threshold', default=0.9, type=int,
@@ -147,7 +148,7 @@ parser.add_argument('--run-batch', action='store_false', help='run all methods i
 
 parser.add_argument('--reset-model', action='store_true', help='reset models after every labels injection cycle')
 
-parser.add_argument('--fixmatch-mu', default=7, type=int,
+parser.add_argument('--fixmatch-mu', default=5, type=int,
                     help='coefficient of unlabeled batch size i.e. mu.B from paper')
 
 parser.add_argument('--fixmatch-lambda-u', default=1, type=float,
