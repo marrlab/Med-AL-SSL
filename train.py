@@ -10,7 +10,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 import torch
 import torch.cuda
@@ -276,19 +276,19 @@ if __name__ == '__main__':
             # ('active_learning', 'least_confidence', 'pseudo_labeling'),
             # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
-            ('active_learning', 'entropy_based', 'pseudo_labeling'),
+            # ('active_learning', 'entropy_based', 'pseudo_labeling'),
             # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
             # TODO: ALWAYS CHANGE THE LOG DIR
             # ('active_learning', 'learning_loss', 'pseudo_labeling'),
-            ('active_learning', 'augmentations_based', 'pseudo_labeling'),
-            ('random_sampling', 'least_confidence', 'pseudo_labeling'),
-            ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
-            ('semi_supervised', 'least_confidence', 'simclr'),
-            ('semi_supervised', 'least_confidence', 'auto_encoder'),
+            # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
+            # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
+            # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
+            # ('semi_supervised', 'least_confidence', 'simclr'),
+            # ('semi_supervised', 'least_confidence', 'auto_encoder'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_no_feat'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
             # TODO: ALWAYS CHANGE THE LOG DIR
-            # ('semi_supervised', 'least_confidence', 'fixmatch')
+            ('semi_supervised', 'least_confidence', 'fixmatch')
         ]
 
         for (m, u, s) in states:

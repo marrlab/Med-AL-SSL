@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="f3bb7f64-1bea-43be-8746-22c07a4b31ff" name="helmholtz" url="">
+        <fileTransfer rootFolder="/mnt/home/icb/ahmad.qasim/" accessType="SFTP" host="vicb-submit-02" port="22" sshConfigId="38d8132e-c347-40c6-a06c-c980e53a744f" sshConfig="ahmad.qasim@vicb-submit-02:22 key" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
