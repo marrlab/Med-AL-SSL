@@ -1,6 +1,4 @@
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
-from active_learning.entropy_based import UncertaintySamplingEntropyBased
-from active_learning.mc_dropout import UncertaintySamplingMCDropout
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
@@ -27,6 +25,7 @@ class AutoEncoder:
         self.model = None
         self.kwargs = {'num_workers': 2, 'pin_memory': False}
         self.train_feat = train_feat
+        self.uncertainty_sampling_method = uncertainty_sampling_method
 
     def train(self):
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,
@@ -109,8 +108,7 @@ class AutoEncoder:
 
         if self.uncertainty_sampling_method == 'augmentations_based':
             uncertainty_sampler = UncertaintySamplingAugmentationBased()
-            self.args.unlabeled_augmentations = True
-            self.args.weak_supervision_strategy == 'semi_supervised_active_learning'
+            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
         else:
             uncertainty_sampler = None
             self.args.weak_supervision_strategy = "random_sampling"

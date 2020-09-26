@@ -60,12 +60,17 @@ class SimCLRArch(nn.Module):
             z = nn.functional.normalize(z, dim=1)
         return h, z
 
-    def forward_classifier(self, x):
-        x = self.classifier(x)
+    def forward_encoder_classifier(self, x):
+        h = self.encoder(x)
+        x = self.classifier(h)
         return x
 
     def forward_encoder(self, x):
         x = self.encoder(x)
+        return x
+
+    def forward_classifier(self, x):
+        x = self.classifier(x)
         return x
 
 

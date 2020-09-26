@@ -72,7 +72,7 @@ parser.add_argument('--labeled-warmup-epochs', default=15, type=int,
 parser.add_argument('--unlabeled-subset', default=0.3, type=float,
                     help='the subset of the unlabeled data to use, to avoid choosing similar data points')
 
-parser.add_argument('--oversampling', action='store_false', help='perform oversampling for labeled dataset')
+parser.add_argument('--oversampling', action='store_true', help='perform oversampling for labeled dataset')
 
 parser.add_argument('--merged', action='store_false',
                     help='to merge certain classes in the dataset (see dataset scripts to see which classes)')
@@ -86,7 +86,7 @@ parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet',
 parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
-parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs_alt_ce_with_over/', type=str,
+parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs_alt_ce_no_over/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
@@ -109,7 +109,7 @@ parser.add_argument('--weak-supervision-strategy', default='semi_supervised', ty
 
 parser.add_argument('--semi-supervised-method', default='fixmatch', type=str,
                     choices=['pseudo_labeling', 'auto_encoder', 'simclr', 'fixmatch', 'auto_encoder_cl',
-                             'auto_encoder_no_feat'],
+                             'auto_encoder_no_feat', 'simclr_with_al', 'auto_encoder_with_al'],
                     help='the semi supervised method to use')
 
 parser.add_argument('--pseudo-labeling-threshold', default=0.9, type=int,

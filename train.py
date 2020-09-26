@@ -76,12 +76,21 @@ def main(args):
         learning_loss = LearningLoss(args)
         best_acc = learning_loss.main()
         return best_acc
+    elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'simclr_with_al':
+        simclr = SimCLR(args, uncertainty_sampling_method='augmentations_based', train_feat=True)
+        simclr.train()
+        best_acc = simclr.train_validate_classifier()
+        return best_acc
+    elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'auto_encoder_with_al':
+        auto_encoder = AutoEncoder(args, uncertainty_sampling_method='augmentations_based')
+        auto_encoder.train()
+        best_acc = auto_encoder.train_validate_classifier()
+        return best_acc
 
     if args.uncertainty_sampling_method == 'mc_dropout':
         uncertainty_sampler = UncertaintySamplingMCDropout()
     elif args.uncertainty_sampling_method == 'augmentations_based':
         uncertainty_sampler = UncertaintySamplingAugmentationBased()
-        args.unlabeled_augmentations = True
     else:
         uncertainty_sampler = UncertaintySamplingEntropyBased(verbose=True,
                                                               uncertainty_sampling_method=args.
@@ -278,7 +287,6 @@ if __name__ == '__main__':
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
             # ('active_learning', 'entropy_based', 'pseudo_labeling'),
             # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
-            # TODO: ALWAYS CHANGE THE LOG DIR
             # ('active_learning', 'learning_loss', 'pseudo_labeling'),
             # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
             # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
@@ -287,8 +295,9 @@ if __name__ == '__main__':
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_no_feat'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
-            # TODO: ALWAYS CHANGE THE LOG DIR
-            ('semi_supervised', 'least_confidence', 'fixmatch')
+            # ('semi_supervised', 'least_confidence', 'fixmatch')
+            ('semi_supervised', 'least_confidence', 'simclr_with_al'),
+            ('semi_supervised', 'least_confidence', 'auto_encoder_with_al')
         ]
 
         for (m, u, s) in states:
