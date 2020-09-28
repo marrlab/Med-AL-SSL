@@ -8,8 +8,8 @@ args = get_arguments()
 methods = [
     'random_sampling',
     'entropy_based',
-    'learning_loss',
-    'mc_dropout',
+    'auto_encoder_with_al',
+    'simclr_with_al',
     'augmentations_based',
     'pseudo_labeling',
     'auto_encoder',

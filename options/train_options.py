@@ -83,10 +83,10 @@ parser.add_argument('--remove_classes', action='store_false',
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 
-parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
+parser.add_argument('--loss', default='fl', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
-parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs_alt_ce_no_over/', type=str,
+parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs_alt_fl_no_over/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,

@@ -78,6 +78,8 @@
       <w>warmup</w>
       <w>wideresnet</w>
       <w>xent</w>
+      <w>xtick</w>
+      <w>ytick</w>
       <w>zagoruyko</w>
     </words>
   </dictionary>

@@ -34,7 +34,10 @@ class UncertaintySamplingAugmentationBased:
                 data_y = data_y.cuda(non_blocking=True)
 
                 with torch.no_grad():
-                    output, _, _ = model(data_x)
+                    if args.weak_supervision_strategy == 'semi_supervised_active_learning':
+                        output = model.forward_encoder_classifier(data_x)
+                    else:
+                        output, _, _ = model(data_x)
 
                 output = torch.argmax(output, dim=1)
 

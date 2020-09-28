@@ -131,7 +131,6 @@ class SimCLR:
         best_model = deepcopy(model)
 
         self.args.start_epoch = 0
-        self.args.weak_supervision_strategy = "random_sampling"
         current_labeled_ratio = self.args.labeled_ratio_start
 
         for epoch in range(self.args.start_epoch, self.args.epochs):

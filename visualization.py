@@ -30,8 +30,8 @@ credits to: Alex Olteanu (https://www.dataquest.io/blog/making-538-plots/) for t
 methods = [
     'random_sampling',
     'entropy_based',
-    'learning_loss',
-    'mc_dropout',
+    'auto_encoder_with_al',
+    'simclr_with_al',
     'augmentations_based',
     'pseudo_labeling',
     'auto_encoder',
@@ -73,6 +73,9 @@ def plot_ratio_class_wise_metrics(metric, classes, label_y, prop, plot_config):
 
 def plot_ratio_metrics(prop, metric, label_y):
     plt.figure(figsize=(14, 10))
+    plt.rc('xtick', labelsize=20)
+    plt.rc('ytick', labelsize=20)
+    plt.grid(color='black')
     style.use('fivethirtyeight')
 
     colors = [[0, 0, 0, 1], [230 / 255, 159 / 255, 0, 1], [86 / 255, 180 / 255, 233 / 255, 1],
@@ -88,8 +91,9 @@ def plot_ratio_metrics(prop, metric, label_y):
                      label=method, linewidth=2, linestyle=linestyle, marker='o', capsize=3)
         plt.fill_between(prop, metric[i][0], metric[i][2], color=colors[i % len(colors)], alpha=0.05)
 
-    plt.xlabel("Labeled ratio of the dataset", fontsize=20, weight='bold', alpha=.75)
-    plt.ylabel(label_y, fontsize=20, weight='bold', alpha=.75)
+    plt.xlabel("Labeled ratio of the dataset", fontsize=25, weight='bold', alpha=.75)
+    plt.ylabel(label_y, fontsize=25, weight='bold', alpha=.75)
+    plt.title('Cross entropy loss', fontsize=30, weight='bold', alpha=.75)
 
     plt.legend(loc='lower right', fontsize=18)
     plt.show()

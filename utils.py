@@ -439,6 +439,7 @@ def set_model_name(args):
 def perform_sampling(args, uncertainty_sampler, pseudo_labeler, epoch, model, train_loader, unlabeled_loader,
                      dataset_class, labeled_indices, unlabeled_indices, labeled_dataset, unlabeled_dataset,
                      test_dataset, kwargs, current_labeled_ratio, best_model):
+    print(args.weak_supervision_strategy)
     if args.weak_supervision_strategy == 'active_learning':
         samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
                                                           train_loader,

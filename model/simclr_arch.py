@@ -91,7 +91,7 @@ def modify_resnet_model(model, *, v1=True, input_size=32):
         first convolution and remove the max pooling layer.
     v1 : bool
         If True, modify some convolution layers to follow the resnet specification of the
-        original paper (v1). torchvision's resnet is v1.5 so to revert to v1 we switch the
+        original paper (v1). torchvision resnet is v1.5 so to revert to v1 we switch the
         strides between the first 1x1 and following 3x3 convolution on the first bottleneck
         block of each of the 2nd, 3rd and 4th layers.
     Returns
@@ -108,8 +108,8 @@ def modify_resnet_model(model, *, v1=True, input_size=32):
     model.conv1 = conv1
     model.maxpool = nn.Identity()
     if v1:
-        for l in range(2, 5):
-            layer = getattr(model, "layer{}".format(l))
+        for i in range(2, 5):
+            layer = getattr(model, "layer{}".format(i))
             block = list(layer.children())[0]
             if isinstance(block, Bottleneck):
                 assert block.conv1.kernel_size == (1, 1) and block.conv1.stride == (1, 1)
