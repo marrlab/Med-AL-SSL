@@ -95,6 +95,13 @@ class SimCLR:
         return model
 
     def train_validate_classifier(self):
+        if self.uncertainty_sampling_method == 'augmentations_based':
+            uncertainty_sampler = UncertaintySamplingAugmentationBased()
+            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
+        else:
+            uncertainty_sampler = None
+            self.args.weak_supervision_strategy = "random_sampling"
+
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,
                                                          labeled_ratio=self.args.labeled_ratio_start,
                                                          add_labeled_ratio=self.args.add_labeled_ratio,
@@ -102,14 +109,10 @@ class SimCLR:
                                                          merged=self.args.merged,
                                                          remove_classes=self.args.remove_classes,
                                                          oversampling=self.args.oversampling,
-                                                         unlabeled_subset_ratio=self.args.unlabeled_subset)
-
-        if self.uncertainty_sampling_method == 'augmentations_based':
-            uncertainty_sampler = UncertaintySamplingAugmentationBased()
-            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
-        else:
-            uncertainty_sampler = None
-            self.args.weak_supervision_strategy = "random_sampling"
+                                                         unlabeled_subset_ratio=self.args.unlabeled_subset,
+                                                         unlabeled_augmentations=True if
+                                                         self.uncertainty_sampling_method == 'augmentations_based'
+                                                         else False)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_class.get_dataset()

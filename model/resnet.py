@@ -112,6 +112,17 @@ class ResNet(nn.Module):
         out = self.linear(feat)
         return out, feat, [out1, out2, out3, out4]
 
+    def forward_encoder_classifier(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = self.layer3(out)
+        out = self.layer4(out)
+        out = F.avg_pool2d(out, 4)
+        out = out.view(out.size(0), -1)
+        out = self.linear(out)
+        return out
+
 
 def resnet18(num_classes, input_size, drop_rate):
     return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=num_classes, input_size=input_size, drop_rate=drop_rate)

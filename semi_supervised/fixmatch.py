@@ -1,5 +1,6 @@
 from torch.utils.data import DataLoader
 
+from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
@@ -9,7 +10,7 @@ import torch
 import time
 
 from utils import create_model_optimizer_scheduler, AverageMeter, accuracy, Metrics, perform_sampling, \
-    store_logs, save_checkpoint, get_loss, LossPerClassMeter
+    store_logs, save_checkpoint, get_loss, LossPerClassMeter, create_loaders
 
 import pandas as pd
 from copy import deepcopy
@@ -23,15 +24,23 @@ Courtesy to: https://github.com/kekmodel/FixMatch-pytorch
 
 
 class FixMatch:
-    def __init__(self, args, verbose=True):
+    def __init__(self, args, verbose=True, uncertainty_sampling_method='random_sampling'):
         self.args = args
         self.verbose = verbose
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
                          'jurkat': JurkatDataset}
         self.model = None
         self.kwargs = {'num_workers': 16, 'pin_memory': False, 'drop_last': True}
+        self.uncertainty_sampling_method = uncertainty_sampling_method
 
     def main(self):
+        if self.uncertainty_sampling_method == 'augmentations_based':
+            uncertainty_sampler = UncertaintySamplingAugmentationBased()
+            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
+        else:
+            uncertainty_sampler = None
+            self.args.weak_supervision_strategy = "random_sampling"
+
         dataset_cls = self.datasets[self.args.dataset](root=self.args.root,
                                                        labeled_ratio=self.args.labeled_ratio_start,
                                                        add_labeled_ratio=self.args.add_labeled_ratio,
@@ -41,24 +50,28 @@ class FixMatch:
                                                        oversampling=self.args.oversampling,
                                                        unlabeled_subset_ratio=self.args.unlabeled_subset,
                                                        expand_labeled=self.args.fixmatch_k_img,
-                                                       expand_unlabeled=self.args.fixmatch_k_img*self.args.fixmatch_mu)
+                                                       expand_unlabeled=self.args.fixmatch_k_img*self.args.fixmatch_mu,
+                                                       unlabeled_augmentations=True if
+                                                       self.uncertainty_sampling_method == 'augmentations_based'
+                                                       else False)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_cls.get_dataset()
 
-        labeled_dataset, unlabeled_dataset = dataset_cls.get_datasets_fixmatch(base_dataset, labeled_indices,
-                                                                               unlabeled_indices)
+        train_loader, unlabeled_loader, val_loader = create_loaders(self.args, labeled_dataset, unlabeled_dataset,
+                                                                    test_dataset,
+                                                                    labeled_indices, unlabeled_indices, self.kwargs,
+                                                                    dataset_cls.unlabeled_subset_num)
 
-        model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_cls, optimizer='sgd',
-                                                                       scheduler='cosine_schedule_with_warmup',
-                                                                       load_optimizer_scheduler=True)
+        labeled_dataset_fix, unlabeled_dataset_fix = dataset_cls.get_datasets_fixmatch(base_dataset, labeled_indices,
+                                                                                       unlabeled_indices)
 
-        labeled_loader = DataLoader(dataset=labeled_dataset, batch_size=self.args.batch_size,
-                                    shuffle=True, **self.kwargs)
-        unlabeled_loader = DataLoader(dataset=unlabeled_dataset, batch_size=self.args.batch_size,
-                                      shuffle=True, **self.kwargs)
-        val_loader = DataLoader(dataset=test_dataset, batch_size=self.args.batch_size,
-                                shuffle=True, **self.kwargs)
+        model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_cls)
+
+        labeled_loader_fix = DataLoader(dataset=labeled_dataset_fix, batch_size=self.args.batch_size,
+                                        shuffle=True, **self.kwargs)
+        unlabeled_loader_fix = DataLoader(dataset=unlabeled_dataset_fix, batch_size=self.args.batch_size,
+                                          shuffle=True, **self.kwargs)
 
         criterion_labeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='none')
         criterion_unlabeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='none')
@@ -77,8 +90,8 @@ class FixMatch:
         current_labeled_ratio = self.args.labeled_ratio_start
 
         for epoch in range(self.args.start_epoch, self.args.fixmatch_epochs):
-            train_loader = zip(labeled_loader, unlabeled_loader)
-            train_loss = self.train(train_loader, model, optimizer, epoch, len(labeled_loader), criterions,
+            train_loader_fix = zip(labeled_loader_fix, unlabeled_loader_fix)
+            train_loss = self.train(train_loader_fix, model, optimizer, epoch, len(labeled_loader_fix), criterions,
                                     base_dataset.classes, last_best_epochs)
             val_loss, val_report = self.validate(val_loader, model, last_best_epochs, criterions)
 
@@ -91,32 +104,29 @@ class FixMatch:
             if epoch > self.args.labeled_warmup_epochs and last_best_epochs > self.args.add_labeled_epochs:
                 metrics_per_ratio = pd.concat([metrics_per_ratio, best_report])
 
-                unlabeled_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
-                    perform_sampling(self.args, None, None,
+                train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
+                    perform_sampling(self.args, uncertainty_sampler, None,
                                      epoch, model, train_loader, unlabeled_loader,
                                      dataset_cls, labeled_indices,
                                      unlabeled_indices, labeled_dataset,
                                      unlabeled_dataset,
                                      test_dataset, self.kwargs, current_labeled_ratio,
-                                     None)
+                                     best_model)
 
-                labeled_dataset, unlabeled_dataset = dataset_cls.get_datasets_fixmatch(base_dataset, labeled_indices,
-                                                                                       unlabeled_indices)
+                labeled_dataset_fix, unlabeled_dataset_fix = dataset_cls.get_datasets_fixmatch(base_dataset,
+                                                                                               labeled_indices,
+                                                                                               unlabeled_indices)
 
-                labeled_loader = DataLoader(dataset=labeled_dataset, batch_size=self.args.batch_size,
-                                            shuffle=True, **self.kwargs)
-                unlabeled_loader = DataLoader(dataset=unlabeled_dataset, batch_size=self.args.batch_size,
-                                              shuffle=True, **self.kwargs)
+                labeled_loader_fix = DataLoader(dataset=labeled_dataset_fix, batch_size=self.args.batch_size,
+                                                shuffle=True, **self.kwargs)
+                unlabeled_loader_fix = DataLoader(dataset=unlabeled_dataset_fix, batch_size=self.args.batch_size,
+                                                  shuffle=True, **self.kwargs)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
                 best_recall, best_report, last_best_epochs = 0, None, 0
 
                 if self.args.reset_model:
-                    model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_cls,
-                                                                                   optimizer='sgd',
-                                                                                   scheduler='cosine_schedule_with_'
-                                                                                             'warmup',
-                                                                                   load_optimizer_scheduler=True)
+                    model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_cls)
 
                 criterion_labeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='none')
                 criterion_unlabeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='none')
@@ -130,7 +140,6 @@ class FixMatch:
                 'epoch': epoch + 1,
                 'state_dict': model.state_dict(),
                 'optimizer': optimizer.state_dict(),
-                'scheduler': scheduler.state_dict(),
                 'best_prec1': best_recall,
             }, is_best)
 

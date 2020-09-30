@@ -10,7 +10,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '7'
 
 import torch
 import torch.cuda
@@ -85,6 +85,10 @@ def main(args):
         auto_encoder = AutoEncoder(args, uncertainty_sampling_method='augmentations_based')
         auto_encoder.train()
         best_acc = auto_encoder.train_validate_classifier()
+        return best_acc
+    elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'fixmatch_with_al':
+        fixmatch = FixMatch(args, uncertainty_sampling_method='augmentations_based')
+        best_acc = fixmatch.main()
         return best_acc
 
     if args.uncertainty_sampling_method == 'mc_dropout':
@@ -296,8 +300,8 @@ if __name__ == '__main__':
             # ('semi_supervised', 'least_confidence', 'auto_encoder_no_feat'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
             # ('semi_supervised', 'least_confidence', 'fixmatch')
+            ('semi_supervised', 'least_confidence', 'fixmatch_with_al'),
             ('semi_supervised', 'least_confidence', 'simclr_with_al'),
-            ('semi_supervised', 'least_confidence', 'auto_encoder_with_al')
         ]
 
         for (m, u, s) in states:

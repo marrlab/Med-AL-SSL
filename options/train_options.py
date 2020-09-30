@@ -83,10 +83,10 @@ parser.add_argument('--remove_classes', action='store_false',
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
                     help='arch name')
 
-parser.add_argument('--loss', default='fl', type=str, choices=['ce', 'fl'],
+parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
-parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs_alt_fl_no_over/', type=str,
+parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs_alt_ce_no_over/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
@@ -107,9 +107,9 @@ parser.add_argument('--weak-supervision-strategy', default='semi_supervised', ty
                     choices=['active_learning', 'semi_supervised', 'random_sampling', 'fully_supervised'],
                     help='the weakly supervised strategy to use')
 
-parser.add_argument('--semi-supervised-method', default='fixmatch', type=str,
+parser.add_argument('--semi-supervised-method', default='fixmatch_with_al', type=str,
                     choices=['pseudo_labeling', 'auto_encoder', 'simclr', 'fixmatch', 'auto_encoder_cl',
-                             'auto_encoder_no_feat', 'simclr_with_al', 'auto_encoder_with_al'],
+                             'auto_encoder_no_feat', 'simclr_with_al', 'auto_encoder_with_al', 'fixmatch_with_al'],
                     help='the semi supervised method to use')
 
 parser.add_argument('--pseudo-labeling-threshold', default=0.9, type=int,
