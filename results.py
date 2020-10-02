@@ -11,7 +11,7 @@ methods = [
     'auto_encoder_with_al',
     'simclr_with_al',
     'augmentations_based',
-    'pseudo_labeling',
+    'fixmatch_with_al',
     'auto_encoder',
     'fixmatch',
     'simclr',
@@ -24,7 +24,7 @@ def ratio_class_wise_metrics(metric, classes, dataset):
     for i, method in enumerate(methods):
         dump_log.append([])
         for filename in logs:
-            if method not in filename or 'epoch' in filename or dataset not in filename or 'ae-loss' in filename:
+            if f"{dataset}@resnet@{method}" != filename.split('-')[1] or 'epoch' in filename or 'ae-loss' in filename:
                 continue
             df = pd.read_csv(os.path.join(args.log_path, filename), index_col=0)
             for j, cls in enumerate(classes):
@@ -55,7 +55,7 @@ def ratio_metrics(metric, dataset, cls):
     for i, method in enumerate(methods):
         dump_log.append([])
         for filename in logs:
-            if method not in filename or 'epoch' in filename or dataset not in filename or 'ae-loss' in filename:
+            if f"{dataset}@resnet@{method}" != filename.split('-')[1] or 'epoch' in filename or 'ae-loss' in filename:
                 continue
             df = pd.read_csv(os.path.join(args.log_path, filename), index_col=0)
             dump_log[i].append(df[cls][metric].tolist())
@@ -84,7 +84,8 @@ def epoch_class_wise_loss(classes, method, dataset):
     for i, cls in enumerate(classes):
         dump_log.append([[], []])
         for filename in logs:
-            if method not in filename or 'epoch' not in filename or dataset not in filename or 'ae-loss' in filename:
+            if f"{dataset}@resnet@{method}" != filename.split('-')[1] or \
+                    'epoch' not in filename or 'ae-loss' in filename:
                 continue
             df = pd.read_csv(os.path.join(args.log_path, filename), index_col=0)
             dump_log[i][0].append(df[f'{cls}-train-loss']['0'].tolist())

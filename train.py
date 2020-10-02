@@ -10,7 +10,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '7'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 import torch
 import torch.cuda
@@ -64,7 +64,7 @@ def main(args):
         best_acc = auto_encoder_cl.main()
         return best_acc
     elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'simclr':
-        simclr = SimCLR(args)
+        simclr = SimCLR(args, train_feat=True, uncertainty_sampling_method='random_sampling')
         simclr.train()
         best_acc = simclr.train_validate_classifier()
         return best_acc
@@ -293,15 +293,15 @@ if __name__ == '__main__':
             # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
             # ('active_learning', 'learning_loss', 'pseudo_labeling'),
             # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
-            # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
+            ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'simclr'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),
-            # ('semi_supervised', 'least_confidence', 'auto_encoder_no_feat'),
+            # ('semi_supervised', 'least_confidence', 'auto_encoder_with_al'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
-            # ('semi_supervised', 'least_confidence', 'fixmatch')
-            ('semi_supervised', 'least_confidence', 'fixmatch_with_al'),
-            ('semi_supervised', 'least_confidence', 'simclr_with_al'),
+            # ('semi_supervised', 'least_confidence', 'fixmatch'),
+            # ('semi_supervised', 'least_confidence', 'fixmatch_with_al'),
+            # ('semi_supervised', 'least_confidence', 'simclr_with_al'),
         ]
 
         for (m, u, s) in states:

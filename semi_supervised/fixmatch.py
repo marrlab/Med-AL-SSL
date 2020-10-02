@@ -86,7 +86,6 @@ class FixMatch:
         metrics_per_ratio = pd.DataFrame([])
         metrics_per_epoch = pd.DataFrame([])
         self.args.start_epoch = 0
-        self.args.weak_supervision_strategy = "random_sampling"
         current_labeled_ratio = self.args.labeled_ratio_start
 
         for epoch in range(self.args.start_epoch, self.args.fixmatch_epochs):

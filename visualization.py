@@ -33,7 +33,7 @@ methods = [
     'auto_encoder_with_al',
     'simclr_with_al',
     'augmentations_based',
-    'pseudo_labeling',
+    'fixmatch_with_al',
     'auto_encoder',
     'fixmatch',
     'simclr',
@@ -82,6 +82,9 @@ def plot_ratio_metrics(prop, metric, label_y):
               [0, 158 / 255, 115 / 255, 1], [213 / 255, 94 / 255, 0, 1], [0, 114 / 255, 178 / 255, 1],
               [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1], [211 / 255, 95 / 255, 183 / 255, 1],
               [238 / 255, 136 / 255, 102 / 255, 1]]
+
+    plt.errorbar(prop, [0.92] * len(prop), yerr=[0] * len(prop), color=colors[0],
+                 label='fully_supervised', linewidth=2, linestyle='--', marker='o', capsize=3)
 
     for i, method in enumerate(methods):
         if len(metric[i]) == 0:

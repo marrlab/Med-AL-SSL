@@ -1,5 +1,5 @@
 from utils import AverageMeter
-import time
+import time, sys
 import torch
 import numpy as np
 
@@ -23,6 +23,7 @@ class UncertaintySamplingAugmentationBased:
         model.eval()
 
         all_max_classes = None
+        targets = None
 
         for j in range(args.augmentations_based_iterations):
 
@@ -65,7 +66,13 @@ class UncertaintySamplingAugmentationBased:
         for j in range(all_max_classes.size(0)):
             scores[j] = torch.sum(all_max_classes[j] == all_modes[j])
 
-        # print(scores[scores.argsort()[:number]].cpu().numpy().tolist())
-        # print(np.array(targets)[scores.argsort()[:number].cpu().numpy()].tolist())
+        original_stdout = sys.stdout
+
+        with open(f'output_{args.semi_supervised_method}.txt', 'w') as f:
+            sys.stdout = f
+            print(targets.tolist())
+            print(scores[scores.argsort()[:number]].cpu().numpy().tolist())
+            print(np.array(targets)[scores.argsort()[:number].cpu().numpy()].tolist())
+            sys.stdout = original_stdout
 
         return scores.argsort()[:number]
