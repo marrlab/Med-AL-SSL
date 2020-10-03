@@ -241,7 +241,7 @@ class TransformsSimCLR:
 
 
 class TransformFix(object):
-    def __init__(self, mean, std, input_size=32):
+    def __init__(self, input_size=32):
         self.weak = torchvision.transforms.Compose([
             torchvision.transforms.RandomHorizontalFlip(),
             torchvision.transforms.RandomCrop(size=input_size, padding=int(input_size * 0.125), padding_mode='reflect'),
@@ -253,7 +253,6 @@ class TransformFix(object):
         ])
         self.normalize = torchvision.transforms.Compose([
             torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(mean=mean, std=std)
         ])
 
     def __call__(self, x):

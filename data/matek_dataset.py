@@ -15,8 +15,8 @@ class MatekDataset:
         self.train_path = os.path.join(self.root, "matek", "train")
         self.test_path = os.path.join(self.root, "matek", "test")
         self.labeled_ratio = labeled_ratio
-        self.matek_mean = (0, 0, 0)
-        self.matek_std = (1, 1, 1)
+        self.matek_mean = (0.8206, 0.7280, 0.8362)
+        self.matek_std = (0.1630, 0.2506, 0.0919)
         self.input_size = 128
         self.crop_size = 224
         self.expand_labeled = expand_labeled
@@ -35,12 +35,10 @@ class MatekDataset:
                 transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),
                 transforms.RandomErasing(scale=(0.02, 0.2), ratio=(0.3, 0.9)),
-                transforms.Normalize(mean=self.matek_mean, std=self.matek_std),
             ])
             self.transform_test = transforms.Compose([
                 transforms.Resize(size=self.input_size),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
             ])
 
         else:
@@ -60,10 +58,9 @@ class MatekDataset:
             transforms.RandomVerticalFlip(),
             transforms.ToTensor(),
             transforms.RandomErasing(scale=(0.02, 0.2), ratio=(0.3, 0.9)),
-            transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
         ])
         self.transform_simclr = TransformsSimCLR(size=self.input_size)
-        self.transform_fixmatch = TransformFix(mean=self.matek_mean, std=self.matek_std, input_size=self.input_size)
+        self.transform_fixmatch = TransformFix(input_size=self.input_size)
         self.merged_classes = 5 if self.merged else 0
         self.num_classes = 15 - self.merged_classes
         self.add_labeled_ratio = add_labeled_ratio
@@ -96,7 +93,9 @@ class MatekDataset:
             base_dataset = remove(base_dataset, self.classes_to_remove)
             test_dataset = remove(test_dataset, self.classes_to_remove)
 
-        test_dataset = WeaklySupervisedDataset(test_dataset, range(len(test_dataset)), transform=self.transform_test)
+        test_dataset = WeaklySupervisedDataset(test_dataset, range(len(test_dataset)),
+                                               transform=self.transform_test,
+                                               mean=self.matek_mean, std=self.matek_std)
 
         if self.stratified:
             labeled_indices, unlabeled_indices = train_test_split(
@@ -121,14 +120,18 @@ class MatekDataset:
 
         labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices,
                                                   transform=self.transform_train,
-                                                  poisson=True, seed=self.seed)
+                                                  poisson=True, seed=self.seed,
+                                                  mean=self.matek_mean, std=self.matek_std)
 
         if self.unlabeled_augmentations:
             unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices,
                                                         transform=self.transform_train,
-                                                        poisson=True, seed=self.seed)
+                                                        poisson=True, seed=self.seed,
+                                                        mean=self.matek_mean, std=self.matek_std)
         else:
-            unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_test)
+            unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices,
+                                                        transform=self.transform_test,
+                                                        mean=self.matek_mean, std=self.matek_std)
 
         return base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset
 
@@ -152,7 +155,8 @@ class MatekDataset:
             base_dataset = remove(base_dataset, self.classes_to_remove)
 
         base_indices = np.array(list(range(len(base_dataset))))
-        base_dataset = WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_autoencoder)
+        base_dataset = WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_autoencoder,
+                                               mean=self.matek_mean, std=self.matek_std)
 
         return base_dataset
 
@@ -177,7 +181,8 @@ class MatekDataset:
             base_dataset = remove(base_dataset, self.classes_to_remove)
 
         base_indices = np.array(list(range(len(base_dataset))))
-        base_dataset = WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_simclr)
+        base_dataset = WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_simclr,
+                                               mean=self.matek_mean, std=self.matek_std)
 
         return base_dataset
 
@@ -190,7 +195,6 @@ class MatekDataset:
             transforms.RandomVerticalFlip(),
             transforms.ToTensor(),
             transforms.RandomErasing(scale=(0.02, 0.2), ratio=(0.3, 0.9)),
-            transforms.Normalize(mean=self.matek_mean, std=self.matek_std),
         ])
 
         expand_labeled = self.expand_labeled // len(labeled_indices)
@@ -214,7 +218,9 @@ class MatekDataset:
 
         labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices,
                                                   transform=transform_labeled,
-                                                  poisson=True, seed=self.seed)
-        unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_fixmatch)
+                                                  poisson=True, seed=self.seed,
+                                                  mean=self.matek_mean, std=self.matek_std)
+        unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_fixmatch,
+                                                    mean=self.matek_mean, std=self.matek_std)
 
         return labeled_dataset, unlabeled_dataset
