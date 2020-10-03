@@ -1,5 +1,5 @@
 from utils import AverageMeter
-import time
+import time, sys
 import torch
 import numpy as np
 
@@ -23,6 +23,7 @@ class UncertaintySamplingAugmentationBased:
         model.eval()
 
         all_max_classes = None
+        targets = None
 
         for j in range(args.augmentations_based_iterations):
 
@@ -34,7 +35,10 @@ class UncertaintySamplingAugmentationBased:
                 data_y = data_y.cuda(non_blocking=True)
 
                 with torch.no_grad():
-                    output, _, _ = model(data_x)
+                    if args.weak_supervision_strategy == 'semi_supervised_active_learning':
+                        output = model.forward_encoder_classifier(data_x)
+                    else:
+                        output, _, _ = model(data_x)
 
                 output = torch.argmax(output, dim=1)
 
@@ -62,7 +66,13 @@ class UncertaintySamplingAugmentationBased:
         for j in range(all_max_classes.size(0)):
             scores[j] = torch.sum(all_max_classes[j] == all_modes[j])
 
-        # print(scores[scores.argsort()[:number]].cpu().numpy().tolist())
-        # print(np.array(targets)[scores.argsort()[:number].cpu().numpy()].tolist())
+        original_stdout = sys.stdout
+
+        with open(f'output_{args.semi_supervised_method}.txt', 'w') as f:
+            sys.stdout = f
+            print(targets.tolist())
+            print(scores[scores.argsort()[:number]].cpu().numpy().tolist())
+            print(np.array(targets)[scores.argsort()[:number].cpu().numpy()].tolist())
+            sys.stdout = original_stdout
 
         return scores.argsort()[:number]

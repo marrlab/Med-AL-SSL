@@ -1,3 +1,4 @@
+from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
@@ -16,7 +17,7 @@ torch.autograd.set_detect_anomaly(True)
 
 
 class AutoEncoder:
-    def __init__(self, args, verbose=True, train_feat=True):
+    def __init__(self, args, verbose=True, train_feat=True, uncertainty_sampling_method='random_sampling'):
         self.args = args
         self.verbose = verbose
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
@@ -24,6 +25,7 @@ class AutoEncoder:
         self.model = None
         self.kwargs = {'num_workers': 2, 'pin_memory': False}
         self.train_feat = train_feat
+        self.uncertainty_sampling_method = uncertainty_sampling_method
 
     def train(self):
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,
@@ -103,6 +105,14 @@ class AutoEncoder:
         return model
 
     def train_validate_classifier(self):
+
+        if self.uncertainty_sampling_method == 'augmentations_based':
+            uncertainty_sampler = UncertaintySamplingAugmentationBased()
+            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
+        else:
+            uncertainty_sampler = None
+            self.args.weak_supervision_strategy = "random_sampling"
+
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,
                                                          labeled_ratio=self.args.labeled_ratio_start,
                                                          add_labeled_ratio=self.args.add_labeled_ratio,
@@ -110,7 +120,10 @@ class AutoEncoder:
                                                          merged=self.args.merged,
                                                          remove_classes=self.args.remove_classes,
                                                          oversampling=self.args.oversampling,
-                                                         unlabeled_subset_ratio=self.args.unlabeled_subset)
+                                                         unlabeled_subset_ratio=self.args.unlabeled_subset,
+                                                         unlabeled_augmentations=True if
+                                                         self.uncertainty_sampling_method == 'augmentations_based'
+                                                         else False)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_class.get_dataset()
@@ -132,7 +145,6 @@ class AutoEncoder:
         best_model = deepcopy(model)
 
         self.args.start_epoch = 0
-        self.args.weak_supervision_strategy = "random_sampling"
         current_labeled_ratio = self.args.labeled_ratio_start
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
@@ -149,13 +161,13 @@ class AutoEncoder:
                 metrics_per_ratio = pd.concat([metrics_per_ratio, best_report])
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
-                    perform_sampling(self.args, None, None,
+                    perform_sampling(self.args, uncertainty_sampler, None,
                                      epoch, model, train_loader, unlabeled_loader,
                                      dataset_class, labeled_indices,
                                      unlabeled_indices, labeled_dataset,
                                      unlabeled_dataset,
                                      test_dataset, self.kwargs, current_labeled_ratio,
-                                     None)
+                                     best_model)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
                 best_recall, best_report, last_best_epochs = 0, None, 0
