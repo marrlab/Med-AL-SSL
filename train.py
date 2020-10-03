@@ -285,7 +285,6 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            # TODO: ALWAYS CHANGE THE LOG DIR
             # ('active_learning', 'least_confidence', 'pseudo_labeling'),
             # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),

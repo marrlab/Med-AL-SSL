@@ -34,8 +34,8 @@ class MatekDataset:
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=self.matek_mean, std=self.matek_std),
                 transforms.RandomErasing(scale=(0.02, 0.2), ratio=(0.3, 0.9)),
+                transforms.Normalize(mean=self.matek_mean, std=self.matek_std),
             ])
             self.transform_test = transforms.Compose([
                 transforms.Resize(size=self.input_size),
@@ -59,6 +59,7 @@ class MatekDataset:
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
             transforms.ToTensor(),
+            transforms.RandomErasing(scale=(0.02, 0.2), ratio=(0.3, 0.9)),
             transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
         ])
         self.transform_simclr = TransformsSimCLR(size=self.input_size)
@@ -178,8 +179,8 @@ class MatekDataset:
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
             transforms.ToTensor(),
-            transforms.Normalize(mean=self.matek_mean, std=self.matek_std),
             transforms.RandomErasing(scale=(0.02, 0.2), ratio=(0.3, 0.9)),
+            transforms.Normalize(mean=self.matek_mean, std=self.matek_std),
         ])
 
         expand_labeled = self.expand_labeled // len(labeled_indices)
