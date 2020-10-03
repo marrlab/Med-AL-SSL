@@ -122,7 +122,7 @@ class FixMatch:
                                                   shuffle=True, **self.kwargs)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_recall, best_report, last_best_epochs = 0, None, 0
+                last_best_epochs = 0
 
                 if self.args.reset_model:
                     model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_cls)

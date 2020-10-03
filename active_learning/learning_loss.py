@@ -93,7 +93,7 @@ class LearningLoss:
                                      None)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_recall, best_report, last_best_epochs = 0, None, 0
+                last_best_epochs = 0
 
                 if self.args.reset_model:
                     model_backbone, optimizer_backbone, scheduler_backbone = \

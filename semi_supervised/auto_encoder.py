@@ -170,7 +170,7 @@ class AutoEncoder:
                                      best_model)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_recall, best_report, last_best_epochs = 0, None, 0
+                last_best_epochs = 0
 
                 if self.args.reset_model:
                     model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)

@@ -162,7 +162,8 @@ def main(args):
                                  test_dataset, kwargs, current_labeled_ratio,
                                  best_model)
             current_labeled_ratio += args.add_labeled_ratio
-            best_recall, best_report, last_best_epochs = 0, None, 0
+            # best_recall, best_report, last_best_epochs = 0, None, 0
+            last_best_epochs = 0
 
             if args.reset_model:
                 model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
