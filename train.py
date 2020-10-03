@@ -10,7 +10,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import torch
 import torch.cuda
@@ -110,7 +110,8 @@ def main(args):
                                            remove_classes=args.remove_classes,
                                            unlabeled_augmentations=True if args.weak_supervision_strategy ==
                                            'active_learning' and args.
-                                           uncertainty_sampling_method == 'augmentations_based' else False)
+                                           uncertainty_sampling_method == 'augmentations_based' else False,
+                                           seed=args.seed)
 
     base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
         dataset_class.get_dataset()
@@ -292,8 +293,8 @@ if __name__ == '__main__':
             # ('active_learning', 'entropy_based', 'pseudo_labeling'),
             # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
             # ('active_learning', 'learning_loss', 'pseudo_labeling'),
-            # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
-            ('random_sampling', 'least_confidence', 'pseudo_labeling'),
+            ('active_learning', 'augmentations_based', 'pseudo_labeling'),
+            # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'simclr'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),

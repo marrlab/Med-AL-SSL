@@ -10,7 +10,7 @@ from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge, r
 class MatekDataset:
     def __init__(self, root, labeled_ratio=1, add_labeled_ratio=0, advanced_transforms=True, remove_classes=False,
                  expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=True, stratified=False,
-                 merged=True, unlabeled_augmentations=False):
+                 merged=True, unlabeled_augmentations=False, seed=9999):
         self.root = root
         self.train_path = os.path.join(self.root, "matek", "train")
         self.test_path = os.path.join(self.root, "matek", "test")
@@ -77,6 +77,7 @@ class MatekDataset:
         self.classes_to_remove = [0, 1, 3, 6]
         self.num_classes = self.num_classes - len(self.classes_to_remove) \
             if self.remove_classes else self.num_classes
+        self.seed = seed
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.ImageFolder(
@@ -118,10 +119,14 @@ class MatekDataset:
             labeled_indices = oversampling_indices(labeled_indices,
                                                    np.array(base_dataset.targets)[labeled_indices])
 
-        labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=self.transform_train)
+        labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices,
+                                                  transform=self.transform_train,
+                                                  poisson=True, seed=self.seed)
 
         if self.unlabeled_augmentations:
-            unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_train)
+            unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices,
+                                                        transform=self.transform_train,
+                                                        poisson=True, seed=self.seed)
         else:
             unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_test)
 
@@ -129,7 +134,7 @@ class MatekDataset:
 
     def get_base_dataset_autoencoder(self):
         base_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=self.transform_autoencoder
+            self.train_path, transform=None
         )
 
         '''
@@ -145,12 +150,15 @@ class MatekDataset:
 
         if self.remove_classes and len(self.classes_to_remove) > 0:
             base_dataset = remove(base_dataset, self.classes_to_remove)
+
+        base_indices = np.array(list(range(len(base_dataset))))
+        base_dataset = WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_autoencoder)
 
         return base_dataset
 
     def get_base_dataset_simclr(self):
         base_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=self.transform_simclr
+            self.train_path, transform=None
         )
 
         '''
@@ -160,7 +168,6 @@ class MatekDataset:
         else:
             base_indices = np.array(list(range(len(base_dataset))))
 
-        base_dataset = WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_simclr)
         '''
 
         if self.merged and len(self.merge_classes) > 0:
@@ -168,6 +175,9 @@ class MatekDataset:
 
         if self.remove_classes and len(self.classes_to_remove) > 0:
             base_dataset = remove(base_dataset, self.classes_to_remove)
+
+        base_indices = np.array(list(range(len(base_dataset))))
+        base_dataset = WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_simclr)
 
         return base_dataset
 
@@ -202,7 +212,9 @@ class MatekDataset:
             unlabeled_indices = np.hstack(
                 (unlabeled_indices, np.random.choice(unlabeled_indices, diff)))
 
-        labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=transform_labeled)
+        labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices,
+                                                  transform=transform_labeled,
+                                                  poisson=True, seed=self.seed)
         unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_fixmatch)
 
         return labeled_dataset, unlabeled_dataset

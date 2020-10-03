@@ -35,7 +35,8 @@ class AutoEncoder:
                                                          merged=self.args.merged,
                                                          remove_classes=self.args.remove_classes,
                                                          oversampling=self.args.oversampling,
-                                                         unlabeled_subset_ratio=self.args.unlabeled_subset)
+                                                         unlabeled_subset_ratio=self.args.unlabeled_subset,
+                                                         seed=self.args.seed)
 
         base_dataset = dataset_class.get_base_dataset_autoencoder()
 
@@ -123,7 +124,8 @@ class AutoEncoder:
                                                          unlabeled_subset_ratio=self.args.unlabeled_subset,
                                                          unlabeled_augmentations=True if
                                                          self.uncertainty_sampling_method == 'augmentations_based'
-                                                         else False)
+                                                         else False,
+                                                         seed=self.args.seed)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_class.get_dataset()

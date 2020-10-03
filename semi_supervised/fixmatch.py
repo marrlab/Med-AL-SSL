@@ -53,7 +53,8 @@ class FixMatch:
                                                        expand_unlabeled=self.args.fixmatch_k_img*self.args.fixmatch_mu,
                                                        unlabeled_augmentations=True if
                                                        self.uncertainty_sampling_method == 'augmentations_based'
-                                                       else False)
+                                                       else False,
+                                                       seed=self.args.seed)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_cls.get_dataset()
