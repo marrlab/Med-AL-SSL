@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.style as style
 
 from data.cifar10_dataset import Cifar10Dataset
+from data.config.cifar10_config import set_cifar_configs
 from data.jurkat_dataset import JurkatDataset
 from data.matek_dataset import MatekDataset
 from data.plasmodium_dataset import PlasmodiumDataset
@@ -14,7 +15,8 @@ from options.visualization_options import get_arguments
 import numpy as np
 
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset, 'jurkat': JurkatDataset}
-configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs, 'plasmodium': set_plasmodium_configs}
+configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs,
+           'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs}
 
 plot_configs = {'matek': (2, 5),
                 'jurkat': (2, 4),

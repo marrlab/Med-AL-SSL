@@ -1,5 +1,6 @@
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
 from active_learning.learning_loss import LearningLoss
+from data.config.cifar10_config import set_cifar_configs
 from options.train_options import get_arguments
 import os
 import time
@@ -40,7 +41,8 @@ from semi_supervised.auto_encoder_cl import AutoEncoderCl
 
 arguments = get_arguments()
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset, 'jurkat': JurkatDataset}
-configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs, 'plasmodium': set_plasmodium_configs}
+configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs,
+           'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs}
 
 
 def main(args):
