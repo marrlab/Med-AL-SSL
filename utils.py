@@ -14,7 +14,6 @@ from numpy.random import default_rng
 from sklearn.metrics import precision_recall_fscore_support, classification_report, confusion_matrix, roc_auc_score
 from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
-from torchlars import LARS
 
 from model.densenet import densenet121
 from model.lenet import LeNet
@@ -319,16 +318,8 @@ def create_model_optimizer_simclr(args, dataset_class):
         model, _, _ = resume_model(args, model)
         args.start_epoch = args.epochs
 
-    if args.simclr_optimizer == 'adam':
-        optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
-        scheduler = None
-    else:
-        args.simclr_base_lr = args.simclr_base_lr * (args.batch_size / 256)
-        base_optimizer = torch.optim.SGD(model.parameters(), lr=args.lr,
-                                         weight_decay=1e-6, momentum=args.momentum)
-        optimizer = LARS(base_optimizer, trust_coef=1e-3)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.simclr_train_epochs,
-                                                               eta_min=0, last_epoch=-1)
+    optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
+    scheduler = None
 
     return model, optimizer, scheduler, args
 
