@@ -5,5 +5,6 @@ def set_matek_configs(args):
     args.labeled_ratio_start = 0.05
     args.labeled_ratio_stop = 0.25
     args.add_labeled_ratio = 0.025
+    args.autoencoder_z_dim = 512
 
     return args

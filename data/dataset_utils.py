@@ -1,7 +1,8 @@
 from torch.utils.data import Dataset
 import numpy as np
 from skimage.util import random_noise
-import torch, torchvision
+import torch
+import torchvision
 
 
 class WeaklySupervisedDataset(Dataset):
@@ -33,9 +34,10 @@ class WeaklySupervisedDataset(Dataset):
             img_noisy_2 = random_noise(img_transformed[1], mode='poisson', seed=self.seed)
             img_noisy_2 = torch.from_numpy(img_noisy_2) if self.poisson else img_transformed[1]
 
-            img1_normalized, img2_normalized = self.normalize(img_noisy_1).float(), self.normalize(img_noisy_2).float()
+            img_normalized_1 = self.normalize(img_noisy_1).float()
+            img_normalized_2 = self.normalize(img_noisy_2).float()
 
-            return (img1_normalized, img2_normalized), target
+            return (img_normalized_1, img_normalized_2), target
         else:
             img_noisy = random_noise(img_transformed, mode='poisson', seed=self.seed)
             img_noisy = torch.from_numpy(img_noisy) if self.poisson else img_transformed

@@ -7,5 +7,6 @@ def set_cifar_configs(args):
     args.add_labeled_ratio = 0.025
     args.merged = False
     args.remove_classes = False
+    args.autoencoder_z_dim = 32
 
     return args

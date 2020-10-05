@@ -57,7 +57,7 @@ class Cifar10Dataset:
             transforms.RandomErasing(scale=(0.02, 0.2), ratio=(0.3, 0.9)),
         ])
         self.transform_simclr = TransformsSimCLR(size=self.input_size)
-        self.transform_fixmatch = TransformFix(input_size=self.input_size)
+        self.transform_fixmatch = TransformFix(input_size=self.input_size, crop_size=self.crop_size)
         self.merged_classes = 0 if self.merged else 0
         self.num_classes = 10 - self.merged_classes
         self.add_labeled_ratio = add_labeled_ratio

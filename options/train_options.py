@@ -175,6 +175,9 @@ parser.add_argument('--learning-loss-weight', default=1.0, type=float,
 parser.add_argument('--dlctcs-loss-weight', default=100, type=float,
                     help='the weight for classification loss in dlctcs')
 
+parser.add_argument('--autoencoder-z-dim', default=128, type=float,
+                    help='the bottleneck dimension for the autoencoder architecture')
+
 parser.set_defaults(augment=True)
 
 arguments = parser.parse_args()

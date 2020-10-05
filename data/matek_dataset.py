@@ -60,7 +60,7 @@ class MatekDataset:
             transforms.RandomErasing(scale=(0.02, 0.2), ratio=(0.3, 0.9)),
         ])
         self.transform_simclr = TransformsSimCLR(size=self.input_size)
-        self.transform_fixmatch = TransformFix(input_size=self.input_size)
+        self.transform_fixmatch = TransformFix(crop_size=self.crop_size, input_size=self.input_size)
         self.merged_classes = 5 if self.merged else 0
         self.num_classes = 15 - self.merged_classes
         self.add_labeled_ratio = add_labeled_ratio
@@ -220,7 +220,9 @@ class MatekDataset:
                                                   transform=transform_labeled,
                                                   poisson=True, seed=self.seed,
                                                   mean=self.matek_mean, std=self.matek_std)
-        unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_fixmatch,
+        unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices,
+                                                    transform=self.transform_fixmatch,
+                                                    poisson=True, seed=self.seed,
                                                     mean=self.matek_mean, std=self.matek_std)
 
         return labeled_dataset, unlabeled_dataset

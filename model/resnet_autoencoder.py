@@ -65,7 +65,7 @@ class UnetDec(nn.Module):
         x = self.up4(x)
         x = self.outc(x)
         x = F.pad(x, [self.input_size - x.size(2), 0, self.input_size - x.size(3), 0])
-        return x
+        return torch.sigmoid(x)
 
 
 class ResizeConv2d(nn.Module):

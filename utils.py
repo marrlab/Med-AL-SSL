@@ -240,15 +240,17 @@ class TransformsSimCLR:
 
 
 class TransformFix(object):
-    def __init__(self, input_size=32):
+    def __init__(self, input_size=32, crop_size=32):
         self.weak = torchvision.transforms.Compose([
             torchvision.transforms.RandomHorizontalFlip(),
-            torchvision.transforms.RandomCrop(size=input_size, padding=int(input_size * 0.125), padding_mode='reflect'),
+            torchvision.transforms.RandomCrop(size=crop_size, padding=int(crop_size * 0.125), padding_mode='reflect'),
+            torchvision.transforms.Resize(size=input_size),
         ])
         self.strong = torchvision.transforms.Compose([
             torchvision.transforms.RandomHorizontalFlip(),
-            torchvision.transforms.RandomCrop(size=input_size, padding=int(input_size * 0.125), padding_mode='reflect'),
-            RandAugmentMC(n=2, m=10)
+            torchvision.transforms.RandomCrop(size=crop_size, padding=int(crop_size * 0.125), padding_mode='reflect'),
+            RandAugmentMC(n=2, m=10),
+            torchvision.transforms.Resize(size=input_size),
         ])
         self.normalize = torchvision.transforms.Compose([
             torchvision.transforms.ToTensor(),
@@ -325,8 +327,8 @@ def create_model_optimizer_simclr(args, dataset_class):
 
 
 def create_model_optimizer_autoencoder(args, dataset_class):
-    model = ResnetAutoencoder(z_dim=128, num_classes=dataset_class.num_classes, drop_rate=args.drop_rate,
-                              input_size=dataset_class.input_size)
+    model = ResnetAutoencoder(z_dim=args.autoencoder_z_dim, num_classes=dataset_class.num_classes,
+                              drop_rate=args.drop_rate, input_size=dataset_class.input_size)
 
     model = model.cuda()
 
