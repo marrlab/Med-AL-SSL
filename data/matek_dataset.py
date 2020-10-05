@@ -10,13 +10,13 @@ from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge, r
 class MatekDataset:
     def __init__(self, root, labeled_ratio=1, add_labeled_ratio=0, advanced_transforms=True, remove_classes=False,
                  expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=True, stratified=False,
-                 merged=True, unlabeled_augmentations=False):
+                 merged=True, unlabeled_augmentations=False, seed=9999):
         self.root = root
         self.train_path = os.path.join(self.root, "matek", "train")
         self.test_path = os.path.join(self.root, "matek", "test")
         self.labeled_ratio = labeled_ratio
-        self.matek_mean = (0, 0, 0)
-        self.matek_std = (1, 1, 1)
+        self.matek_mean = (0.8206, 0.7280, 0.8362)
+        self.matek_std = (0.1630, 0.2506, 0.0919)
         self.input_size = 128
         self.crop_size = 224
         self.expand_labeled = expand_labeled
@@ -34,13 +34,11 @@ class MatekDataset:
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=self.matek_mean, std=self.matek_std),
                 transforms.RandomErasing(scale=(0.02, 0.2), ratio=(0.3, 0.9)),
             ])
             self.transform_test = transforms.Compose([
                 transforms.Resize(size=self.input_size),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
             ])
 
         else:
@@ -59,10 +57,10 @@ class MatekDataset:
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
             transforms.ToTensor(),
-            transforms.Normalize(mean=self.matek_mean, std=self.matek_std)
+            transforms.RandomErasing(scale=(0.02, 0.2), ratio=(0.3, 0.9)),
         ])
         self.transform_simclr = TransformsSimCLR(size=self.input_size)
-        self.transform_fixmatch = TransformFix(mean=self.matek_mean, std=self.matek_std, input_size=self.input_size)
+        self.transform_fixmatch = TransformFix(crop_size=self.crop_size, input_size=self.input_size)
         self.merged_classes = 5 if self.merged else 0
         self.num_classes = 15 - self.merged_classes
         self.add_labeled_ratio = add_labeled_ratio
@@ -76,6 +74,7 @@ class MatekDataset:
         self.classes_to_remove = [0, 1, 3, 6]
         self.num_classes = self.num_classes - len(self.classes_to_remove) \
             if self.remove_classes else self.num_classes
+        self.seed = seed
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.ImageFolder(
@@ -94,7 +93,9 @@ class MatekDataset:
             base_dataset = remove(base_dataset, self.classes_to_remove)
             test_dataset = remove(test_dataset, self.classes_to_remove)
 
-        test_dataset = WeaklySupervisedDataset(test_dataset, range(len(test_dataset)), transform=self.transform_test)
+        test_dataset = WeaklySupervisedDataset(test_dataset, range(len(test_dataset)),
+                                               transform=self.transform_test,
+                                               mean=self.matek_mean, std=self.matek_std)
 
         if self.stratified:
             labeled_indices, unlabeled_indices = train_test_split(
@@ -117,18 +118,26 @@ class MatekDataset:
             labeled_indices = oversampling_indices(labeled_indices,
                                                    np.array(base_dataset.targets)[labeled_indices])
 
-        labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=self.transform_train)
+        labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices,
+                                                  transform=self.transform_train,
+                                                  poisson=True, seed=self.seed,
+                                                  mean=self.matek_mean, std=self.matek_std)
 
         if self.unlabeled_augmentations:
-            unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_train)
+            unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices,
+                                                        transform=self.transform_train,
+                                                        poisson=True, seed=self.seed,
+                                                        mean=self.matek_mean, std=self.matek_std)
         else:
-            unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_test)
+            unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices,
+                                                        transform=self.transform_test,
+                                                        mean=self.matek_mean, std=self.matek_std)
 
         return base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset
 
     def get_base_dataset_autoencoder(self):
         base_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=self.transform_autoencoder
+            self.train_path, transform=None
         )
 
         '''
@@ -144,12 +153,16 @@ class MatekDataset:
 
         if self.remove_classes and len(self.classes_to_remove) > 0:
             base_dataset = remove(base_dataset, self.classes_to_remove)
+
+        base_indices = np.array(list(range(len(base_dataset))))
+        base_dataset = WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_autoencoder,
+                                               mean=self.matek_mean, std=self.matek_std)
 
         return base_dataset
 
     def get_base_dataset_simclr(self):
         base_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=self.transform_simclr
+            self.train_path, transform=None
         )
 
         '''
@@ -159,7 +172,6 @@ class MatekDataset:
         else:
             base_indices = np.array(list(range(len(base_dataset))))
 
-        base_dataset = WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_simclr)
         '''
 
         if self.merged and len(self.merge_classes) > 0:
@@ -167,6 +179,10 @@ class MatekDataset:
 
         if self.remove_classes and len(self.classes_to_remove) > 0:
             base_dataset = remove(base_dataset, self.classes_to_remove)
+
+        base_indices = np.array(list(range(len(base_dataset))))
+        base_dataset = WeaklySupervisedDataset(base_dataset, base_indices, transform=self.transform_simclr,
+                                               mean=self.matek_mean, std=self.matek_std)
 
         return base_dataset
 
@@ -178,7 +194,6 @@ class MatekDataset:
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
             transforms.ToTensor(),
-            transforms.Normalize(mean=self.matek_mean, std=self.matek_std),
             transforms.RandomErasing(scale=(0.02, 0.2), ratio=(0.3, 0.9)),
         ])
 
@@ -201,7 +216,13 @@ class MatekDataset:
             unlabeled_indices = np.hstack(
                 (unlabeled_indices, np.random.choice(unlabeled_indices, diff)))
 
-        labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices, transform=transform_labeled)
-        unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices, transform=self.transform_fixmatch)
+        labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices,
+                                                  transform=transform_labeled,
+                                                  poisson=True, seed=self.seed,
+                                                  mean=self.matek_mean, std=self.matek_std)
+        unlabeled_dataset = WeaklySupervisedDataset(base_dataset, unlabeled_indices,
+                                                    transform=self.transform_fixmatch,
+                                                    poisson=True, seed=self.seed,
+                                                    mean=self.matek_mean, std=self.matek_std)
 
         return labeled_dataset, unlabeled_dataset

@@ -14,7 +14,6 @@ from numpy.random import default_rng
 from sklearn.metrics import precision_recall_fscore_support, classification_report, confusion_matrix, roc_auc_score
 from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
-from torchlars import LARS
 
 from model.densenet import densenet121
 from model.lenet import LeNet
@@ -215,16 +214,16 @@ class NTXent(nn.Module):
 
 class TransformsSimCLR:
     def __init__(self, size):
-        s = 1
+        s = 0.75
         color_jitter = torchvision.transforms.ColorJitter(
             0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s
         )
         self.train_transform = torchvision.transforms.Compose(
             [
-                torchvision.transforms.RandomResizedCrop(size=size),
+                torchvision.transforms.RandomResizedCrop(size=size, scale=(0.5, 1.0)),
                 torchvision.transforms.RandomHorizontalFlip(),
                 torchvision.transforms.RandomApply([color_jitter], p=0.8),
-                torchvision.transforms.RandomGrayscale(p=0.2),
+                torchvision.transforms.RandomGrayscale(p=0.4),
                 torchvision.transforms.ToTensor(),
             ]
         )
@@ -241,19 +240,20 @@ class TransformsSimCLR:
 
 
 class TransformFix(object):
-    def __init__(self, mean, std, input_size=32):
+    def __init__(self, input_size=32, crop_size=32):
         self.weak = torchvision.transforms.Compose([
             torchvision.transforms.RandomHorizontalFlip(),
-            torchvision.transforms.RandomCrop(size=input_size, padding=int(input_size * 0.125), padding_mode='reflect'),
+            torchvision.transforms.RandomCrop(size=crop_size, padding=int(crop_size * 0.125), padding_mode='reflect'),
+            torchvision.transforms.Resize(size=input_size),
         ])
         self.strong = torchvision.transforms.Compose([
             torchvision.transforms.RandomHorizontalFlip(),
-            torchvision.transforms.RandomCrop(size=input_size, padding=int(input_size * 0.125), padding_mode='reflect'),
-            RandAugmentMC(n=2, m=10)
+            torchvision.transforms.RandomCrop(size=crop_size, padding=int(crop_size * 0.125), padding_mode='reflect'),
+            RandAugmentMC(n=2, m=10),
+            torchvision.transforms.Resize(size=input_size),
         ])
         self.normalize = torchvision.transforms.Compose([
             torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(mean=mean, std=std)
         ])
 
     def __call__(self, x):
@@ -320,23 +320,15 @@ def create_model_optimizer_simclr(args, dataset_class):
         model, _, _ = resume_model(args, model)
         args.start_epoch = args.epochs
 
-    if args.simclr_optimizer == 'adam':
-        optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
-        scheduler = None
-    else:
-        args.simclr_base_lr = args.simclr_base_lr * (args.batch_size / 256)
-        base_optimizer = torch.optim.SGD(model.parameters(), lr=args.lr,
-                                         weight_decay=1e-6, momentum=args.momentum)
-        optimizer = LARS(base_optimizer, trust_coef=1e-3)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, args.simclr_train_epochs,
-                                                               eta_min=0, last_epoch=-1)
+    optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
+    scheduler = None
 
     return model, optimizer, scheduler, args
 
 
 def create_model_optimizer_autoencoder(args, dataset_class):
-    model = ResnetAutoencoder(z_dim=128, num_classes=dataset_class.num_classes, drop_rate=args.drop_rate,
-                              input_size=dataset_class.input_size)
+    model = ResnetAutoencoder(z_dim=args.autoencoder_z_dim, num_classes=dataset_class.num_classes,
+                              drop_rate=args.drop_rate, input_size=dataset_class.input_size)
 
     model = model.cuda()
 

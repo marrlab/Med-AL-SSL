@@ -1,5 +1,6 @@
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
 from active_learning.learning_loss import LearningLoss
+from data.config.cifar10_config import set_cifar_configs
 from options.train_options import get_arguments
 import os
 import time
@@ -10,7 +11,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import torch
 import torch.cuda
@@ -40,7 +41,8 @@ from semi_supervised.auto_encoder_cl import AutoEncoderCl
 
 arguments = get_arguments()
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset, 'jurkat': JurkatDataset}
-configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs, 'plasmodium': set_plasmodium_configs}
+configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs,
+           'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs}
 
 
 def main(args):
@@ -77,7 +79,7 @@ def main(args):
         best_acc = learning_loss.main()
         return best_acc
     elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'simclr_with_al':
-        simclr = SimCLR(args, uncertainty_sampling_method='augmentations_based', train_feat=True)
+        simclr = SimCLR(args, train_feat=True, uncertainty_sampling_method='augmentations_based')
         simclr.train()
         best_acc = simclr.train_validate_classifier()
         return best_acc
@@ -110,7 +112,8 @@ def main(args):
                                            remove_classes=args.remove_classes,
                                            unlabeled_augmentations=True if args.weak_supervision_strategy ==
                                            'active_learning' and args.
-                                           uncertainty_sampling_method == 'augmentations_based' else False)
+                                           uncertainty_sampling_method == 'augmentations_based' else False,
+                                           seed=args.seed)
 
     base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
         dataset_class.get_dataset()
@@ -162,7 +165,8 @@ def main(args):
                                  test_dataset, kwargs, current_labeled_ratio,
                                  best_model)
             current_labeled_ratio += args.add_labeled_ratio
-            best_recall, best_report, last_best_epochs = 0, None, 0
+            # best_recall, best_report, last_best_epochs = 0, None, 0
+            last_best_epochs = 0
 
             if args.reset_model:
                 model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
@@ -285,15 +289,14 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            # TODO: ALWAYS CHANGE THE LOG DIR
             # ('active_learning', 'least_confidence', 'pseudo_labeling'),
             # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
             # ('active_learning', 'entropy_based', 'pseudo_labeling'),
             # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
             # ('active_learning', 'learning_loss', 'pseudo_labeling'),
-            # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
-            ('random_sampling', 'least_confidence', 'pseudo_labeling'),
+            ('active_learning', 'augmentations_based', 'pseudo_labeling'),
+            # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'simclr'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),

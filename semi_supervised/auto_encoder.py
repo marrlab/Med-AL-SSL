@@ -35,7 +35,8 @@ class AutoEncoder:
                                                          merged=self.args.merged,
                                                          remove_classes=self.args.remove_classes,
                                                          oversampling=self.args.oversampling,
-                                                         unlabeled_subset_ratio=self.args.unlabeled_subset)
+                                                         unlabeled_subset_ratio=self.args.unlabeled_subset,
+                                                         seed=self.args.seed)
 
         base_dataset = dataset_class.get_base_dataset_autoencoder()
 
@@ -43,12 +44,11 @@ class AutoEncoder:
 
         training_loss_log = []
 
-        bce_loss = nn.BCELoss().cuda()
         l1_loss = nn.L1Loss()
         l2_loss = nn.MSELoss()
         ssim_loss = SSIM(size_average=True, data_range=1.0, nonnegative_ssim=True)
 
-        criterions = {'bce': bce_loss, 'l1': l1_loss, 'l2': l2_loss, 'ssim': ssim_loss}
+        criterions = {'l1': l1_loss, 'l2': l2_loss, 'ssim': ssim_loss}
 
         model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
 
@@ -99,7 +99,7 @@ class AutoEncoder:
             }, is_best)
 
         if self.args.store_logs and not self.args.resume:
-            store_logs(self.args, pd.DataFrame(training_loss_log, columns=['bce', 'l1', 'l2', 'ssim']), ae=True)
+            store_logs(self.args, pd.DataFrame(training_loss_log, columns=['l1', 'l2', 'ssim']), ae=True)
 
         self.model = model
         return model
@@ -123,7 +123,8 @@ class AutoEncoder:
                                                          unlabeled_subset_ratio=self.args.unlabeled_subset,
                                                          unlabeled_augmentations=True if
                                                          self.uncertainty_sampling_method == 'augmentations_based'
-                                                         else False)
+                                                         else False,
+                                                         seed=self.args.seed)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_class.get_dataset()
@@ -170,7 +171,7 @@ class AutoEncoder:
                                      best_model)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_recall, best_report, last_best_epochs = 0, None, 0
+                last_best_epochs = 0
 
                 if self.args.reset_model:
                     model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)

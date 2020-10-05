@@ -37,7 +37,8 @@ class LearningLoss:
                                                       merged=self.args.merged,
                                                       remove_classes=self.args.remove_classes,
                                                       oversampling=self.args.oversampling,
-                                                      unlabeled_subset_ratio=self.args.unlabeled_subset)
+                                                      unlabeled_subset_ratio=self.args.unlabeled_subset,
+                                                      seed=self.args.seed)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_cl.get_dataset()
@@ -93,7 +94,7 @@ class LearningLoss:
                                      None)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_recall, best_report, last_best_epochs = 0, None, 0
+                last_best_epochs = 0
 
                 if self.args.reset_model:
                     model_backbone, optimizer_backbone, scheduler_backbone = \

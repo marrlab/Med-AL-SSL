@@ -40,7 +40,8 @@ class SimCLR:
                                                          merged=self.args.merged,
                                                          remove_classes=self.args.remove_classes,
                                                          oversampling=self.args.oversampling,
-                                                         unlabeled_subset_ratio=self.args.unlabeled_subset)
+                                                         unlabeled_subset_ratio=self.args.unlabeled_subset,
+                                                         seed=self.args.seed)
 
         base_dataset = dataset_class.get_base_dataset_simclr()
 
@@ -112,7 +113,8 @@ class SimCLR:
                                                          unlabeled_subset_ratio=self.args.unlabeled_subset,
                                                          unlabeled_augmentations=True if
                                                          self.uncertainty_sampling_method == 'augmentations_based'
-                                                         else False)
+                                                         else False,
+                                                         seed=self.args.seed)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_class.get_dataset()
@@ -159,7 +161,7 @@ class SimCLR:
                                      best_model)
 
                 current_labeled_ratio += self.args.add_labeled_ratio
-                best_recall, best_report, last_best_epochs = 0, None, 0
+                last_best_epochs = 0
 
                 if self.args.reset_model:
                     model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_class)

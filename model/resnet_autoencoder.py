@@ -32,52 +32,37 @@ class DoubleConv(nn.Module):
 
 
 class Up(nn.Module):
-    def __init__(self, in_channels, out_channels, bilinear=True):
+    def __init__(self, in_channels, out_channels):
         super().__init__()
 
-        if bilinear:
-            self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
-            self.conv = DoubleConv(in_channels, out_channels, in_channels // 2)
-        else:
-            self.up = nn.ConvTranspose2d(in_channels, in_channels // 2, kernel_size=2, stride=2)
-            self.conv = DoubleConv(in_channels, out_channels)
+        self.up = nn.ConvTranspose2d(in_channels, in_channels, kernel_size=2, stride=2)
+        self.conv = DoubleConv(in_channels, out_channels)
 
-    def forward(self, x1, x2):
-        x1 = self.up(x1)
-        # input is CHW
-        diffY = x2.size()[2] - x1.size()[2]
-        diffX = x2.size()[3] - x1.size()[3]
-
-        x1 = F.pad(x1, [diffX // 2, diffX - diffX // 2,
-                        diffY // 2, diffY - diffY // 2])
-        # if you have padding issues, see
-        # https://github.com/HaiyongJiang/U-Net-Pytorch-Unstructured-Buggy/commit/0e854509c2cea854e247a9c615f175f76fbb2e3a
-        # https://github.com/xiaopeng-liao/Pytorch-UNet/commit/8ebac70e633bac59fc22bb5195e513d5832fb3bd
-        x = torch.cat([x2, x1], dim=1)
+    def forward(self, x):
+        x = self.up(x)
         return self.conv(x)
 
 
 class UnetDec(nn.Module):
-    def __init__(self, bilinear=False, nc=3, z_dim=128, input_size=32):
+    def __init__(self, nc=3, z_dim=128, input_size=32):
         super(UnetDec, self).__init__()
 
         self.linear = nn.Linear(z_dim, 512)
         self.input_size = input_size
-        factor = 2 if bilinear else 1
-        self.up1 = Up(512, 256 // factor, bilinear)
-        self.up2 = Up(256, 128 // factor, bilinear)
-        self.up3 = Up(128, 64 // factor, bilinear)
-        self.up4 = Up(128, 64, bilinear=True)
+        self.up1 = Up(512, 256)
+        self.up2 = Up(256, 128)
+        self.up3 = Up(128, 64)
+        self.up4 = Up(64, 64)
         self.outc = nn.ConvTranspose2d(64, nc, kernel_size=3, stride=int(math.log2(input_size) - 4), padding=1,
                                        bias=False)
 
-    def forward(self, z, layer_outputs):
+    def forward(self, z):
         x = self.linear(z)
         x = x.view(x.size(0), 512, 1, 1)
-        x = self.up1(x, layer_outputs['layer4'])
-        x = self.up2(x, layer_outputs['layer3'])
-        x = self.up3(x, layer_outputs['layer2'])
-        x = self.up4(x, layer_outputs['layer1'])
+        x = self.up1(x)
+        x = self.up2(x)
+        x = self.up3(x)
+        x = self.up4(x)
         x = self.outc(x)
         x = F.pad(x, [self.input_size - x.size(2), 0, self.input_size - x.size(3), 0])
         return torch.sigmoid(x)
@@ -177,16 +162,16 @@ class ResNet18Enc(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        x1 = torch.relu(self.bn1(self.conv1(x)))
-        x2 = self.layer1(x1)
-        x3 = self.layer2(x2)
-        x4 = self.layer3(x3)
-        x = self.layer4(x4)
+        x = torch.relu(self.bn1(self.conv1(x)))
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
         x = F.avg_pool2d(x, 4)
         x = x.view(x.size(0), -1)
         x = self.linear(x)
 
-        return x, {'layer1': x1, 'layer2':  x2, 'layer3':  x3, 'layer4':  x4}
+        return x
 
 
 class ResNet18Dec(nn.Module):
@@ -221,7 +206,7 @@ class ResNet18Dec(nn.Module):
         x = self.layer3(x)
         x = self.layer2(x)
         x = self.layer1(x)
-        x = torch.sigmoid(self.conv1(x))
+        x = self.conv1(x)
         x = x.view(x.size(0), 3, self.input_size, self.input_size)
 
         return x
@@ -242,17 +227,17 @@ class ResnetAutoencoder(nn.Module):
         )
 
     def forward(self, x):
-        z, layer_outputs = self.encoder(x)
-        x = self.decoder(z, layer_outputs)
+        z = self.encoder(x)
+        x = self.decoder(z)
         return x
 
     def forward_encoder_classifier(self, x):
-        z, layer_outputs = self.encoder(x)
+        z = self.encoder(x)
         x = self.classifier(z)
         return x
 
     def forward_encoder(self, x):
-        z, layer_outputs = self.encoder(x)
+        z = self.encoder(x)
         return z
 
     def forward_classifier(self, x):
