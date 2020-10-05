@@ -70,7 +70,7 @@ class JurkatDataset:
         self.remove_classes = remove_classes
         self.unlabeled_augmentations = unlabeled_augmentations
         self.labeled_class_samples = None
-        self.classes_to_remove = np.array([0, 3, 6])
+        self.classes_to_remove = np.array([0, 3, 4, 6])
         self.num_classes = self.num_classes - len(self.classes_to_remove) \
             if self.remove_classes else self.num_classes
         self.seed = seed
@@ -143,7 +143,7 @@ class JurkatDataset:
 
     def get_base_dataset_autoencoder(self):
         base_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=self.transform_autoencoder, is_valid_file=self.check_file_jurkat,
+            self.train_path, transform=None, is_valid_file=self.check_file_jurkat,
         )
 
         if self.merged and len(self.merge_classes) > 0:
@@ -160,7 +160,7 @@ class JurkatDataset:
 
     def get_base_dataset_simclr(self):
         base_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=self.transform_simclr, is_valid_file=self.check_file_jurkat,
+            self.train_path, transform=None, is_valid_file=self.check_file_jurkat,
         )
         if self.merged and len(self.merge_classes) > 0:
             base_dataset = merge(base_dataset, self.merge_classes)

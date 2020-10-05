@@ -15,8 +15,8 @@ class PlasmodiumDataset:
         self.train_path = os.path.join(self.root, "plasmodium", "train")
         self.test_path = os.path.join(self.root, "plasmodium", "test")
         self.labeled_ratio = labeled_ratio
-        self.plasmodium_mean = (0, 0, 0)
-        self.plasmodium_std = (1, 1, 1)
+        self.plasmodium_mean = (0.5296, 0.4238, 0.4530)
+        self.plasmodium_std = (0.3161, 0.2536, 0.2688)
         self.input_size = 32
         self.crop_size = 36
         self.expand_labeled = expand_labeled
@@ -140,7 +140,7 @@ class PlasmodiumDataset:
 
     def get_base_dataset_autoencoder(self):
         base_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=self.transform_autoencoder
+            self.train_path, transform=None
         )
 
         if self.merged and len(self.merge_classes) > 0:
@@ -157,7 +157,7 @@ class PlasmodiumDataset:
 
     def get_base_dataset_simclr(self):
         base_dataset = torchvision.datasets.ImageFolder(
-            self.train_path, transform=self.transform_simclr
+            self.train_path, transform=None
         )
 
         if self.merged and len(self.merge_classes) > 0:
