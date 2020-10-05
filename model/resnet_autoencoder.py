@@ -65,7 +65,7 @@ class UnetDec(nn.Module):
         x = self.up4(x)
         x = self.outc(x)
         x = F.pad(x, [self.input_size - x.size(2), 0, self.input_size - x.size(3), 0])
-        return torch.sigmoid(x)
+        return x
 
 
 class ResizeConv2d(nn.Module):
@@ -206,7 +206,7 @@ class ResNet18Dec(nn.Module):
         x = self.layer3(x)
         x = self.layer2(x)
         x = self.layer1(x)
-        x = torch.sigmoid(self.conv1(x))
+        x = self.conv1(x)
         x = x.view(x.size(0), 3, self.input_size, self.input_size)
 
         return x

@@ -44,12 +44,11 @@ class AutoEncoder:
 
         training_loss_log = []
 
-        bce_loss = nn.BCELoss().cuda()
         l1_loss = nn.L1Loss()
         l2_loss = nn.MSELoss()
         ssim_loss = SSIM(size_average=True, data_range=1.0, nonnegative_ssim=True)
 
-        criterions = {'bce': bce_loss, 'l1': l1_loss, 'l2': l2_loss, 'ssim': ssim_loss}
+        criterions = {'l1': l1_loss, 'l2': l2_loss, 'ssim': ssim_loss}
 
         model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
 
@@ -100,7 +99,7 @@ class AutoEncoder:
             }, is_best)
 
         if self.args.store_logs and not self.args.resume:
-            store_logs(self.args, pd.DataFrame(training_loss_log, columns=['bce', 'l1', 'l2', 'ssim']), ae=True)
+            store_logs(self.args, pd.DataFrame(training_loss_log, columns=['l1', 'l2', 'ssim']), ae=True)
 
         self.model = model
         return model
