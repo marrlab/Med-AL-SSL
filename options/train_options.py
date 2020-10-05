@@ -1,4 +1,7 @@
 import argparse
+from os.path import expanduser
+
+home = expanduser("~")
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
 
@@ -48,7 +51,7 @@ parser.add_argument('--resume', action='store_true',
 parser.add_argument('--simclr-resume', action='store_false',
                     help='flag to be set if an existing simclr model is to be loaded')
 
-parser.add_argument('--autoencoder-resume', action='store_false',
+parser.add_argument('--autoencoder-resume', action='store_true',
                     help='flag to be set if an existing autoencoder model is to be loaded')
 
 parser.add_argument('--name', default=' ', type=str,
@@ -86,7 +89,7 @@ parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet',
 parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
-parser.add_argument('--log-path', default='/home/qasima/med_active_learning/logs_alt_ce_no_over/', type=str,
+parser.add_argument('--log-path', default=home+'/med_active_learning/logs_alt_ce_no_over/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
@@ -100,7 +103,7 @@ parser.add_argument('--mc-dropout-iterations', default=25, type=int,
 parser.add_argument('--augmentations_based_iterations', default=25, type=int,
                     help='number of iterations for augmentations based uncertainty sampling')
 
-parser.add_argument('--root', default='/home/qasima/datasets/thesis/stratified/', type=str,
+parser.add_argument('--root', default=home+'/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
 
 parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
@@ -137,7 +140,7 @@ parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 
                                                                      'plasmodium'],
                     help='the dataset to train on')
 
-parser.add_argument('--checkpoint-path', default='/home/qasima/med_active_learning/runs/', type=str,
+parser.add_argument('--checkpoint-path', default=home+'/med_active_learning/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
 
 parser.add_argument('--seed', default=9999, type=int, choices=[6666, 9999, 2323, 5555], help='the random seed to set')

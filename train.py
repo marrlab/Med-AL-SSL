@@ -11,7 +11,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import torch
 import torch.cuda
@@ -79,7 +79,7 @@ def main(args):
         best_acc = learning_loss.main()
         return best_acc
     elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'simclr_with_al':
-        simclr = SimCLR(args, uncertainty_sampling_method='augmentations_based', train_feat=True)
+        simclr = SimCLR(args, train_feat=True, uncertainty_sampling_method='augmentations_based')
         simclr.train()
         best_acc = simclr.train_validate_classifier()
         return best_acc
@@ -292,14 +292,14 @@ if __name__ == '__main__':
             # ('active_learning', 'least_confidence', 'pseudo_labeling'),
             # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
-            ('active_learning', 'entropy_based', 'pseudo_labeling'),
+            # ('active_learning', 'entropy_based', 'pseudo_labeling'),
             # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
             # ('active_learning', 'learning_loss', 'pseudo_labeling'),
-            ('active_learning', 'augmentations_based', 'pseudo_labeling'),
-            ('random_sampling', 'least_confidence', 'pseudo_labeling'),
+            # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
+            # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'simclr'),
-            # ('semi_supervised', 'least_confidence', 'auto_encoder'),
+            ('semi_supervised', 'least_confidence', 'auto_encoder'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_with_al'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
             # ('semi_supervised', 'least_confidence', 'fixmatch'),
