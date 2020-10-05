@@ -15,8 +15,8 @@ class JurkatDataset:
         self.train_path = os.path.join(self.root, "jurkat", "train")
         self.test_path = os.path.join(self.root, "jurkat", "test")
         self.labeled_ratio = labeled_ratio
-        self.jurkat_mean = (0, 0, 0)
-        self.jurkat_std = (1, 1, 1)
+        self.jurkat_mean = (0.1714, 0.0022, 0.3684)
+        self.jurkat_std = (0.0528, 0.0056, 0.0721)
         self.input_size = 64
         self.crop_size = 64
         self.expand_labeled = expand_labeled
