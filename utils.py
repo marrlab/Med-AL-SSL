@@ -214,16 +214,16 @@ class NTXent(nn.Module):
 
 class TransformsSimCLR:
     def __init__(self, size):
-        s = 1
+        s = 0.75
         color_jitter = torchvision.transforms.ColorJitter(
             0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s
         )
         self.train_transform = torchvision.transforms.Compose(
             [
-                torchvision.transforms.RandomResizedCrop(size=size),
+                torchvision.transforms.RandomResizedCrop(size=size, scale=(0.5, 1.0)),
                 torchvision.transforms.RandomHorizontalFlip(),
                 torchvision.transforms.RandomApply([color_jitter], p=0.8),
-                torchvision.transforms.RandomGrayscale(p=0.2),
+                torchvision.transforms.RandomGrayscale(p=0.4),
                 torchvision.transforms.ToTensor(),
             ]
         )

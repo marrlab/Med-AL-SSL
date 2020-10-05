@@ -48,10 +48,10 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true',
                     help='flag to be set if an existing model is to be loaded')
 
-parser.add_argument('--simclr-resume', action='store_false',
+parser.add_argument('--simclr-resume', action='store_true',
                     help='flag to be set if an existing simclr model is to be loaded')
 
-parser.add_argument('--autoencoder-resume', action='store_true',
+parser.add_argument('--autoencoder-resume', action='store_false',
                     help='flag to be set if an existing autoencoder model is to be loaded')
 
 parser.add_argument('--name', default=' ', type=str,
