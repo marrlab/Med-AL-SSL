@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="SshConfigs">
-    <configs>
-      <sshConfig host="vicb-submit-02" id="38d8132e-c347-40c6-a06c-c980e53a744f" keyPath="$USER_HOME$/.ssh/id_rsa_helmholtz" port="22" nameFormat="DESCRIPTIVE" username="ahmad.qasim" />
-    </configs>
-  </component>
-</project>
