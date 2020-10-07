@@ -214,16 +214,16 @@ class NTXent(nn.Module):
 
 class TransformsSimCLR:
     def __init__(self, size):
-        s = 0.75
+        s = 1
         color_jitter = torchvision.transforms.ColorJitter(
             0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s
         )
         self.train_transform = torchvision.transforms.Compose(
             [
-                torchvision.transforms.RandomResizedCrop(size=size, scale=(0.5, 1.0)),
+                torchvision.transforms.RandomResizedCrop(size=size),
                 torchvision.transforms.RandomHorizontalFlip(),
                 torchvision.transforms.RandomApply([color_jitter], p=0.8),
-                torchvision.transforms.RandomGrayscale(p=0.4),
+                torchvision.transforms.RandomGrayscale(p=0.2),
                 torchvision.transforms.ToTensor(),
             ]
         )
@@ -245,21 +245,20 @@ class TransformFix(object):
             torchvision.transforms.RandomHorizontalFlip(),
             torchvision.transforms.RandomCrop(size=crop_size, padding=int(crop_size * 0.125), padding_mode='reflect'),
             torchvision.transforms.Resize(size=input_size),
+            torchvision.transforms.ToTensor(),
         ])
         self.strong = torchvision.transforms.Compose([
             torchvision.transforms.RandomHorizontalFlip(),
             torchvision.transforms.RandomCrop(size=crop_size, padding=int(crop_size * 0.125), padding_mode='reflect'),
             RandAugmentMC(n=2, m=10),
             torchvision.transforms.Resize(size=input_size),
-        ])
-        self.normalize = torchvision.transforms.Compose([
             torchvision.transforms.ToTensor(),
         ])
 
     def __call__(self, x):
         weak = self.weak(x)
         strong = self.strong(x)
-        return self.normalize(weak), self.normalize(strong)
+        return weak, strong
 
 
 def create_model_optimizer_scheduler(args, dataset_class, optimizer='adam', scheduler='steplr',
