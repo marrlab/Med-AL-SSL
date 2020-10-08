@@ -80,7 +80,7 @@ class UnetDec(nn.Module):
         x = self.up4(x, layer_outputs['layer1'])
         x = self.outc(x)
         x = F.pad(x, [self.input_size - x.size(2), 0, self.input_size - x.size(3), 0])
-        return torch.sigmoid(x)
+        return x
 
 
 class ResizeConv2d(nn.Module):

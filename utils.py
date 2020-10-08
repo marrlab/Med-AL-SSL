@@ -25,6 +25,8 @@ from model.wideresnet import WideResNet
 from augmentations.randaugment import RandAugmentMC
 
 import torch.nn.functional as F
+import torchvision.models as models
+
 
 
 def save_checkpoint(args, state, is_best, filename='checkpoint.pth.tar', best_model_filename='model_best.pth.tar'):
@@ -424,6 +426,8 @@ def set_model_name(args):
     else:
         name = f"{args.dataset}@{args.arch}@{args.weak_supervision_strategy}"
 
+    name = f'{name}@{"pretrained" if args.load_pretrained else ""}'
+
     return name
 
 
@@ -600,6 +604,20 @@ class FocalLoss(nn.Module):
             return balanced_focal_loss.mean()
         else:
             return balanced_focal_loss
+
+
+def load_pretrained(model):
+    model_dict = model.state_dict()
+    resnet18_pretrained_dict = models.resnet18(pretrained=True).state_dict()
+
+    for key in list(model_dict.keys()):
+        if 'linear' in key or 'conv1.weight' == key:
+            continue
+        model_dict[key] = resnet18_pretrained_dict[key.replace('shortcut', 'downsample')]
+
+    model.load_state_dict(model_dict)
+
+    return model
 
 
 def print_args(args):

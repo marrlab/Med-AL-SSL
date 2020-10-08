@@ -30,7 +30,8 @@ from data.config.jurkat_config import set_jurkat_configs
 from data.config.plasmodium_config import set_plasmodium_configs
 
 from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, \
-    create_model_optimizer_scheduler, get_loss, resume_model, set_model_name, perform_sampling, LossPerClassMeter
+    create_model_optimizer_scheduler, get_loss, resume_model, set_model_name, perform_sampling, LossPerClassMeter, \
+    load_pretrained
 from utils import Metrics, store_logs
 from active_learning.entropy_based import UncertaintySamplingEntropyBased
 from active_learning.mc_dropout import UncertaintySamplingMCDropout
@@ -126,6 +127,9 @@ def main(args):
     pseudo_labeler = PseudoLabeling()
 
     model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
+
+    if args.load_pretrained:
+        model = load_pretrained(model)
 
     if args.resume:
         model, _, _ = resume_model(args, model)
@@ -293,7 +297,7 @@ if __name__ == '__main__':
             # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
             # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
             ('active_learning', 'entropy_based', 'pseudo_labeling'),
-            ('active_learning', 'mc_dropout', 'pseudo_labeling'),
+            # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
             # ('active_learning', 'learning_loss', 'pseudo_labeling'),
             ('active_learning', 'augmentations_based', 'pseudo_labeling'),
             ('random_sampling', 'least_confidence', 'pseudo_labeling'),
@@ -302,8 +306,8 @@ if __name__ == '__main__':
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_with_al'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
-            ('semi_supervised', 'least_confidence', 'fixmatch'),
-            ('semi_supervised', 'least_confidence', 'fixmatch_with_al'),
+            # ('semi_supervised', 'least_confidence', 'fixmatch'),
+            # ('semi_supervised', 'least_confidence', 'fixmatch_with_al'),
             # ('semi_supervised', 'least_confidence', 'simclr_with_al'),
         ]
 

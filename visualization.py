@@ -20,7 +20,8 @@ configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs,
 
 plot_configs = {'matek': (2, 5),
                 'jurkat': (2, 4),
-                'plasmodium': (1, 2)}
+                'plasmodium': (1, 2),
+                'cifar10': (2, 5)}
 
 """
 plot the accuracy vs data proportion being used, graph
@@ -85,8 +86,8 @@ def plot_ratio_metrics(prop, metric, label_y):
               [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1], [211 / 255, 95 / 255, 183 / 255, 1],
               [238 / 255, 136 / 255, 102 / 255, 1]]
 
-    plt.errorbar(prop, [0.92] * len(prop), yerr=[0] * len(prop), color=colors[0],
-                 label='fully_supervised', linewidth=2, linestyle='--', marker='o', capsize=3)
+    # plt.errorbar(prop, [0.92] * len(prop), yerr=[0] * len(prop), color=colors[0],
+    #             label='fully_supervised', linewidth=2, linestyle='--', marker='o', capsize=3)
 
     for i, method in enumerate(methods):
         if len(metric[i]) == 0:

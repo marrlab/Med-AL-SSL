@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imag
 parser.add_argument('--epochs', default=1000, type=int,
                     help='number of total epochs to run')
 
-parser.add_argument('--autoencoder-train-epochs', default=20, type=int,
+parser.add_argument('--autoencoder-train-epochs', default=100, type=int,
                     help='number of total epochs to run')
 
 parser.add_argument('--simclr-train-epochs', default=200, type=int,
@@ -48,7 +48,10 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true',
                     help='flag to be set if an existing model is to be loaded')
 
-parser.add_argument('--simclr-resume', action='store_true',
+parser.add_argument('--load-pretrained', action='store_false',
+                    help='load pretrained imagenet weights for some methods')
+
+parser.add_argument('--simclr-resume', action='store_false',
                     help='flag to be set if an existing simclr model is to be loaded')
 
 parser.add_argument('--autoencoder-resume', action='store_true',
