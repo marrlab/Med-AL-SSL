@@ -6,11 +6,11 @@ import pandas as pd
 args = get_arguments()
 
 methods = [
-    'random_sampling',
-    'entropy_based',
+    'random_sampling@pretrained',
+    'entropy_based@pretrained',
     'auto_encoder_with_al',
     'simclr_with_al',
-    'augmentations_based',
+    'augmentations_based@pretrained',
     'fixmatch_with_al',
     'auto_encoder',
     'fixmatch',

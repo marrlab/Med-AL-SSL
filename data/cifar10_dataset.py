@@ -7,11 +7,11 @@ from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge, r
 
 
 class Cifar10Dataset:
-    def __init__(self, root, labeled_ratio=1, add_labeled_ratio=0, advanced_transforms=True, remove_classes=False,
+    def __init__(self, root, labeled_amount=1, add_labeled=0, advanced_transforms=True, remove_classes=False,
                  expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=False, stratified=False,
                  merged=False, unlabeled_augmentations=False, seed=9999):
         self.root = root
-        self.labeled_ratio = labeled_ratio
+        self.labeled_amount = labeled_amount
         self.cifar_mean = (0.4914, 0.4822, 0.4465)
         self.cifar_std = (0.2023, 0.1994, 0.2010)
         self.input_size = 32
@@ -60,9 +60,9 @@ class Cifar10Dataset:
         self.transform_fixmatch = TransformFix(input_size=self.input_size, crop_size=self.crop_size)
         self.merged_classes = 0 if self.merged else 0
         self.num_classes = 10 - self.merged_classes
-        self.add_labeled_ratio = add_labeled_ratio
+        self.add_labeled = add_labeled
         self.unlabeled_subset_ratio = unlabeled_subset_ratio
-        self.add_labeled_num = None
+        self.add_labeled = None
         self.unlabeled_subset_num = None
         self.remove_classes = remove_classes
         self.unlabeled_augmentations = unlabeled_augmentations
@@ -93,14 +93,14 @@ class Cifar10Dataset:
         if self.stratified:
             labeled_indices, unlabeled_indices = train_test_split(
                 np.arange(len(base_dataset)),
-                test_size=(1 - self.labeled_ratio),
+                test_size=(1 - self.labeled_amount),
                 shuffle=True,
                 stratify=base_dataset.targets)
         else:
             indices = np.arange(len(base_dataset))
             np.random.shuffle(indices)
-            self.add_labeled_num = int(indices.shape[0] * self.labeled_ratio)
-            labeled_indices, unlabeled_indices = indices[:self.add_labeled_num], indices[self.add_labeled_num:]
+            self.add_labeled = int(indices.shape[0] * self.labeled_amount)
+            labeled_indices, unlabeled_indices = indices[:self.add_labeled], indices[self.add_labeled:]
 
         self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
 

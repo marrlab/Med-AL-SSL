@@ -6,9 +6,9 @@ from .dataset_utils import WeaklySupervisedDataset
 
 
 class Cifar100Dataset:
-    def __init__(self, root, labeled_ratio, add_labeled_ratio):
+    def __init__(self, root, labeled_amount, add_labeled):
         self.root = root
-        self.labeled_ratio = labeled_ratio
+        self.labeled_amount = labeled_amount
         self.cifar_mean = (0.5071, 0.4867, 0.4408)
         self.cifar_std = (0.2675, 0.2565, 0.2761)
         self.input_size = 32
@@ -26,18 +26,18 @@ class Cifar100Dataset:
             transforms.Normalize(mean=self.cifar_mean, std=self.cifar_std)
         ])
         self.num_classes = 100
-        self.add_labeled_ratio = add_labeled_ratio
-        self.add_labeled_num = None
+        self.add_labeled = add_labeled
+        self.add_labeled = None
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.CIFAR100(root=self.root, train=True,
                                                      download=True, transform=None)
 
-        self.add_labeled_num = int(len(base_dataset) * self.add_labeled_ratio)
+        self.add_labeled = int(len(base_dataset) * self.add_labeled)
 
         labeled_indices, unlabeled_indices = train_test_split(
             np.arange(len(base_dataset)),
-            test_size=(1 - self.labeled_ratio),
+            test_size=(1 - self.labeled_amount),
             shuffle=True,
             stratify=base_dataset.targets)
 

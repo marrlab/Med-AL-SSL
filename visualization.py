@@ -31,11 +31,11 @@ credits to: Alex Olteanu (https://www.dataquest.io/blog/making-538-plots/) for t
 
 
 methods = [
-    'random_sampling',
-    'entropy_based',
+    'random_sampling@pretrained',
+    'entropy_based@pretrained',
     'auto_encoder_with_al',
     'simclr_with_al',
-    'augmentations_based',
+    'augmentations_based@pretrained',
     'fixmatch_with_al',
     'auto_encoder',
     'fixmatch',
@@ -160,8 +160,8 @@ if __name__ == "__main__":
     args = get_arguments()
     args = configs[args.dataset](args)
 
-    ratio = [i for i in np.arange(args.labeled_ratio_start, args.labeled_ratio_stop + args.add_labeled_ratio - 0.01,
-                                  args.add_labeled_ratio)]
+    ratio = [i for i in np.arange(args.labeled_start, args.labeled_stop + args.add_labeled - 0.01,
+                                  args.add_labeled)]
 
     dataset_class = datasets[args.dataset](root=args.root, oversampling=args.oversampling, merged=args.merged,
                                            remove_classes=args.remove_classes)

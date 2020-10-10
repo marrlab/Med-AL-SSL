@@ -4,17 +4,16 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from torchvision import transforms
 from .dataset_utils import WeaklySupervisedDataset
-from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge, remove
+from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge, remove, class_wise_random_sample
 
 
 class MatekDataset:
-    def __init__(self, root, labeled_ratio=1, add_labeled_ratio=0, advanced_transforms=True, remove_classes=False,
+    def __init__(self, root, add_labeled=0, advanced_transforms=True, remove_classes=False,
                  expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=True, stratified=False,
                  merged=True, unlabeled_augmentations=False, seed=9999):
         self.root = root
         self.train_path = os.path.join(self.root, "matek", "train")
         self.test_path = os.path.join(self.root, "matek", "test")
-        self.labeled_ratio = labeled_ratio
         self.matek_mean = (0.8206, 0.7280, 0.8362)
         self.matek_std = (0.1630, 0.2506, 0.0919)
         self.input_size = 128
@@ -63,9 +62,8 @@ class MatekDataset:
         self.transform_fixmatch = TransformFix(crop_size=self.crop_size, input_size=self.input_size)
         self.merged_classes = 5 if self.merged else 0
         self.num_classes = 15 - self.merged_classes
-        self.add_labeled_ratio = add_labeled_ratio
+        self.add_labeled = add_labeled
         self.unlabeled_subset_ratio = unlabeled_subset_ratio
-        self.add_labeled_num = None
         self.unlabeled_subset_num = None
         self.remove_classes = remove_classes
         self.unlabeled_augmentations = unlabeled_augmentations
@@ -75,6 +73,7 @@ class MatekDataset:
         self.num_classes = self.num_classes - len(self.classes_to_remove) \
             if self.remove_classes else self.num_classes
         self.seed = seed
+        self.labeled_amount = self.num_classes
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.ImageFolder(
@@ -100,18 +99,15 @@ class MatekDataset:
         if self.stratified:
             labeled_indices, unlabeled_indices = train_test_split(
                 np.arange(len(base_dataset)),
-                test_size=(1 - self.labeled_ratio),
+                test_size=(len(base_dataset) - self.labeled_amount) / len(base_dataset),
                 shuffle=True,
                 stratify=base_dataset.targets)
         else:
-            indices = np.arange(len(base_dataset))
-            np.random.shuffle(indices)
-            self.add_labeled_num = int(indices.shape[0] * self.labeled_ratio)
-            labeled_indices, unlabeled_indices = indices[:self.add_labeled_num], indices[self.add_labeled_num:]
+            labeled_indices, unlabeled_indices = class_wise_random_sample(base_dataset.targets, n=1, seed=self.seed)
 
         self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
 
-        self.labeled_class_samples = [np.sum(np.array(base_dataset.targets)[labeled_indices] == i)
+        self.labeled_class_samples = [np.sum(np.array(base_dataset.targets)[unlabeled_indices] == i)
                                       for i in range(len(base_dataset.classes))]
 
         if self.oversampling:

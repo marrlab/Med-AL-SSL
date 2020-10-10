@@ -32,8 +32,7 @@ class AutoEncoderCl:
 
     def main(self):
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,
-                                                         labeled_ratio=self.args.labeled_ratio_start,
-                                                         add_labeled_ratio=self.args.add_labeled_ratio,
+                                                         add_labeled=self.args.add_labeled,
                                                          advanced_transforms=True,
                                                          merged=self.args.merged,
                                                          remove_classes=self.args.remove_classes,
@@ -66,7 +65,7 @@ class AutoEncoderCl:
 
         best_loss = np.inf
 
-        metrics_per_ratio = pd.DataFrame([])
+        metrics_per_cycle = pd.DataFrame([])
         metrics_per_epoch = pd.DataFrame([])
 
         best_recall, best_report, last_best_epochs = 0, None, 0
@@ -74,7 +73,7 @@ class AutoEncoderCl:
 
         self.args.start_epoch = 0
         self.args.weak_supervision_strategy = "random_sampling"
-        current_labeled_ratio = self.args.labeled_ratio_start
+        current_labeled = dataset_class.labeled_amount
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
             cl_train_loss, losses_avg_reconstruction, losses_reconstruction = \
@@ -92,7 +91,7 @@ class AutoEncoderCl:
             metrics_per_epoch = pd.concat([metrics_per_epoch, val_report])
 
             if epoch > self.args.labeled_warmup_epochs and last_best_epochs > self.args.add_labeled_epochs:
-                metrics_per_ratio = pd.concat([metrics_per_ratio, best_report])
+                metrics_per_cycle = pd.concat([metrics_per_cycle, best_report])
 
                 labeled_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                     perform_sampling(self.args, None, None,
@@ -100,10 +99,10 @@ class AutoEncoderCl:
                                      dataset_class, labeled_indices,
                                      unlabeled_indices, labeled_dataset,
                                      unlabeled_dataset,
-                                     test_dataset, self.kwargs, current_labeled_ratio,
-                                     None)
+                                     test_dataset, self.kwargs, current_labeled,
+                                     model)
 
-                current_labeled_ratio += self.args.add_labeled_ratio
+                current_labeled += self.args.add_labeled
                 last_best_epochs = 0
 
                 if self.args.reset_model:
@@ -115,7 +114,7 @@ class AutoEncoderCl:
                 best_report = val_report if is_best else best_report
                 best_model = deepcopy(model) if is_best else best_model
 
-            if current_labeled_ratio > self.args.labeled_ratio_stop:
+            if current_labeled > self.args.labeled_stop:
                 break
 
             save_checkpoint(self.args, {
@@ -126,7 +125,7 @@ class AutoEncoderCl:
 
         if self.args.store_logs:
             store_logs(self.args, pd.DataFrame(reconstruction_loss_log, columns=['bce', 'l1', 'l2', 'ssim']), ae=True)
-            store_logs(self.args, metrics_per_ratio)
+            store_logs(self.args, metrics_per_cycle)
             store_logs(self.args, metrics_per_epoch, epoch_wise=True)
 
         self.model = model
