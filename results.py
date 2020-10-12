@@ -6,11 +6,11 @@ import pandas as pd
 args = get_arguments()
 
 methods = [
-    'random_sampling@pretrained',
-    'entropy_based@pretrained',
+    'random_sampling',
+    'entropy_based',
     'auto_encoder_with_al',
     'simclr_with_al',
-    'augmentations_based@pretrained',
+    'augmentations_based',
     'fixmatch_with_al',
     'auto_encoder',
     'fixmatch',
@@ -29,7 +29,12 @@ def ratio_class_wise_metrics(metric, classes, dataset):
             df = pd.read_csv(os.path.join(args.log_path, filename), index_col=0)
             for j, cls in enumerate(classes):
                 dump_log[i].append([])
-                dump_log[i][j].append(df[cls][metric].tolist())
+                dump = df[cls][metric].tolist()
+                max_metric = 0
+                for k, m in enumerate(dump):
+                    max_metric = m if m > max_metric else max_metric
+                    dump[k] = max_metric
+                dump_log[i][j].append(dump)
 
     metrics_log = []
 
@@ -58,7 +63,12 @@ def ratio_metrics(metric, dataset, cls):
             if f"{dataset}@resnet@{method}" != filename.split('-')[1] or 'epoch' in filename or 'ae-loss' in filename:
                 continue
             df = pd.read_csv(os.path.join(args.log_path, filename), index_col=0)
-            dump_log[i].append(df[cls][metric].tolist())
+            dump = df[cls][metric].tolist()
+            max_metric = 0
+            for k, m in enumerate(dump):
+                max_metric = m if m > max_metric else max_metric
+                dump[k] = max_metric
+            dump_log[i].append(dump)
 
     metrics_log = []
 

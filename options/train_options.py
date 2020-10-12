@@ -48,13 +48,13 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true',
                     help='flag to be set if an existing model is to be loaded')
 
-parser.add_argument('--load-pretrained', action='store_false',
+parser.add_argument('--load-pretrained', action='store_true',
                     help='load pretrained imagenet weights for some methods')
 
-parser.add_argument('--simclr-resume', action='store_false',
+parser.add_argument('--simclr-resume', action='store_true',
                     help='flag to be set if an existing simclr model is to be loaded')
 
-parser.add_argument('--autoencoder-resume', action='store_true',
+parser.add_argument('--autoencoder-resume', action='store_false',
                     help='flag to be set if an existing autoencoder model is to be loaded')
 
 parser.add_argument('--name', default=' ', type=str,
@@ -72,7 +72,7 @@ parser.add_argument('--labeled-stop', default=1020, type=int,
 parser.add_argument('--labeled-warmup-epochs', default=15, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
 
-parser.add_argument('--unlabeled-subset', default=0.1, type=float,
+parser.add_argument('--unlabeled-subset', default=0.3, type=float,
                     help='the subset of the unlabeled data to use, to avoid choosing similar data points')
 
 parser.add_argument('--oversampling', action='store_true', help='perform oversampling for labeled dataset')
