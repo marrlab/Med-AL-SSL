@@ -28,7 +28,6 @@ import torch.nn.functional as F
 import torchvision.models as models
 
 
-
 def save_checkpoint(args, state, is_best, filename='checkpoint.pth.tar', best_model_filename='model_best.pth.tar'):
     directory = os.path.join(args.checkpoint_path, args.name)
     if not os.path.exists(directory):
@@ -426,48 +425,48 @@ def set_model_name(args):
     else:
         name = f"{args.dataset}@{args.arch}@{args.weak_supervision_strategy}"
 
-    name = f'{name}@{"pretrained" if args.load_pretrained else ""}'
+    name = f'{name}_{"pretrained" if args.load_pretrained else ""}'
 
     return name
 
 
 def perform_sampling(args, uncertainty_sampler, pseudo_labeler, epoch, model, train_loader, unlabeled_loader,
                      dataset_class, labeled_indices, unlabeled_indices, labeled_dataset, unlabeled_dataset,
-                     test_dataset, kwargs, current_labeled_ratio, best_model):
+                     test_dataset, kwargs, current_labeled, best_model):
     print(args.weak_supervision_strategy)
     if args.weak_supervision_strategy == 'active_learning':
         samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
                                                           train_loader,
                                                           unlabeled_loader,
-                                                          number=dataset_class.add_labeled_num)
+                                                          number=dataset_class.add_labeled)
 
         print(f'Uncertainty Sampling\t '
-              f'Current labeled ratio: {current_labeled_ratio + args.add_labeled_ratio}\t'
+              f'Current labeled ratio: {current_labeled + args.add_labeled}\t'
               f'Model Reset')
     elif args.weak_supervision_strategy == 'semi_supervised':
         samples_indices, samples_targets = pseudo_labeler.get_samples(epoch, args, best_model,
                                                                       unlabeled_loader,
-                                                                      number=dataset_class.add_labeled_num)
+                                                                      number=dataset_class.add_labeled)
 
         print(f'Pseudo labeling\t '
-              f'Current labeled ratio: {current_labeled_ratio + args.add_labeled_ratio}\t'
+              f'Current labeled ratio: {current_labeled + args.add_labeled}\t'
               f'Model Reset')
 
     elif args.weak_supervision_strategy == 'random_sampling':
-        samples_indices = random_sampling(unlabeled_indices, number=dataset_class.add_labeled_num)
+        samples_indices = random_sampling(unlabeled_indices, number=dataset_class.add_labeled)
 
         print(f'Random Sampling\t '
-              f'Current labeled ratio: {current_labeled_ratio + args.add_labeled_ratio}\t'
+              f'Current labeled ratio: {current_labeled + args.add_labeled}\t'
               f'Model Reset')
 
     else:
         samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
                                                           train_loader,
                                                           unlabeled_loader,
-                                                          number=dataset_class.add_labeled_num)
+                                                          number=dataset_class.add_labeled)
 
         print(f'Semi Supervised with Active Learning Sampling\t '
-              f'Current labeled ratio: {current_labeled_ratio + args.add_labeled_ratio}\t'
+              f'Current labeled ratio: {current_labeled + args.add_labeled}\t'
               f'Model Reset')
 
     labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
@@ -618,6 +617,20 @@ def load_pretrained(model):
     model.load_state_dict(model_dict)
 
     return model
+
+
+def class_wise_random_sample(targets, n=1, seed=9999):
+    targets = np.array(targets)
+    indices = np.arange(len(targets))
+    rng = default_rng(seed=seed)
+
+    labeled_indices = []
+
+    for i in np.unique(targets):
+        indices_cls = indices[targets == i]
+        labeled_indices.extend(rng.choice(indices_cls.shape[0], size=n, replace=False).tolist())
+
+    return labeled_indices, indices[~np.isin(indices, labeled_indices)]
 
 
 def print_args(args):

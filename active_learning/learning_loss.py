@@ -31,8 +31,7 @@ class LearningLoss:
 
     def main(self):
         dataset_cl = self.datasets[self.args.dataset](root=self.args.root,
-                                                      labeled_ratio=self.args.labeled_ratio_start,
-                                                      add_labeled_ratio=self.args.add_labeled_ratio,
+                                                      add_labeled=self.args.add_labeled,
                                                       advanced_transforms=True,
                                                       merged=self.args.merged,
                                                       remove_classes=self.args.remove_classes,
@@ -62,8 +61,8 @@ class LearningLoss:
                                                               uncertainty_sampling_method=self.args.
                                                               uncertainty_sampling_method)
 
-        current_labeled_ratio = self.args.labeled_ratio_start
-        metrics_per_ratio = pd.DataFrame([])
+        current_labeled = dataset_cl.labeled_amount
+        metrics_per_cycle = pd.DataFrame([])
         metrics_per_epoch = pd.DataFrame([])
 
         print_args(self.args)
@@ -82,7 +81,7 @@ class LearningLoss:
             metrics_per_epoch = pd.concat([metrics_per_epoch, val_report])
 
             if epoch > self.args.labeled_warmup_epochs and last_best_epochs > self.args.add_labeled_epochs:
-                metrics_per_ratio = pd.concat([metrics_per_ratio, best_report])
+                metrics_per_cycle = pd.concat([metrics_per_cycle, best_report])
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                     perform_sampling(self.args, uncertainty_sampler, None,
@@ -90,10 +89,10 @@ class LearningLoss:
                                      dataset_cl, labeled_indices,
                                      unlabeled_indices, labeled_dataset,
                                      unlabeled_dataset,
-                                     test_dataset, self.kwargs, current_labeled_ratio,
+                                     test_dataset, self.kwargs, current_labeled,
                                      None)
 
-                current_labeled_ratio += self.args.add_labeled_ratio
+                current_labeled += self.args.add_labeled
                 last_best_epochs = 0
 
                 if self.args.reset_model:
@@ -110,7 +109,7 @@ class LearningLoss:
                 best_report = val_report if is_best else best_report
                 best_model = deepcopy(models['backbone']) if is_best else best_model
 
-            if current_labeled_ratio > self.args.labeled_ratio_stop:
+            if current_labeled > self.args.labeled_stop:
                 break
 
             save_checkpoint(self.args, {
@@ -120,7 +119,7 @@ class LearningLoss:
             }, is_best)
 
         if self.args.store_logs:
-            store_logs(self.args, metrics_per_ratio)
+            store_logs(self.args, metrics_per_cycle)
             store_logs(self.args, metrics_per_epoch, epoch_wise=True)
 
         return best_recall

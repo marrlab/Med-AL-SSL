@@ -69,7 +69,7 @@ def plot_ratio_class_wise_metrics(metric, classes, label_y, prop, plot_config):
     ax_main.spines['right'].set_color('none')
     ax_main.tick_params(labelcolor='w', top=False, bottom=False, left=False, right=False)
 
-    ax_main.set_xlabel("Labeled ratio of the dataset", fontsize=20, weight='bold', alpha=.75)
+    ax_main.set_xlabel("Active Learning Cycles", fontsize=20, weight='bold', alpha=.75)
     ax_main.set_ylabel(label_y, fontsize=20, weight='bold', alpha=.75)
     plt.show()
 
@@ -97,9 +97,8 @@ def plot_ratio_metrics(prop, metric, label_y):
                      label=method, linewidth=2, linestyle=linestyle, marker='o', capsize=3)
         plt.fill_between(prop, metric[i][0], metric[i][2], color=colors[i % len(colors)], alpha=0.05)
 
-    plt.xlabel("Labeled ratio of the dataset", fontsize=25, weight='bold', alpha=.75)
+    plt.xlabel("Active Learning Cycles", fontsize=25, weight='bold', alpha=.75)
     plt.ylabel(label_y, fontsize=25, weight='bold', alpha=.75)
-    plt.title('Cross entropy loss', fontsize=30, weight='bold', alpha=.75)
 
     plt.legend(loc='lower right', fontsize=18)
     plt.show()
@@ -160,8 +159,7 @@ if __name__ == "__main__":
     args = get_arguments()
     args = configs[args.dataset](args)
 
-    ratio = [i for i in np.arange(args.labeled_ratio_start, args.labeled_ratio_stop + args.add_labeled_ratio - 0.01,
-                                  args.add_labeled_ratio)]
+    num = [i for i, n in enumerate(range(args.add_labeled, args.labeled_stop + 10, args.add_labeled))]
 
     dataset_class = datasets[args.dataset](root=args.root, oversampling=args.oversampling, merged=args.merged,
                                            remove_classes=args.remove_classes)
@@ -170,15 +168,15 @@ if __name__ == "__main__":
 
     dataset_title = {'cifar10': ' cifar-10 dataset', 'matek': ' matek dataset', 'jurkat': ' jurkat dataset',
                      'plasmodium': ' plasmodium dataset'}
-    y_label = f'{args.metric} on {dataset_title[args.dataset]}'
+    y_label = f'{args.metric_ratio} of {args.metric} on {dataset_title[args.dataset]}'
     y_label_alt = f'Losses for {methods[args.method_id]} on {dataset_title[args.dataset]}'
 
     ratio_class_wise_metrics_log = ratio_class_wise_metrics(args.metric, dataset.classes, args.dataset)
-    plot_ratio_class_wise_metrics(ratio_class_wise_metrics_log, dataset.classes, y_label, ratio,
+    plot_ratio_class_wise_metrics(ratio_class_wise_metrics_log, dataset.classes, y_label, num,
                                   plot_configs[args.dataset])
 
     ratio_metrics_logs = ratio_metrics(args.metric, args.dataset, cls=args.metric_ratio)
-    plot_ratio_metrics(ratio, ratio_metrics_logs, y_label)
+    plot_ratio_metrics(num, ratio_metrics_logs, y_label)
 
     epoch_class_wise_log = epoch_class_wise_loss(dataset.classes, methods[args.method_id], args.dataset)
     plot_epoch_class_wise_loss(epoch_class_wise_log, dataset.classes, y_label_alt,

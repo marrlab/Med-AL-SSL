@@ -104,8 +104,7 @@ def main(args):
                                                               uncertainty_sampling_method)
 
     dataset_class = datasets[args.dataset](root=args.root,
-                                           labeled_ratio=args.labeled_ratio_start,
-                                           add_labeled_ratio=args.add_labeled_ratio,
+                                           add_labeled=args.add_labeled,
                                            advanced_transforms=True,
                                            unlabeled_subset_ratio=args.unlabeled_subset,
                                            oversampling=args.oversampling,
@@ -136,8 +135,8 @@ def main(args):
 
     criterion = get_loss(args, dataset_class.labeled_class_samples, reduction='none')
 
-    current_labeled_ratio = args.labeled_ratio_start
-    metrics_per_ratio = pd.DataFrame([])
+    current_labeled = dataset_class.labeled_amount
+    metrics_per_cycle = pd.DataFrame([])
     metrics_per_epoch = pd.DataFrame([])
     best_model = deepcopy(model)
 
@@ -158,7 +157,7 @@ def main(args):
         metrics_per_epoch = pd.concat([metrics_per_epoch, val_report])
 
         if epoch > args.labeled_warmup_epochs and last_best_epochs > args.add_labeled_epochs:
-            metrics_per_ratio = pd.concat([metrics_per_ratio, best_report])
+            metrics_per_cycle = pd.concat([metrics_per_cycle, best_report])
 
             train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                 perform_sampling(args, uncertainty_sampler, pseudo_labeler,
@@ -166,9 +165,9 @@ def main(args):
                                  dataset_class, labeled_indices,
                                  unlabeled_indices, labeled_dataset,
                                  unlabeled_dataset,
-                                 test_dataset, kwargs, current_labeled_ratio,
-                                 best_model)
-            current_labeled_ratio += args.add_labeled_ratio
+                                 test_dataset, kwargs, current_labeled,
+                                 model)
+            current_labeled += args.add_labeled
             # best_recall, best_report, last_best_epochs = 0, None, 0
             last_best_epochs = 0
 
@@ -187,13 +186,13 @@ def main(args):
             'best_recall': best_recall,
         }, is_best)
 
-        if current_labeled_ratio > args.labeled_ratio_stop:
+        if current_labeled > args.labeled_stop:
             break
 
     print(best_report)
 
     if args.store_logs:
-        store_logs(args, metrics_per_ratio)
+        store_logs(args, metrics_per_cycle)
         store_logs(args, metrics_per_epoch, epoch_wise=True)
 
 
@@ -306,8 +305,8 @@ if __name__ == '__main__':
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_with_al'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
-            # ('semi_supervised', 'least_confidence', 'fixmatch'),
-            # ('semi_supervised', 'least_confidence', 'fixmatch_with_al'),
+            ('semi_supervised', 'least_confidence', 'fixmatch'),
+            ('semi_supervised', 'least_confidence', 'fixmatch_with_al'),
             # ('semi_supervised', 'least_confidence', 'simclr_with_al'),
         ]
 

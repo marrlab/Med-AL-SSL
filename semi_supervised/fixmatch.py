@@ -42,8 +42,7 @@ class FixMatch:
             self.args.weak_supervision_strategy = "random_sampling"
 
         dataset_cls = self.datasets[self.args.dataset](root=self.args.root,
-                                                       labeled_ratio=self.args.labeled_ratio_start,
-                                                       add_labeled_ratio=self.args.add_labeled_ratio,
+                                                       add_labeled=self.args.add_labeled,
                                                        advanced_transforms=True,
                                                        merged=self.args.merged,
                                                        remove_classes=self.args.remove_classes,
@@ -84,10 +83,10 @@ class FixMatch:
         best_recall, best_report, last_best_epochs = 0, None, 0
         best_model = deepcopy(model)
 
-        metrics_per_ratio = pd.DataFrame([])
+        metrics_per_cycle = pd.DataFrame([])
         metrics_per_epoch = pd.DataFrame([])
         self.args.start_epoch = 0
-        current_labeled_ratio = self.args.labeled_ratio_start
+        current_labeled = dataset_cls.labeled_amount
 
         for epoch in range(self.args.start_epoch, self.args.fixmatch_epochs):
             train_loader_fix = zip(labeled_loader_fix, unlabeled_loader_fix)
@@ -102,7 +101,7 @@ class FixMatch:
             metrics_per_epoch = pd.concat([metrics_per_epoch, val_report])
 
             if epoch > self.args.labeled_warmup_epochs and last_best_epochs > self.args.add_labeled_epochs:
-                metrics_per_ratio = pd.concat([metrics_per_ratio, best_report])
+                metrics_per_cycle = pd.concat([metrics_per_cycle, best_report])
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
                     perform_sampling(self.args, uncertainty_sampler, None,
@@ -110,8 +109,8 @@ class FixMatch:
                                      dataset_cls, labeled_indices,
                                      unlabeled_indices, labeled_dataset,
                                      unlabeled_dataset,
-                                     test_dataset, self.kwargs, current_labeled_ratio,
-                                     best_model)
+                                     test_dataset, self.kwargs, current_labeled,
+                                     model)
 
                 labeled_dataset_fix, unlabeled_dataset_fix = dataset_cls.get_datasets_fixmatch(base_dataset,
                                                                                                labeled_indices,
@@ -122,7 +121,7 @@ class FixMatch:
                 unlabeled_loader_fix = DataLoader(dataset=unlabeled_dataset_fix, batch_size=self.args.batch_size,
                                                   shuffle=True, **self.kwargs)
 
-                current_labeled_ratio += self.args.add_labeled_ratio
+                current_labeled += self.args.add_labeled
                 last_best_epochs = 0
 
                 if self.args.reset_model:
@@ -143,11 +142,11 @@ class FixMatch:
                 'best_prec1': best_recall,
             }, is_best)
 
-            if current_labeled_ratio > self.args.labeled_ratio_stop:
+            if current_labeled > self.args.labeled_stop:
                 break
 
         if self.args.store_logs:
-            store_logs(self.args, metrics_per_ratio)
+            store_logs(self.args, metrics_per_cycle)
             store_logs(self.args, metrics_per_epoch, epoch_wise=True)
 
         return best_recall

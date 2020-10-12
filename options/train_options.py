@@ -48,13 +48,13 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true',
                     help='flag to be set if an existing model is to be loaded')
 
-parser.add_argument('--load-pretrained', action='store_false',
+parser.add_argument('--load-pretrained', action='store_true',
                     help='load pretrained imagenet weights for some methods')
 
-parser.add_argument('--simclr-resume', action='store_false',
+parser.add_argument('--simclr-resume', action='store_true',
                     help='flag to be set if an existing simclr model is to be loaded')
 
-parser.add_argument('--autoencoder-resume', action='store_true',
+parser.add_argument('--autoencoder-resume', action='store_false',
                     help='flag to be set if an existing autoencoder model is to be loaded')
 
 parser.add_argument('--name', default=' ', type=str,
@@ -63,14 +63,11 @@ parser.add_argument('--name', default=' ', type=str,
 parser.add_argument('--add-labeled-epochs', default=20, type=int,
                     help='add labeled data through sampling strategy after epochs')
 
-parser.add_argument('--add-labeled-ratio', default=0.025, type=int,
-                    help='what percentage of labeled data to be added')
+parser.add_argument('--add-labeled', default=100, type=int,
+                    help='amount of labeled data to be added in each cycle')
 
-parser.add_argument('--labeled-ratio-start', default=0.05, type=int,
-                    help='what percentage of labeled data to start the training with')
-
-parser.add_argument('--labeled-ratio-stop', default=0.25, type=int,
-                    help='what percentage of labeled data to stop the training process at')
+parser.add_argument('--labeled-stop', default=1020, type=int,
+                    help='amount of labeled data to stop the training process at')
 
 parser.add_argument('--labeled-warmup-epochs', default=15, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
@@ -83,7 +80,7 @@ parser.add_argument('--oversampling', action='store_true', help='perform oversam
 parser.add_argument('--merged', action='store_false',
                     help='to merge certain classes in the dataset (see dataset scripts to see which classes)')
 
-parser.add_argument('--remove_classes', action='store_false',
+parser.add_argument('--remove_classes', action='store_true',
                     help='to remove certain classes in the dataset (see dataset scripts to see which classes)')
 
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
