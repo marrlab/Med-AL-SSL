@@ -48,7 +48,7 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true',
                     help='flag to be set if an existing model is to be loaded')
 
-parser.add_argument('--load-pretrained', action='store_false',
+parser.add_argument('--load-pretrained', action='store_true',
                     help='load pretrained imagenet weights for some methods')
 
 parser.add_argument('--simclr-resume', action='store_false',

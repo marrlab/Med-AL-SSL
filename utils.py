@@ -11,10 +11,13 @@ import torch.nn as nn
 import torchvision
 
 from numpy.random import default_rng
-from sklearn.metrics import precision_recall_fscore_support, classification_report, confusion_matrix, roc_auc_score
+from sklearn.metrics import precision_recall_fscore_support, classification_report, confusion_matrix, roc_auc_score, \
+    pairwise_distances
+from sklearn_extra.cluster import KMedoids
 from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
 
+from data.dataset_utils import WeaklySupervisedDataset
 from model.densenet import densenet121
 from model.lenet import LeNet
 from model.loss_net import LossNet
@@ -630,6 +633,40 @@ def class_wise_random_sample(targets, n=1, seed=9999):
     for i in np.unique(targets):
         indices_cls = indices[targets == i]
         labeled_indices.extend(rng.choice(indices_cls.shape[0], size=n, replace=False).tolist())
+
+    return labeled_indices, indices[~np.isin(indices, labeled_indices)]
+
+
+def k_medoids_init(base_dataset, k_medoids_model, transform_test, mean, std, seed, n):
+    k_medoids_dataset = WeaklySupervisedDataset(base_dataset, range(len(base_dataset)), transform=transform_test,
+                                                mean=mean, std=std)
+    k_medoids_loader = DataLoader(dataset=k_medoids_dataset, batch_size=128, shuffle=True)
+    k_medoids_model.eval()
+
+    features_h_train = None
+
+    with torch.no_grad():
+        for i, (data_x, data_y) in enumerate(k_medoids_loader):
+            data_x = data_x.cuda(non_blocking=True)
+
+            h = k_medoids_model.forward_encoder(data_x)
+            features_h_train = h if features_h_train is None else torch.cat([features_h_train, h], dim=0)
+            print('K-medoids features: [{0}/{1}]'.format(i, len(k_medoids_loader)))
+
+    features_h_train = features_h_train.cpu().numpy()
+    dist_mat = pairwise_distances(features_h_train)
+
+    k_medoids_clusterer = KMedoids(n_clusters=10, metric='precomputed', random_state=seed)
+    k_medoids = k_medoids_clusterer.fit(dist_mat)
+
+    indices = np.arange(len(base_dataset))
+    labeled_indices = []
+    samples_per_cluster = int(n / 10)
+
+    for index in k_medoids.medoid_indices_:
+        labeled_indices.extend(np.argsort(dist_mat[index])[:samples_per_cluster])
+
+    labeled_indices = np.unique(labeled_indices)
 
     return labeled_indices, indices[~np.isin(indices, labeled_indices)]
 

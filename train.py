@@ -11,7 +11,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '5'
 
 import torch
 import torch.cuda
@@ -301,12 +301,12 @@ if __name__ == '__main__':
             # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
             # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
-            # ('semi_supervised', 'least_confidence', 'simclr'),
+            ('semi_supervised', 'least_confidence', 'simclr'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_with_al'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
-            ('semi_supervised', 'least_confidence', 'fixmatch'),
-            ('semi_supervised', 'least_confidence', 'fixmatch_with_al'),
+            # ('semi_supervised', 'least_confidence', 'fixmatch'),
+            # ('semi_supervised', 'least_confidence', 'fixmatch_with_al'),
             # ('semi_supervised', 'least_confidence', 'simclr_with_al'),
         ]
 

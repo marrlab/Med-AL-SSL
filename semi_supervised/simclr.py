@@ -112,7 +112,8 @@ class SimCLR:
                                                          unlabeled_augmentations=True if
                                                          self.uncertainty_sampling_method == 'augmentations_based'
                                                          else False,
-                                                         seed=self.args.seed)
+                                                         seed=self.args.seed, k_medoids=True,
+                                                         k_medoids_model=self.model)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_class.get_dataset()
