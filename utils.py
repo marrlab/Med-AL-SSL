@@ -430,6 +430,7 @@ def set_model_name(args):
         name = f"{args.dataset}@{args.arch}@{args.weak_supervision_strategy}"
 
     name = f'{name}{"_pretrained" if args.load_pretrained else ""}'
+    name = f'{name}{"_k_medoids" if args.k_medoids else ""}'
 
     return name
 
