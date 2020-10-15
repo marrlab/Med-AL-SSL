@@ -113,7 +113,7 @@ def main(args):
                                            unlabeled_augmentations=True if args.weak_supervision_strategy ==
                                            'active_learning' and args.
                                            uncertainty_sampling_method == 'augmentations_based' else False,
-                                           seed=args.seed)
+                                           seed=args.seed, start_labeled=args.start_labeled)
 
     base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
         dataset_class.get_dataset()
@@ -186,7 +186,7 @@ def main(args):
             'best_recall': best_recall,
         }, is_best)
 
-        if current_labeled > args.labeled_stop:
+        if current_labeled > args.stop_labeled:
             break
 
     print(best_report)

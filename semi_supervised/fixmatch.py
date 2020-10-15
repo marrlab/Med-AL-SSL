@@ -53,7 +53,7 @@ class FixMatch:
                                                        unlabeled_augmentations=True if
                                                        self.uncertainty_sampling_method == 'augmentations_based'
                                                        else False,
-                                                       seed=self.args.seed)
+                                                       seed=self.args.seed, start_labeled=self.args.start_labeled)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_cls.get_dataset()
@@ -142,7 +142,7 @@ class FixMatch:
                 'best_prec1': best_recall,
             }, is_best)
 
-            if current_labeled > self.args.labeled_stop:
+            if current_labeled > self.args.stop_labeled:
                 break
 
         if self.args.store_logs:
