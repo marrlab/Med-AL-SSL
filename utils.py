@@ -219,6 +219,7 @@ class TransformsSimCLR:
         color_jitter = torchvision.transforms.ColorJitter(
             0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s
         )
+        # TODO: Add normalization
         self.train_transform = torchvision.transforms.Compose(
             [
                 torchvision.transforms.RandomResizedCrop(size=size),
@@ -425,7 +426,7 @@ def set_model_name(args):
     else:
         name = f"{args.dataset}@{args.arch}@{args.weak_supervision_strategy}"
 
-    name = f'{name}_{"pretrained" if args.load_pretrained else ""}'
+    name = f'{name}{"_pretrained" if args.load_pretrained else ""}'
 
     return name
 

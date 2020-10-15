@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from torchvision import transforms
 from .dataset_utils import WeaklySupervisedDataset
-from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge, remove, class_wise_random_sample
+from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge, remove
 
 
 class MatekDataset:
@@ -103,7 +103,10 @@ class MatekDataset:
                 shuffle=True,
                 stratify=base_dataset.targets)
         else:
-            labeled_indices, unlabeled_indices = class_wise_random_sample(base_dataset.targets, n=1, seed=self.seed)
+            # labeled_indices, unlabeled_indices = class_wise_random_sample(base_dataset.targets, n=1, seed=self.seed)
+            indices = np.arange(len(base_dataset))
+            np.random.shuffle(indices)
+            labeled_indices, unlabeled_indices = indices[:300], indices[300:]
 
         self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
 

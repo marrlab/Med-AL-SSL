@@ -109,7 +109,10 @@ class JurkatDataset:
                 shuffle=True,
                 stratify=base_dataset.targets)
         else:
-            labeled_indices, unlabeled_indices = class_wise_random_sample(base_dataset.targets, n=1, seed=self.seed)
+            # labeled_indices, unlabeled_indices = class_wise_random_sample(base_dataset.targets, n=1, seed=self.seed)
+            indices = np.arange(len(base_dataset))
+            np.random.shuffle(indices)
+            labeled_indices, unlabeled_indices = indices[:300], indices[300:]
 
         self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
 

@@ -31,11 +31,11 @@ credits to: Alex Olteanu (https://www.dataquest.io/blog/making-538-plots/) for t
 
 
 methods = [
-    'random_sampling',
-    'entropy_based',
+    'random_sampling_pretrained',
+    'entropy_based_pretrained',
     'auto_encoder_with_al',
     'simclr_with_al',
-    'augmentations_based',
+    'augmentations_based_pretrained',
     'fixmatch_with_al',
     'auto_encoder',
     'fixmatch',
