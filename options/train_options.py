@@ -48,7 +48,7 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true',
                     help='flag to be set if an existing model is to be loaded')
 
-parser.add_argument('--load-pretrained', action='store_false',
+parser.add_argument('--load-pretrained', action='store_true',
                     help='load pretrained imagenet weights for some methods')
 
 parser.add_argument('--simclr-resume', action='store_false',
@@ -66,7 +66,10 @@ parser.add_argument('--add-labeled-epochs', default=20, type=int,
 parser.add_argument('--add-labeled', default=100, type=int,
                     help='amount of labeled data to be added in each cycle')
 
-parser.add_argument('--labeled-stop', default=1020, type=int,
+parser.add_argument('--start-labeled', default=300, type=int,
+                    help='amount of labeled data to start the training process with')
+
+parser.add_argument('--stop-labeled', default=1020, type=int,
                     help='amount of labeled data to stop the training process at')
 
 parser.add_argument('--labeled-warmup-epochs', default=15, type=int,
@@ -177,6 +180,13 @@ parser.add_argument('--dlctcs-loss-weight', default=100, type=float,
 
 parser.add_argument('--autoencoder-z-dim', default=128, type=float,
                     help='the bottleneck dimension for the autoencoder architecture')
+
+parser.add_argument('--autoencoder-z-dim', default=128, type=float,
+                    help='the bottleneck dimension for the autoencoder architecture')
+
+parser.add_argument('--k-medoids', action='store_true', help='to perform k medoids init with SimCLR')
+
+parser.add_argument('--k-medoids-n-clusters', action='store_true', help='number of k medoids clusters')
 
 parser.set_defaults(augment=True)
 

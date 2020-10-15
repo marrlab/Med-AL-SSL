@@ -4,13 +4,14 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from torchvision import transforms
 from .dataset_utils import WeaklySupervisedDataset
-from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge, remove, class_wise_random_sample
+from utils import TransformsSimCLR, TransformFix, oversampling_indices, merge, remove, k_medoids_init
 
 
 class PlasmodiumDataset:
     def __init__(self, root, add_labeled=0, advanced_transforms=True, remove_classes=False,
                  expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=True, stratified=False,
-                 merged=False, unlabeled_augmentations=False, seed=9999):
+                 merged=False, unlabeled_augmentations=False, seed=9999, k_medoids=False, k_medoids_model=None,
+                 k_medoids_n_clusters=10, start_labeled=300):
         self.root = root
         self.train_path = os.path.join(self.root, "plasmodium", "train")
         self.test_path = os.path.join(self.root, "plasmodium", "test")
@@ -75,6 +76,10 @@ class PlasmodiumDataset:
             if self.remove_classes else self.num_classes
         self.seed = seed
         self.labeled_amount = self.num_classes
+        self.k_medoids = k_medoids
+        self.k_medoids_model = k_medoids_model
+        self.k_medoids_n_clusters = k_medoids_n_clusters
+        self.start_labeled = start_labeled
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.ImageFolder(
@@ -105,9 +110,15 @@ class PlasmodiumDataset:
                 stratify=base_dataset.targets)
         else:
             # labeled_indices, unlabeled_indices = class_wise_random_sample(base_dataset.targets, n=1, seed=self.seed)
-            indices = np.arange(len(base_dataset))
-            np.random.shuffle(indices)
-            labeled_indices, unlabeled_indices = indices[:100], indices[100:]
+            if self.k_medoids:
+                labeled_indices, unlabeled_indices = k_medoids_init(base_dataset, self.k_medoids_model,
+                                                                    self.transform_test, self.plasmodium_mean,
+                                                                    self.plasmodium_std, self.seed, self.start_labeled,
+                                                                    self.k_medoids_n_clusters)
+            else:
+                indices = np.arange(len(base_dataset))
+                np.random.shuffle(indices)
+                labeled_indices, unlabeled_indices = indices[:self.start_labeled], indices[self.start_labeled:]
 
         self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
 

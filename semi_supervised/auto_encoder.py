@@ -35,7 +35,7 @@ class AutoEncoder:
                                                          remove_classes=self.args.remove_classes,
                                                          oversampling=self.args.oversampling,
                                                          unlabeled_subset_ratio=self.args.unlabeled_subset,
-                                                         seed=self.args.seed)
+                                                         seed=self.args.seed, start_labeled=self.args.start_labeled)
 
         base_dataset = dataset_class.get_base_dataset_autoencoder()
 
@@ -122,7 +122,7 @@ class AutoEncoder:
                                                          unlabeled_augmentations=True if
                                                          self.uncertainty_sampling_method == 'augmentations_based'
                                                          else False,
-                                                         seed=self.args.seed)
+                                                         seed=self.args.seed, start_labeled=self.args.start_labeled)
 
         base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
             dataset_class.get_dataset()
@@ -180,7 +180,7 @@ class AutoEncoder:
                 best_report = val_report if is_best else best_report
                 best_model = deepcopy(model) if is_best else best_model
 
-            if current_labeled > self.args.labeled_stop:
+            if current_labeled > self.args.stop_labeled:
                 break
 
         if self.args.store_logs:

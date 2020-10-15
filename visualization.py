@@ -159,7 +159,7 @@ if __name__ == "__main__":
     args = get_arguments()
     args = configs[args.dataset](args)
 
-    num = [i for i, n in enumerate(range(args.add_labeled, args.labeled_stop + 10, args.add_labeled))]
+    num = [i for i, n in enumerate(range(args.add_labeled, args.stop_labeled + 10, args.add_labeled))]
 
     dataset_class = datasets[args.dataset](root=args.root, oversampling=args.oversampling, merged=args.merged,
                                            remove_classes=args.remove_classes)
