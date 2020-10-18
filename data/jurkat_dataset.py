@@ -69,7 +69,7 @@ class JurkatDataset:
         self.remove_classes = remove_classes
         self.unlabeled_augmentations = unlabeled_augmentations
         self.labeled_class_samples = None
-        self.classes_to_remove = np.array([0, 3, 4, 6])
+        self.classes_to_remove = np.array([4])
         self.num_classes = self.num_classes - len(self.classes_to_remove) \
             if self.remove_classes else self.num_classes
         self.seed = seed
@@ -78,6 +78,7 @@ class JurkatDataset:
         self.k_medoids_model = k_medoids_model
         self.k_medoids_n_clusters = k_medoids_n_clusters
         self.start_labeled = start_labeled
+        self.novel_class = 4
 
     @staticmethod
     def check_file_jurkat(path):

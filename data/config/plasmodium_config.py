@@ -7,4 +7,7 @@ def set_plasmodium_configs(args):
     args.remove_classes = False
     args.merged = False
 
+    if args.novel_class_detection:
+        args.remove_classes = True
+
     return args

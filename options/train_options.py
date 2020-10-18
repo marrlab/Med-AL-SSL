@@ -83,7 +83,7 @@ parser.add_argument('--oversampling', action='store_true', help='perform oversam
 parser.add_argument('--merged', action='store_false',
                     help='to merge certain classes in the dataset (see dataset scripts to see which classes)')
 
-parser.add_argument('--remove_classes', action='store_true',
+parser.add_argument('--remove-classes', action='store_true',
                     help='to remove certain classes in the dataset (see dataset scripts to see which classes)')
 
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
@@ -181,12 +181,14 @@ parser.add_argument('--dlctcs-loss-weight', default=100, type=float,
 parser.add_argument('--autoencoder-z-dim', default=128, type=float,
                     help='the bottleneck dimension for the autoencoder architecture')
 
-parser.add_argument('--autoencoder-z-dim', default=128, type=float,
-                    help='the bottleneck dimension for the autoencoder architecture')
-
 parser.add_argument('--k-medoids', action='store_true', help='to perform k medoids init with SimCLR')
 
 parser.add_argument('--k-medoids-n-clusters', action='store_true', help='number of k medoids clusters')
+
+parser.add_argument('--novel-class-detection', action='store_true', help='number of k medoids clusters')
+
+parser.add_argument('--novel-class-ratio', default=0.75, type=float,
+                    help='the ratio of novel class to be detected for the training to stop')
 
 parser.set_defaults(augment=True)
 

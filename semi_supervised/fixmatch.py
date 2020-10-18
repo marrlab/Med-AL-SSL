@@ -10,7 +10,7 @@ import torch
 import time
 
 from utils import create_model_optimizer_scheduler, AverageMeter, accuracy, Metrics, perform_sampling, \
-    store_logs, save_checkpoint, get_loss, LossPerClassMeter, create_loaders
+    store_logs, save_checkpoint, get_loss, LossPerClassMeter, create_loaders, novel_class_detected
 
 import pandas as pd
 from copy import deepcopy
@@ -86,7 +86,7 @@ class FixMatch:
         metrics_per_cycle = pd.DataFrame([])
         metrics_per_epoch = pd.DataFrame([])
         self.args.start_epoch = 0
-        current_labeled = dataset_cls.labeled_amount
+        current_labeled = dataset_cls.start_labeled
 
         for epoch in range(self.args.start_epoch, self.args.fixmatch_epochs):
             train_loader_fix = zip(labeled_loader_fix, unlabeled_loader_fix)
@@ -126,6 +126,10 @@ class FixMatch:
 
                 if self.args.reset_model:
                     model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_cls)
+
+                if self.args.novel_class_detection:
+                    if novel_class_detected(train_loader, dataset_cls, self.args):
+                        break
 
                 criterion_labeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='none')
                 criterion_unlabeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='none')

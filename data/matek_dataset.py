@@ -70,7 +70,7 @@ class MatekDataset:
         self.unlabeled_augmentations = unlabeled_augmentations
         self.labeled_class_samples = None
         # self.classes_to_remove = [0, 1, 2, 3, 4, 6, 7, 9, 11, 13, 14]
-        self.classes_to_remove = [0, 1, 3, 6]
+        self.classes_to_remove = [2]
         self.num_classes = self.num_classes - len(self.classes_to_remove) \
             if self.remove_classes else self.num_classes
         self.seed = seed
@@ -79,6 +79,7 @@ class MatekDataset:
         self.k_medoids_model = k_medoids_model
         self.k_medoids_n_clusters = k_medoids_n_clusters
         self.start_labeled = start_labeled
+        self.novel_class = 2
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.ImageFolder(
@@ -104,7 +105,7 @@ class MatekDataset:
         if self.stratified:
             labeled_indices, unlabeled_indices = train_test_split(
                 np.arange(len(base_dataset)),
-                test_size=(len(base_dataset) - self.labeled_amount) / len(base_dataset),
+                test_size=(len(base_dataset) - self.start_labeled) / len(base_dataset),
                 shuffle=True,
                 stratify=base_dataset.targets)
         else:

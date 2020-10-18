@@ -5,7 +5,7 @@ from data.jurkat_dataset import JurkatDataset
 from data.plasmodium_dataset import PlasmodiumDataset
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
     store_logs, NTXent, get_loss, perform_sampling, \
-    create_model_optimizer_simclr, LossPerClassMeter
+    create_model_optimizer_simclr, LossPerClassMeter, novel_class_detected
 import time
 import torch
 import numpy as np
@@ -137,7 +137,7 @@ class SimCLR:
         best_model = deepcopy(model)
 
         self.args.start_epoch = 0
-        current_labeled = dataset_class.labeled_amount
+        current_labeled = dataset_class.start_labeled
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
             train_loss = self.train_classifier(train_loader, model, criterion, optimizer, last_best_epochs, epoch)
@@ -167,6 +167,10 @@ class SimCLR:
                 if self.args.reset_model:
                     model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_class)
                     optimizer = torch.optim.Adam(model.parameters())
+
+                if self.args.novel_class_detection:
+                    if novel_class_detected(train_loader, dataset_class, self.args):
+                        break
 
                 criterion = get_loss(self.args, dataset_class.labeled_class_samples, reduction='none')
             else:

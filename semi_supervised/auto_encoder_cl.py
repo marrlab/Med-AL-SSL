@@ -3,7 +3,7 @@ from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
 from data.plasmodium_dataset import PlasmodiumDataset
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
-    store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder, LossPerClassMeter
+    store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder, LossPerClassMeter, novel_class_detected
 import time
 import torch
 import torch.nn as nn
@@ -73,7 +73,7 @@ class AutoEncoderCl:
 
         self.args.start_epoch = 0
         self.args.weak_supervision_strategy = "random_sampling"
-        current_labeled = dataset_class.labeled_amount
+        current_labeled = dataset_class.start_labeled
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
             cl_train_loss, losses_avg_reconstruction, losses_reconstruction = \
@@ -107,6 +107,10 @@ class AutoEncoderCl:
 
                 if self.args.reset_model:
                     model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
+
+                if self.args.novel_class_detection:
+                    if novel_class_detected(labeled_loader, dataset_class, self.args):
+                        break
 
                 criterion_cl = get_loss(self.args, dataset_class.labeled_class_samples, reduction='none')
             else:
