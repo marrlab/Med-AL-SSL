@@ -66,7 +66,7 @@ parser.add_argument('--add-labeled-epochs', default=20, type=int,
 parser.add_argument('--add-labeled', default=100, type=int,
                     help='amount of labeled data to be added in each cycle')
 
-parser.add_argument('--start-labeled', default=300, type=int,
+parser.add_argument('--start-labeled', default=100, type=int,
                     help='amount of labeled data to start the training process with')
 
 parser.add_argument('--stop-labeled', default=1020, type=int,
@@ -92,7 +92,7 @@ parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet',
 parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
-parser.add_argument('--log-path', default=home+'/med_active_learning/logs_alt_ce_no_over/', type=str,
+parser.add_argument('--log-path', default=home+'/med_active_learning/logs_b_100_n_100/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
