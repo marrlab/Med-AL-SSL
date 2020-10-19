@@ -71,7 +71,7 @@ class PlasmodiumDataset:
         self.remove_classes = remove_classes
         self.unlabeled_augmentations = unlabeled_augmentations
         self.labeled_class_samples = None
-        self.classes_to_remove = np.array([])
+        self.classes_to_remove = np.array([1])
         self.num_classes = self.num_classes - len(self.classes_to_remove) \
             if self.remove_classes else self.num_classes
         self.seed = seed
@@ -80,6 +80,7 @@ class PlasmodiumDataset:
         self.k_medoids_model = k_medoids_model
         self.k_medoids_n_clusters = k_medoids_n_clusters
         self.start_labeled = start_labeled
+        self.novel_class = 1
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.ImageFolder(

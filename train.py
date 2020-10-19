@@ -11,7 +11,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '5'
+os.environ['CUDA_VISIBLE_DEVICES'] = '7'
 
 import torch
 import torch.cuda
@@ -31,7 +31,7 @@ from data.config.plasmodium_config import set_plasmodium_configs
 
 from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, \
     create_model_optimizer_scheduler, get_loss, resume_model, set_model_name, perform_sampling, LossPerClassMeter, \
-    load_pretrained
+    load_pretrained, novel_class_detected
 from utils import Metrics, store_logs
 from active_learning.entropy_based import UncertaintySamplingEntropyBased
 from active_learning.mc_dropout import UncertaintySamplingMCDropout
@@ -135,7 +135,7 @@ def main(args):
 
     criterion = get_loss(args, dataset_class.labeled_class_samples, reduction='none')
 
-    current_labeled = dataset_class.labeled_amount
+    current_labeled = dataset_class.start_labeled
     metrics_per_cycle = pd.DataFrame([])
     metrics_per_epoch = pd.DataFrame([])
     best_model = deepcopy(model)
@@ -173,6 +173,10 @@ def main(args):
 
             if args.reset_model:
                 model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
+
+            if args.novel_class_detection:
+                if novel_class_detected(train_loader, dataset_class, args):
+                    break
 
             criterion = get_loss(args, dataset_class.labeled_class_samples, reduction='none')
         else:
@@ -301,9 +305,9 @@ if __name__ == '__main__':
             # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
             # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
-            ('semi_supervised', 'least_confidence', 'simclr'),
-            # ('semi_supervised', 'least_confidence', 'auto_encoder'),
-            # ('semi_supervised', 'least_confidence', 'auto_encoder_with_al'),
+            # ('semi_supervised', 'least_confidence', 'simclr'),
+            ('semi_supervised', 'least_confidence', 'auto_encoder'),
+            ('semi_supervised', 'least_confidence', 'auto_encoder_with_al'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
             # ('semi_supervised', 'least_confidence', 'fixmatch'),
             # ('semi_supervised', 'least_confidence', 'fixmatch_with_al'),

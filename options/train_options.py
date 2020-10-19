@@ -66,7 +66,7 @@ parser.add_argument('--add-labeled-epochs', default=20, type=int,
 parser.add_argument('--add-labeled', default=100, type=int,
                     help='amount of labeled data to be added in each cycle')
 
-parser.add_argument('--start-labeled', default=300, type=int,
+parser.add_argument('--start-labeled', default=100, type=int,
                     help='amount of labeled data to start the training process with')
 
 parser.add_argument('--stop-labeled', default=1020, type=int,
@@ -83,7 +83,7 @@ parser.add_argument('--oversampling', action='store_true', help='perform oversam
 parser.add_argument('--merged', action='store_false',
                     help='to merge certain classes in the dataset (see dataset scripts to see which classes)')
 
-parser.add_argument('--remove_classes', action='store_true',
+parser.add_argument('--remove-classes', action='store_true',
                     help='to remove certain classes in the dataset (see dataset scripts to see which classes)')
 
 parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet', 'densenet', 'lenet', 'resnet'],
@@ -92,7 +92,7 @@ parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet',
 parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
-parser.add_argument('--log-path', default=home+'/med_active_learning/logs_alt_ce_no_over/', type=str,
+parser.add_argument('--log-path', default=home+'/med_active_learning/logs_b_100_n_100/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
@@ -181,12 +181,14 @@ parser.add_argument('--dlctcs-loss-weight', default=100, type=float,
 parser.add_argument('--autoencoder-z-dim', default=128, type=float,
                     help='the bottleneck dimension for the autoencoder architecture')
 
-parser.add_argument('--autoencoder-z-dim', default=128, type=float,
-                    help='the bottleneck dimension for the autoencoder architecture')
-
 parser.add_argument('--k-medoids', action='store_true', help='to perform k medoids init with SimCLR')
 
 parser.add_argument('--k-medoids-n-clusters', action='store_true', help='number of k medoids clusters')
+
+parser.add_argument('--novel-class-detection', action='store_true', help='number of k medoids clusters')
+
+parser.add_argument('--novel-class-ratio', default=0.75, type=float,
+                    help='the ratio of novel class to be detected for the training to stop')
 
 parser.set_defaults(augment=True)
 

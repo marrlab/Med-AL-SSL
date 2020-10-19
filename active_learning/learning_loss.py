@@ -9,7 +9,7 @@ from data.plasmodium_dataset import PlasmodiumDataset
 from model.loss_net import LossNet
 from utils import create_loaders, create_model_optimizer_scheduler, create_model_optimizer_loss_net, get_loss, \
     print_args, loss_module_objective_func, AverageMeter, accuracy, Metrics, store_logs, save_checkpoint, \
-    perform_sampling, LossPerClassMeter
+    perform_sampling, LossPerClassMeter, novel_class_detected
 
 import pandas as pd
 from copy import deepcopy
@@ -61,7 +61,7 @@ class LearningLoss:
                                                               uncertainty_sampling_method=self.args.
                                                               uncertainty_sampling_method)
 
-        current_labeled = dataset_cl.labeled_amount
+        current_labeled = dataset_cl.start_labeled
         metrics_per_cycle = pd.DataFrame([])
         metrics_per_epoch = pd.DataFrame([])
 
@@ -101,6 +101,10 @@ class LearningLoss:
                     model_module, optimizer_module = create_model_optimizer_loss_net()
                     models = {'backbone': model_backbone, 'module': model_module}
                     optimizers = {'backbone': optimizer_backbone, 'module': optimizer_module}
+
+                if self.args.novel_class_detection:
+                    if novel_class_detected(train_loader, dataset_cl, self.args):
+                        break
 
                 criterion_backbone = get_loss(self.args, dataset_cl.labeled_class_samples, reduction='none')
                 criterions = {'backbone': criterion_backbone, 'module': loss_module_objective_func}

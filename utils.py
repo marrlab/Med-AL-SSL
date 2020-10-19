@@ -222,7 +222,6 @@ class TransformsSimCLR:
         color_jitter = torchvision.transforms.ColorJitter(
             0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s
         )
-        # TODO: Add normalization
         self.train_transform = torchvision.transforms.Compose(
             [
                 torchvision.transforms.RandomResizedCrop(size=size),
@@ -431,6 +430,7 @@ def set_model_name(args):
 
     name = f'{name}{"_pretrained" if args.load_pretrained else ""}'
     name = f'{name}{"_k_medoids" if args.k_medoids else ""}'
+    name = f'{name}{"_novel_class_detection" if args.novel_class_detection else ""}'
 
     return name
 
@@ -670,6 +670,17 @@ def k_medoids_init(base_dataset, k_medoids_model, transform_test, mean, std, see
     labeled_indices = np.unique(labeled_indices)
 
     return labeled_indices, indices[~np.isin(indices, labeled_indices)]
+
+
+def novel_class_detected(train_loader, dataset_class, args):
+    targets = []
+
+    for i, (data_x, data_y) in enumerate(train_loader):
+        targets.extend(data_y.numpy().tolist())
+
+    targets = np.array(targets)
+
+    return (targets[targets == dataset_class.novel_class].shape[0] / targets.shape[0]) > args.novel_class_ratio
 
 
 def print_args(args):

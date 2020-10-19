@@ -6,4 +6,7 @@ def set_matek_configs(args):
     args.add_labeled = 100
     args.autoencoder_z_dim = 128
 
+    if args.novel_class_detection:
+        args.remove_classes = True
+
     return args

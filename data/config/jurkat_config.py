@@ -7,4 +7,7 @@ def set_jurkat_configs(args):
     args.merged = False
     args.autoencoder_z_dim = 128
 
+    if args.novel_class_detection:
+        args.remove_classes = True
+
     return args
