@@ -10,7 +10,7 @@ import torch
 import time
 
 from utils import create_model_optimizer_scheduler, AverageMeter, accuracy, Metrics, perform_sampling, \
-    store_logs, save_checkpoint, get_loss, LossPerClassMeter, create_loaders, novel_class_detected
+    store_logs, save_checkpoint, get_loss, LossPerClassMeter, create_loaders, novel_class_detected, load_pretrained
 
 import pandas as pd
 from copy import deepcopy
@@ -67,6 +67,9 @@ class FixMatch:
                                                                                        unlabeled_indices)
 
         model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_cls)
+
+        if self.args.load_pretrained:
+            model = load_pretrained(model)
 
         labeled_loader_fix = DataLoader(dataset=labeled_dataset_fix, batch_size=self.args.batch_size,
                                         shuffle=True, **self.kwargs)
