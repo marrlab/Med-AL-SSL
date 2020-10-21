@@ -6,15 +6,12 @@ import pandas as pd
 args = get_arguments()
 
 methods = [
-    'random_sampling_pretrained',
-    'entropy_based_pretrained',
-    'auto_encoder_with_al',
-    'simclr_with_al',
-    'augmentations_based_pretrained',
-    'fixmatch_with_al',
-    'auto_encoder',
-    'fixmatch',
     'simclr',
+    'simclr_with_al',
+    'simclr_k_medoids',
+    'simclr_with_al_k_medoids',
+    'simclr_k_medoids_100',
+    'simclr_with_al_k_medoids_100',
 ]
 
 

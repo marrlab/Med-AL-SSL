@@ -12,8 +12,6 @@ from data.config.plasmodium_config import set_plasmodium_configs
 from results import ratio_metrics, ratio_class_wise_metrics, epoch_class_wise_loss, ae_loss
 from options.visualization_options import get_arguments
 
-import numpy as np
-
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset, 'jurkat': JurkatDataset}
 configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs,
            'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs}
@@ -31,15 +29,12 @@ credits to: Alex Olteanu (https://www.dataquest.io/blog/making-538-plots/) for t
 
 
 methods = [
-    'random_sampling_pretrained',
-    'entropy_based_pretrained',
-    'auto_encoder_with_al',
-    'simclr_with_al',
-    'augmentations_based_pretrained',
-    'fixmatch_with_al',
-    'auto_encoder',
-    'fixmatch',
     'simclr',
+    'simclr_with_al',
+    'simclr_k_medoids',
+    'simclr_with_al_k_medoids',
+    'simclr_k_medoids_100',
+    'simclr_with_al_k_medoids_100',
 ]
 
 

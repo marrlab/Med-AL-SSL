@@ -429,7 +429,7 @@ def set_model_name(args):
         name = f"{args.dataset}@{args.arch}@{args.weak_supervision_strategy}"
 
     name = f'{name}{"_pretrained" if args.load_pretrained else ""}'
-    name = f'{name}{"_k_medoids" if args.k_medoids else ""}'
+    name = f'{name}{"_k_medoids_100" if args.k_medoids else ""}'
     name = f'{name}{"_novel_class_detection" if args.novel_class_detection else ""}'
 
     return name
@@ -657,17 +657,17 @@ def k_medoids_init(base_dataset, k_medoids_model, transform_test, mean, std, see
     features_h = features_h.cpu().numpy()
     dist_mat = pairwise_distances(features_h)
 
-    k_medoids_clusterer = KMedoids(n_clusters=k_medoids_n_clusters, metric='precomputed', random_state=seed)
+    k_medoids_clusterer = KMedoids(n_clusters=100, metric='precomputed', random_state=seed)
     k_medoids = k_medoids_clusterer.fit(dist_mat)
 
     indices = np.arange(len(base_dataset))
-    labeled_indices = []
+    # labeled_indices = []
     samples_per_cluster = int(n / k_medoids_n_clusters)
 
-    for index in k_medoids.medoid_indices_:
-        labeled_indices.extend(np.argsort(dist_mat[index])[:samples_per_cluster])
+    # for index in k_medoids.medoid_indices_:
+    #    labeled_indices.extend(np.argsort(dist_mat[index])[:samples_per_cluster])
 
-    labeled_indices = np.unique(labeled_indices)
+    labeled_indices = np.unique(k_medoids.medoid_indices_)
 
     return labeled_indices, indices[~np.isin(indices, labeled_indices)]
 

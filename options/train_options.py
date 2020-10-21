@@ -183,7 +183,7 @@ parser.add_argument('--autoencoder-z-dim', default=128, type=float,
 
 parser.add_argument('--k-medoids', action='store_true', help='to perform k medoids init with SimCLR')
 
-parser.add_argument('--k-medoids-n-clusters', action='store_true', help='number of k medoids clusters')
+parser.add_argument('--k-medoids-n-clusters', default=10, type=int, help='number of k medoids clusters')
 
 parser.add_argument('--novel-class-detection', action='store_true', help='number of k medoids clusters')
 

@@ -4,7 +4,7 @@ from os.path import expanduser
 home = expanduser("~")
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
-parser.add_argument('--metric', default='recall', type=str,
+parser.add_argument('--metric', default='f1-score', type=str,
                     choices=['precision', 'recall', 'f1-score'],
                     help='the class wise metric to display')
 
@@ -16,7 +16,7 @@ parser.add_argument('--root', default=home+'/datasets/thesis/stratified/', type=
                     help='the root path for the datasets')
 
 parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat',
-                                                                          'plasmodium'], help='the dataset to train on')
+                                                                     'plasmodium'], help='the dataset to train on')
 
 parser.add_argument('--oversampling', action='store_true', help='perform oversampling for labeled dataset')
 
