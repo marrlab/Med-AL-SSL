@@ -305,13 +305,13 @@ if __name__ == '__main__':
             # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
             # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
             # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
-            ('semi_supervised', 'least_confidence', 'simclr'),
+            # ('semi_supervised', 'least_confidence', 'simclr'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_with_al'),
             # ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
-            # ('semi_supervised', 'least_confidence', 'fixmatch'),
-            # ('semi_supervised', 'least_confidence', 'fixmatch_with_al'),
-            ('semi_supervised', 'least_confidence', 'simclr_with_al'),
+            ('semi_supervised', 'least_confidence', 'fixmatch'),
+            ('semi_supervised', 'least_confidence', 'fixmatch_with_al'),
+            # ('semi_supervised', 'least_confidence', 'simclr_with_al'),
         ]
 
         for (m, u, s) in states:
