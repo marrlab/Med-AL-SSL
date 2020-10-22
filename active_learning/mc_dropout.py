@@ -41,7 +41,7 @@ class UncertaintySamplingMCDropout:
                 data_y = data_y.cuda(non_blocking=True)
 
                 with torch.no_grad():
-                    output, _, _ = model(data_x)
+                    output = model(data_x)
 
                 scores = output if scores is None else torch.cat([scores, output])
                 targets = data_y.cpu().numpy() if targets is None \

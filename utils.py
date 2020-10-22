@@ -291,8 +291,8 @@ def create_model_optimizer_scheduler(args, dataset_class, optimizer='adam', sche
     if optimizer == 'adam':
         optimizer = torch.optim.Adam(model.parameters())
     else:
-        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr,
-                                    momentum=args.momentum, nesterov=args.nesterov)
+        optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,
+                                    nesterov=args.nesterov, weight_decay=args.weight_decay)
 
     if scheduler == 'steplr':
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=50, gamma=0.2)
@@ -428,6 +428,7 @@ def set_model_name(args):
     else:
         name = f"{args.dataset}@{args.arch}@{args.weak_supervision_strategy}"
 
+    name = f'{name}{f"_{args.semi_supervised_uncertainty_method}" if "_with_al" in name else ""}'
     name = f'{name}{"_pretrained" if args.load_pretrained else ""}'
     name = f'{name}{"_k_medoids_100" if args.k_medoids else ""}'
     name = f'{name}{"_novel_class_detection" if args.novel_class_detection else ""}'

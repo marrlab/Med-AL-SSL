@@ -80,17 +80,17 @@ def main(args):
         best_acc = learning_loss.main()
         return best_acc
     elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'simclr_with_al':
-        simclr = SimCLR(args, train_feat=True, uncertainty_sampling_method='augmentations_based')
+        simclr = SimCLR(args, train_feat=True, uncertainty_sampling_method=args.semi_supervised_uncertainty_method)
         simclr.train()
         best_acc = simclr.train_validate_classifier()
         return best_acc
     elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'auto_encoder_with_al':
-        auto_encoder = AutoEncoder(args, uncertainty_sampling_method='augmentations_based')
+        auto_encoder = AutoEncoder(args, uncertainty_sampling_method=args.semi_supervised_uncertainty_method)
         auto_encoder.train()
         best_acc = auto_encoder.train_validate_classifier()
         return best_acc
     elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'fixmatch_with_al':
-        fixmatch = FixMatch(args, uncertainty_sampling_method='augmentations_based')
+        fixmatch = FixMatch(args, uncertainty_sampling_method=args.semi_supervised_uncertainty_method)
         best_acc = fixmatch.main()
         return best_acc
 
@@ -214,7 +214,7 @@ def train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, ar
         data_x = data_x.cuda(non_blocking=True)
 
         optimizer.zero_grad()
-        output, _, _ = model(data_x)
+        output = model(data_x)
         loss = criterion(output, data_y)
 
         losses_per_class.update(loss.cpu().detach().numpy(), data_y.cpu().numpy())
@@ -260,7 +260,7 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
             data_y = data_y.cuda(non_blocking=True)
             data_x = data_x.cuda(non_blocking=True)
 
-            output, _, _ = model(data_x)
+            output = model(data_x)
             loss = criterion(output, data_y)
 
             losses_per_class.update(loss.cpu().detach().numpy(), data_y.cpu().numpy())

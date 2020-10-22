@@ -22,7 +22,7 @@ class PseudoLabeling:
             data_x = data_x.cuda(non_blocking=True)
 
             with torch.no_grad():
-                output, _, _ = model(data_x)
+                output = model(data_x)
             score = F.softmax(output, dim=1)
             score = torch.max(score, dim=1)
 

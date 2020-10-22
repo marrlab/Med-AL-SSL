@@ -1,6 +1,7 @@
 from torch.utils.data import DataLoader
 
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
+from active_learning.entropy_based import UncertaintySamplingEntropyBased
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
@@ -37,6 +38,10 @@ class FixMatch:
         if self.uncertainty_sampling_method == 'augmentations_based':
             uncertainty_sampler = UncertaintySamplingAugmentationBased()
             self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
+        elif self.uncertainty_sampling_method == 'entropy_based':
+            uncertainty_sampler = UncertaintySamplingEntropyBased(verbose=True,
+                                                                  uncertainty_sampling_method='entropy_based')
+            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
         else:
             uncertainty_sampler = None
             self.args.weak_supervision_strategy = "random_sampling"
@@ -66,7 +71,7 @@ class FixMatch:
         labeled_dataset_fix, unlabeled_dataset_fix = dataset_cls.get_datasets_fixmatch(base_dataset, labeled_indices,
                                                                                        unlabeled_indices)
 
-        model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_cls)
+        model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_cls, 'sdg', 'cos')
 
         if self.args.load_pretrained:
             model = load_pretrained(model)
@@ -142,6 +147,8 @@ class FixMatch:
                 best_report = val_report if is_best else best_report
                 best_model = deepcopy(model) if is_best else best_model
 
+            scheduler.step()
+
             save_checkpoint(self.args, {
                 'epoch': epoch + 1,
                 'state_dict': model.state_dict(),
@@ -176,7 +183,7 @@ class FixMatch:
             data_w, data_s = data_w.cuda(non_blocking=True), data_s.cuda(non_blocking=True)
 
             inputs = torch.cat((data_x, data_w, data_s))
-            logits, _, _ = model(inputs)
+            logits = model(inputs)
             logits_labeled = logits[:self.args.batch_size]
             logits_unlabeled_w, logits_unlabeled_s = logits[self.args.batch_size:].chunk(2)
             del logits
@@ -233,7 +240,7 @@ class FixMatch:
                 data_x = data_x.cuda(non_blocking=True)
                 data_y = data_y.cuda(non_blocking=True)
 
-                output, _, _ = model(data_x)
+                output = model(data_x)
 
                 loss = criterions['labeled'](output, data_y)
 

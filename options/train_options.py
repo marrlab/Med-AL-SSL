@@ -48,7 +48,7 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true',
                     help='flag to be set if an existing model is to be loaded')
 
-parser.add_argument('--load-pretrained', action='store_false',
+parser.add_argument('--load-pretrained', action='store_true',
                     help='load pretrained imagenet weights for some methods')
 
 parser.add_argument('--simclr-resume', action='store_false',
@@ -97,7 +97,7 @@ parser.add_argument('--log-path', default=home+'/med_active_learning/logs_b_100_
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
-                             'density_weighted', 'mc_dropout', 'learning_loss', 'augmentations_based'],
+                             'mc_dropout', 'learning_loss', 'augmentations_based'],
                     help='the uncertainty sampling method to use')
 
 parser.add_argument('--mc-dropout-iterations', default=25, type=int,
@@ -117,6 +117,10 @@ parser.add_argument('--semi-supervised-method', default='fixmatch_with_al', type
                     choices=['pseudo_labeling', 'auto_encoder', 'simclr', 'fixmatch', 'auto_encoder_cl',
                              'auto_encoder_no_feat', 'simclr_with_al', 'auto_encoder_with_al', 'fixmatch_with_al'],
                     help='the semi supervised method to use')
+
+parser.add_argument('--semi-supervised-uncertainty-method', default='augmentations_based', type=str,
+                    choices=['entropy_based', 'augmentations_based'],
+                    help='the uncertainty sampling method to use for SSL methods')
 
 parser.add_argument('--pseudo-labeling-threshold', default=0.9, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
