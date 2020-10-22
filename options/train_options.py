@@ -48,7 +48,7 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true',
                     help='flag to be set if an existing model is to be loaded')
 
-parser.add_argument('--load-pretrained', action='store_true',
+parser.add_argument('--load-pretrained', action='store_false',
                     help='load pretrained imagenet weights for some methods')
 
 parser.add_argument('--simclr-resume', action='store_false',
@@ -158,7 +158,7 @@ parser.add_argument('--run-batch', action='store_false', help='run all methods i
 
 parser.add_argument('--reset-model', action='store_true', help='reset models after every labels injection cycle')
 
-parser.add_argument('--fixmatch-mu', default=5, type=int,
+parser.add_argument('--fixmatch-mu', default=8, type=int,
                     help='coefficient of unlabeled batch size i.e. mu.B from paper')
 
 parser.add_argument('--fixmatch-lambda-u', default=1, type=float,
@@ -170,7 +170,7 @@ parser.add_argument('--fixmatch-threshold', default=0.95, type=float,
 parser.add_argument('--fixmatch-k-img', default=8192, type=int,
                     help='number of labeled examples')
 
-parser.add_argument('--fixmatch-epochs', default=1000, type=int,
+parser.add_argument('--fixmatch-epochs', default=400, type=int,
                     help='epochs for fixmatch algorithm')
 
 parser.add_argument('--fixmatch-warmup', default=0, type=int,

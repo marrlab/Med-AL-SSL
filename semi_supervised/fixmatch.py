@@ -99,7 +99,7 @@ class FixMatch:
         for epoch in range(self.args.start_epoch, self.args.fixmatch_epochs):
             train_loader_fix = zip(labeled_loader_fix, unlabeled_loader_fix)
             train_loss = self.train(train_loader_fix, model, optimizer, epoch, len(labeled_loader_fix), criterions,
-                                    base_dataset.classes, last_best_epochs)
+                                    base_dataset.classes, last_best_epochs, scheduler)
             val_loss, val_report = self.validate(val_loader, model, last_best_epochs, criterions)
 
             is_best = val_report['macro avg']['recall'] > best_recall
@@ -147,8 +147,6 @@ class FixMatch:
                 best_report = val_report if is_best else best_report
                 best_model = deepcopy(model) if is_best else best_model
 
-            scheduler.step()
-
             save_checkpoint(self.args, {
                 'epoch': epoch + 1,
                 'state_dict': model.state_dict(),
@@ -165,7 +163,7 @@ class FixMatch:
 
         return best_recall
 
-    def train(self, train_loader, model, optimizer, epoch, loaders_len, criterions, classes, last_best_epochs):
+    def train(self, train_loader, model, optimizer, epoch, loaders_len, criterions, classes, last_best_epochs, sch):
         batch_time = AverageMeter()
         losses = AverageMeter()
         top1 = AverageMeter()
@@ -208,6 +206,7 @@ class FixMatch:
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            sch.step(epoch*loaders_len + i)
 
             batch_time.update(time.time() - end)
             end = time.time()
@@ -216,9 +215,11 @@ class FixMatch:
                 print('Epoch Classifier: [{0}][{1}/{2}]\t'
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                      'Last best epoch {last_best_epoch}'
+                      'Last best epoch {last_best_epoch}\t'
+                      'Current LR: {curr_lr}'
                       .format(epoch, i, loaders_len,
-                              batch_time=batch_time, loss=losses, last_best_epoch=last_best_epochs))
+                              batch_time=batch_time, loss=losses,
+                              last_best_epoch=last_best_epochs, curr_lr=optimizer.param_groups[0]['lr']))
 
         return pd.DataFrame.from_dict({f'{k}-train-loss': losses_per_class.avg[i]
                                        for i, k in enumerate(classes)}, orient='index').T
