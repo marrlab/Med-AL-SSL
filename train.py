@@ -100,8 +100,7 @@ def main(args):
         uncertainty_sampler = UncertaintySamplingAugmentationBased()
     else:
         uncertainty_sampler = UncertaintySamplingEntropyBased(verbose=True,
-                                                              uncertainty_sampling_method=args.
-                                                              uncertainty_sampling_method)
+                                                              uncertainty_sampling_method='entropy_based')
 
     dataset_class = datasets[args.dataset](root=args.root,
                                            add_labeled=args.add_labeled,
@@ -296,23 +295,26 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            ('active_learning', 'entropy_based', None, None, False),
-            ('active_learning', 'mc_dropout', None, None, False),
-            ('active_learning', 'augmentations_based', None, None, False),
-            ('random_sampling', None, None, None, False),
-            ('semi_supervised', 'least_confidence', 'simclr', None, False),
-            ('semi_supervised', 'least_confidence', 'simclr_with_al', 'augmentations_based', False),
-            ('semi_supervised', 'least_confidence', 'simclr_with_al', 'entropy_based', False),
-            ('semi_supervised', 'least_confidence', 'simclr_with_al', 'mc_dropout', False),
-            ('semi_supervised', 'least_confidence', 'auto_encoder', None, False),
-            ('semi_supervised', 'least_confidence', 'auto_encoder_with_al', 'augmentations_based', False),
-            ('semi_supervised', 'least_confidence', 'auto_encoder_with_al', 'entropy_based', False),
-            ('semi_supervised', 'least_confidence', 'auto_encoder_with_al', 'mc_dropout', False),
+            ('semi_supervised', None, 'simclr', None, False),
+            ('semi_supervised', None, 'simclr_with_al', 'augmentations_based', False),
+            ('semi_supervised', None, 'simclr_with_al', 'entropy_based', False),
+            ('semi_supervised', None, 'simclr_with_al', 'mc_dropout', False),
+            ('semi_supervised', None, 'auto_encoder', None, False),
+            ('semi_supervised', None, 'auto_encoder_with_al', 'augmentations_based', False),
+            ('semi_supervised', None, 'auto_encoder_with_al', 'entropy_based', False),
+            ('semi_supervised', None, 'auto_encoder_with_al', 'mc_dropout', False),
+            ('semi_supervised', None, 'fixmatch', False),
+            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', False),
+            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', False),
+            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', False),
             ('active_learning', 'entropy_based', None, None, True),
             ('active_learning', 'mc_dropout', None, None, True),
             ('active_learning', 'augmentations_based', None, None, True),
-            # ('semi_supervised', 'least_confidence', 'fixmatch'),
-            # ('semi_supervised', 'least_confidence', 'fixmatch_with_al'),
+            ('random_sampling', None, None, None, True),
+            ('semi_supervised', None, 'fixmatch', True),
+            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', True),
+            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', True),
+            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', True),
         ]
 
         for (m, u, s, us, p) in states:

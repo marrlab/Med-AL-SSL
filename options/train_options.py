@@ -2,6 +2,7 @@ import argparse
 from os.path import expanduser
 
 home = expanduser("~")
+code_dir = 'med_active_learning'
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
 
@@ -92,7 +93,7 @@ parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet',
 parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
-parser.add_argument('--log-path', default=home+'/med_active_learning/logs_b_100_n_100/', type=str,
+parser.add_argument('--log-path', default=f'{home}/{code_dir}/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
@@ -147,7 +148,7 @@ parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 
                                                                      'plasmodium'],
                     help='the dataset to train on')
 
-parser.add_argument('--checkpoint-path', default=home+'/med_active_learning/runs/', type=str,
+parser.add_argument('--checkpoint-path', default=f'{home}/{code_dir}/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
 
 parser.add_argument('--seed', default=9999, type=int, choices=[6666, 9999, 2323, 5555], help='the random seed to set')
