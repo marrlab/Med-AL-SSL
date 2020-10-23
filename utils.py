@@ -289,7 +289,7 @@ def create_model_optimizer_scheduler(args, dataset_class, optimizer='adam', sche
     model = model.cuda()
 
     if optimizer == 'adam':
-        optimizer = torch.optim.Adam(model.parameters())
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     else:
         optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,
                                     nesterov=args.nesterov, weight_decay=args.weight_decay)
@@ -336,17 +336,8 @@ def create_model_optimizer_autoencoder(args, dataset_class):
     model = model.cuda()
 
     if args.autoencoder_resume:
-        file = os.path.join(args.checkpoint_path, args.name, 'model_best.pth.tar')
-        if os.path.isfile(file):
-            print("=> loading checkpoint '{}'".format(file))
-            checkpoint = torch.load(file)
-            args.start_epoch = checkpoint['epoch']
-            args.start_epoch = args.epochs
-            model.load_state_dict(checkpoint['state_dict'])
-            print("=> loaded checkpoint '{}' (epoch {})"
-                  .format(args.resume, checkpoint['epoch']))
-        else:
-            print("=> no checkpoint found at '{}'".format(file))
+        model, _, _ = resume_model(args, model)
+        args.start_epoch = args.epochs
 
     optimizer = torch.optim.Adam(model.parameters())
 
@@ -402,7 +393,13 @@ def loss_module_objective_func(pred, target, margin=1.0, reduction='mean'):
 
 
 def resume_model(args, model, optimizer=None, scheduler=None):
-    file = os.path.join(args.checkpoint_path, args.name, 'model_best.pth.tar')
+    if 'simclr' in args.name:
+        name = f"{args.dataset}@{args.arch}@{'simclr'}"
+    elif 'auto_encoder' in args.name:
+        name = f"{args.dataset}@{args.arch}@{'auto_encoder'}"
+    else:
+        name = args.name
+    file = os.path.join(args.checkpoint_path, name, 'model_best.pth.tar')
     if os.path.isfile(file):
         print("=> loading checkpoint '{}'".format(file))
         checkpoint = torch.load(file)
@@ -412,10 +409,9 @@ def resume_model(args, model, optimizer=None, scheduler=None):
             optimizer.load_state_dict(checkpoint['optimizer'])
         if scheduler:
             scheduler.load_state_dict(checkpoint['scheduler'])
-        print("=> loaded checkpoint '{}' (epoch {})"
-              .format(args.resume, checkpoint['epoch']))
+        print("=> loaded checkpoint (epoch {0})".format(checkpoint['epoch']))
     else:
-        print("=> no checkpoint found at '{}'".format(file))
+        print("=> no checkpoint found at '{0}'".format(file))
 
     return model, optimizer, scheduler
 
@@ -658,15 +654,15 @@ def k_medoids_init(base_dataset, k_medoids_model, transform_test, mean, std, see
     features_h = features_h.cpu().numpy()
     dist_mat = pairwise_distances(features_h)
 
-    k_medoids_clusterer = KMedoids(n_clusters=100, metric='precomputed', random_state=seed)
+    k_medoids_clusterer = KMedoids(n_clusters=k_medoids_n_clusters, metric='precomputed', random_state=seed)
     k_medoids = k_medoids_clusterer.fit(dist_mat)
 
     indices = np.arange(len(base_dataset))
-    # labeled_indices = []
+    labeled_indices = []
     samples_per_cluster = int(n / k_medoids_n_clusters)
 
-    # for index in k_medoids.medoid_indices_:
-    #    labeled_indices.extend(np.argsort(dist_mat[index])[:samples_per_cluster])
+    for index in k_medoids.medoid_indices_:
+        labeled_indices.extend(np.argsort(dist_mat[index])[:samples_per_cluster])
 
     labeled_indices = np.unique(k_medoids.medoid_indices_)
 

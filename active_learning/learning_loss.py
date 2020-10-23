@@ -27,7 +27,7 @@ class LearningLoss:
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
                          'jurkat': JurkatDataset}
         self.model = None
-        self.kwargs = {'num_workers': 2, 'pin_memory': False, 'drop_last': True}
+        self.kwargs = {'num_workers': 16, 'pin_memory': False, 'drop_last': True}
 
     def main(self):
         dataset_cl = self.datasets[self.args.dataset](root=self.args.root,

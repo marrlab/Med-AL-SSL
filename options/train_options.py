@@ -20,7 +20,7 @@ parser.add_argument('--start-epoch', default=0, type=int,
 parser.add_argument('-b', '--batch-size', default=256, type=int,
                     help='mini-batch size (default: 256)')
 
-parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
+parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float,
                     help='initial learning rate')
 
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
@@ -72,7 +72,7 @@ parser.add_argument('--start-labeled', default=100, type=int,
 parser.add_argument('--stop-labeled', default=1020, type=int,
                     help='amount of labeled data to stop the training process at')
 
-parser.add_argument('--labeled-warmup-epochs', default=15, type=int,
+parser.add_argument('--labeled-warmup-epochs', default=35, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
 
 parser.add_argument('--unlabeled-subset', default=0.3, type=float,
@@ -118,7 +118,7 @@ parser.add_argument('--semi-supervised-method', default='fixmatch_with_al', type
                              'auto_encoder_no_feat', 'simclr_with_al', 'auto_encoder_with_al', 'fixmatch_with_al'],
                     help='the semi supervised method to use')
 
-parser.add_argument('--semi-supervised-uncertainty-method', default='augmentations_based', type=str,
+parser.add_argument('--semi-supervised-uncertainty-method', default='entropy_based', type=str,
                     choices=['entropy_based', 'augmentations_based'],
                     help='the uncertainty sampling method to use for SSL methods')
 
@@ -170,7 +170,7 @@ parser.add_argument('--fixmatch-threshold', default=0.95, type=float,
 parser.add_argument('--fixmatch-k-img', default=8192, type=int,
                     help='number of labeled examples')
 
-parser.add_argument('--fixmatch-epochs', default=400, type=int,
+parser.add_argument('--fixmatch-epochs', default=600, type=int,
                     help='epochs for fixmatch algorithm')
 
 parser.add_argument('--fixmatch-warmup', default=0, type=int,

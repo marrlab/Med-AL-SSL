@@ -89,10 +89,11 @@ class UncertaintySamplingEntropyBased:
             targets = data_y.cpu().numpy() if targets is None \
                 else np.concatenate([targets, data_y.cpu().numpy().tolist()])
 
-            if args.weak_supervision_strategy == 'semi_supervised_active_learning':
-                output = model.forward_encoder_classifier(data_x)
-            else:
-                output = model(data_x)
+            with torch.no_grad():
+                if args.weak_supervision_strategy == 'semi_supervised_active_learning':
+                    output = model.forward_encoder_classifier(data_x)
+                else:
+                    output = model(data_x)
 
             score = self.method(F.softmax(output, dim=1))
 

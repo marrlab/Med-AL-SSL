@@ -2,6 +2,7 @@ from torch.utils.data import DataLoader
 
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
 from active_learning.entropy_based import UncertaintySamplingEntropyBased
+from active_learning.mc_dropout import UncertaintySamplingMCDropout
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
@@ -35,7 +36,10 @@ class FixMatch:
         self.uncertainty_sampling_method = uncertainty_sampling_method
 
     def main(self):
-        if self.uncertainty_sampling_method == 'augmentations_based':
+        if self.args.uncertainty_sampling_method == 'mc_dropout':
+            uncertainty_sampler = UncertaintySamplingMCDropout()
+            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
+        elif self.uncertainty_sampling_method == 'augmentations_based':
             uncertainty_sampler = UncertaintySamplingAugmentationBased()
             self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
         elif self.uncertainty_sampling_method == 'entropy_based':
@@ -71,7 +75,8 @@ class FixMatch:
         labeled_dataset_fix, unlabeled_dataset_fix = dataset_cls.get_datasets_fixmatch(base_dataset, labeled_indices,
                                                                                        unlabeled_indices)
 
-        model, optimizer, scheduler = create_model_optimizer_scheduler(self.args, dataset_cls, 'sdg', 'cos')
+        self.args.lr = 0.0003
+        model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_cls)
 
         if self.args.load_pretrained:
             model = load_pretrained(model)
@@ -99,7 +104,7 @@ class FixMatch:
         for epoch in range(self.args.start_epoch, self.args.fixmatch_epochs):
             train_loader_fix = zip(labeled_loader_fix, unlabeled_loader_fix)
             train_loss = self.train(train_loader_fix, model, optimizer, epoch, len(labeled_loader_fix), criterions,
-                                    base_dataset.classes, last_best_epochs, scheduler)
+                                    base_dataset.classes, last_best_epochs)
             val_loss, val_report = self.validate(val_loader, model, last_best_epochs, criterions)
 
             is_best = val_report['macro avg']['recall'] > best_recall
@@ -163,7 +168,7 @@ class FixMatch:
 
         return best_recall
 
-    def train(self, train_loader, model, optimizer, epoch, loaders_len, criterions, classes, last_best_epochs, sch):
+    def train(self, train_loader, model, optimizer, epoch, loaders_len, criterions, classes, last_best_epochs):
         batch_time = AverageMeter()
         losses = AverageMeter()
         top1 = AverageMeter()
@@ -206,7 +211,7 @@ class FixMatch:
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            sch.step(epoch*loaders_len + i)
+            # sch.step(epoch*loaders_len + i)
 
             batch_time.update(time.time() - end)
             end = time.time()

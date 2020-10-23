@@ -41,7 +41,10 @@ class UncertaintySamplingMCDropout:
                 data_y = data_y.cuda(non_blocking=True)
 
                 with torch.no_grad():
-                    output = model(data_x)
+                    if args.weak_supervision_strategy == 'semi_supervised_active_learning':
+                        output = model.forward_encoder_classifier(data_x)
+                    else:
+                        output = model(data_x)
 
                 scores = output if scores is None else torch.cat([scores, output])
                 targets = data_y.cpu().numpy() if targets is None \
