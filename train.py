@@ -11,7 +11,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '7'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '7'
 
 import torch
 import torch.cuda
@@ -295,6 +295,10 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
+            ('active_learning', 'entropy_based', None, None, False),
+            ('active_learning', 'mc_dropout', None, None, False),
+            ('active_learning', 'augmentations_based', None, None, False),
+            ('random_sampling', None, None, None, False),
             ('semi_supervised', None, 'simclr', None, False),
             ('semi_supervised', None, 'simclr_with_al', 'augmentations_based', False),
             ('semi_supervised', None, 'simclr_with_al', 'entropy_based', False),
