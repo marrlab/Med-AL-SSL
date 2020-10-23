@@ -20,7 +20,7 @@ parser.add_argument('--start-epoch', default=0, type=int,
 parser.add_argument('-b', '--batch-size', default=256, type=int,
                     help='mini-batch size (default: 256)')
 
-parser.add_argument('--lr', '--learning-rate', default=0.03, type=float,
+parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float,
                     help='initial learning rate')
 
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
@@ -48,7 +48,7 @@ parser.add_argument('--no-augment', dest='augment', action='store_false',
 parser.add_argument('--resume', action='store_true',
                     help='flag to be set if an existing model is to be loaded')
 
-parser.add_argument('--load-pretrained', action='store_true',
+parser.add_argument('--load-pretrained', action='store_false',
                     help='load pretrained imagenet weights for some methods')
 
 parser.add_argument('--simclr-resume', action='store_false',
@@ -72,7 +72,7 @@ parser.add_argument('--start-labeled', default=100, type=int,
 parser.add_argument('--stop-labeled', default=1020, type=int,
                     help='amount of labeled data to stop the training process at')
 
-parser.add_argument('--labeled-warmup-epochs', default=15, type=int,
+parser.add_argument('--labeled-warmup-epochs', default=35, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
 
 parser.add_argument('--unlabeled-subset', default=0.3, type=float,
@@ -97,7 +97,7 @@ parser.add_argument('--log-path', default=home+'/med_active_learning/logs_b_100_
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
                     choices=['least_confidence', 'margin_confidence', 'ratio_confidence', 'entropy_based',
-                             'density_weighted', 'mc_dropout', 'learning_loss', 'augmentations_based'],
+                             'mc_dropout', 'learning_loss', 'augmentations_based'],
                     help='the uncertainty sampling method to use')
 
 parser.add_argument('--mc-dropout-iterations', default=25, type=int,
@@ -117,6 +117,10 @@ parser.add_argument('--semi-supervised-method', default='fixmatch_with_al', type
                     choices=['pseudo_labeling', 'auto_encoder', 'simclr', 'fixmatch', 'auto_encoder_cl',
                              'auto_encoder_no_feat', 'simclr_with_al', 'auto_encoder_with_al', 'fixmatch_with_al'],
                     help='the semi supervised method to use')
+
+parser.add_argument('--semi-supervised-uncertainty-method', default='entropy_based', type=str,
+                    choices=['entropy_based', 'augmentations_based'],
+                    help='the uncertainty sampling method to use for SSL methods')
 
 parser.add_argument('--pseudo-labeling-threshold', default=0.9, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
@@ -154,7 +158,7 @@ parser.add_argument('--run-batch', action='store_false', help='run all methods i
 
 parser.add_argument('--reset-model', action='store_true', help='reset models after every labels injection cycle')
 
-parser.add_argument('--fixmatch-mu', default=5, type=int,
+parser.add_argument('--fixmatch-mu', default=8, type=int,
                     help='coefficient of unlabeled batch size i.e. mu.B from paper')
 
 parser.add_argument('--fixmatch-lambda-u', default=1, type=float,
@@ -166,7 +170,7 @@ parser.add_argument('--fixmatch-threshold', default=0.95, type=float,
 parser.add_argument('--fixmatch-k-img', default=8192, type=int,
                     help='number of labeled examples')
 
-parser.add_argument('--fixmatch-epochs', default=1000, type=int,
+parser.add_argument('--fixmatch-epochs', default=600, type=int,
                     help='epochs for fixmatch algorithm')
 
 parser.add_argument('--fixmatch-warmup', default=0, type=int,

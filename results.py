@@ -6,12 +6,10 @@ import pandas as pd
 args = get_arguments()
 
 methods = [
-    'simclr',
-    'simclr_with_al',
-    'simclr_k_medoids',
-    'simclr_with_al_k_medoids',
-    'simclr_k_medoids_100',
-    'simclr_with_al_k_medoids_100',
+    'fixmatch',
+    'fixmatch_with_al',
+    'fixmatch_pretrained',
+    'fixmatch_with_al_pretrained',
 ]
 
 

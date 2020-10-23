@@ -336,7 +336,7 @@ class UncertaintySamplingBatchBald:
                 data_y = data_y.cuda(non_blocking=True)
 
                 with torch.no_grad():
-                    output, _, _ = model(data_x)
+                    output = model(data_x)
 
                 targets = data_y.cpu().numpy() if targets is None \
                     else np.concatenate([targets, data_y.cpu().numpy().tolist()])

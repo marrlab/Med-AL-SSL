@@ -80,17 +80,17 @@ def main(args):
         best_acc = learning_loss.main()
         return best_acc
     elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'simclr_with_al':
-        simclr = SimCLR(args, train_feat=True, uncertainty_sampling_method='augmentations_based')
+        simclr = SimCLR(args, train_feat=True, uncertainty_sampling_method=args.semi_supervised_uncertainty_method)
         simclr.train()
         best_acc = simclr.train_validate_classifier()
         return best_acc
     elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'auto_encoder_with_al':
-        auto_encoder = AutoEncoder(args, uncertainty_sampling_method='augmentations_based')
+        auto_encoder = AutoEncoder(args, uncertainty_sampling_method=args.semi_supervised_uncertainty_method)
         auto_encoder.train()
         best_acc = auto_encoder.train_validate_classifier()
         return best_acc
     elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'fixmatch_with_al':
-        fixmatch = FixMatch(args, uncertainty_sampling_method='augmentations_based')
+        fixmatch = FixMatch(args, uncertainty_sampling_method=args.semi_supervised_uncertainty_method)
         best_acc = fixmatch.main()
         return best_acc
 
@@ -118,7 +118,7 @@ def main(args):
     base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
         dataset_class.get_dataset()
 
-    kwargs = {'num_workers': 2, 'pin_memory': False}
+    kwargs = {'num_workers': 16, 'pin_memory': False}
     train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset,
                                                                 labeled_indices, unlabeled_indices, kwargs,
                                                                 dataset_class.unlabeled_subset_num)
@@ -214,7 +214,7 @@ def train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, ar
         data_x = data_x.cuda(non_blocking=True)
 
         optimizer.zero_grad()
-        output, _, _ = model(data_x)
+        output = model(data_x)
         loss = criterion(output, data_y)
 
         losses_per_class.update(loss.cpu().detach().numpy(), data_y.cpu().numpy())
@@ -260,7 +260,7 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
             data_y = data_y.cuda(non_blocking=True)
             data_x = data_x.cuda(non_blocking=True)
 
-            output, _, _ = model(data_x)
+            output = model(data_x)
             loss = criterion(output, data_y)
 
             losses_per_class.update(loss.cpu().detach().numpy(), data_y.cpu().numpy())
@@ -296,28 +296,31 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            # ('active_learning', 'least_confidence', 'pseudo_labeling'),
-            # ('active_learning', 'margin_confidence', 'pseudo_labeling'),
-            # ('active_learning', 'ratio_confidence', 'pseudo_labeling'),
-            # ('active_learning', 'entropy_based', 'pseudo_labeling'),
-            # ('active_learning', 'mc_dropout', 'pseudo_labeling'),
-            # ('active_learning', 'learning_loss', 'pseudo_labeling'),
-            # ('active_learning', 'augmentations_based', 'pseudo_labeling'),
-            # ('random_sampling', 'least_confidence', 'pseudo_labeling'),
-            # ('semi_supervised', 'least_confidence', 'pseudo_labeling'),
-            ('semi_supervised', 'least_confidence', 'simclr'),
-            # ('semi_supervised', 'least_confidence', 'auto_encoder'),
-            # ('semi_supervised', 'least_confidence', 'auto_encoder_with_al'),
-            # ('semi_supervised', 'least_confidence', 'auto_encoder_cl'),
+            ('active_learning', 'entropy_based', None, None, False),
+            ('active_learning', 'mc_dropout', None, None, False),
+            ('active_learning', 'augmentations_based', None, None, False),
+            ('random_sampling', None, None, None, False),
+            ('semi_supervised', 'least_confidence', 'simclr', None, False),
+            ('semi_supervised', 'least_confidence', 'simclr_with_al', 'augmentations_based', False),
+            ('semi_supervised', 'least_confidence', 'simclr_with_al', 'entropy_based', False),
+            ('semi_supervised', 'least_confidence', 'simclr_with_al', 'mc_dropout', False),
+            ('semi_supervised', 'least_confidence', 'auto_encoder', None, False),
+            ('semi_supervised', 'least_confidence', 'auto_encoder_with_al', 'augmentations_based', False),
+            ('semi_supervised', 'least_confidence', 'auto_encoder_with_al', 'entropy_based', False),
+            ('semi_supervised', 'least_confidence', 'auto_encoder_with_al', 'mc_dropout', False),
+            ('active_learning', 'entropy_based', None, None, True),
+            ('active_learning', 'mc_dropout', None, None, True),
+            ('active_learning', 'augmentations_based', None, None, True),
             # ('semi_supervised', 'least_confidence', 'fixmatch'),
             # ('semi_supervised', 'least_confidence', 'fixmatch_with_al'),
-            ('semi_supervised', 'least_confidence', 'simclr_with_al'),
         ]
 
-        for (m, u, s) in states:
+        for (m, u, s, us, p) in states:
             arguments.weak_supervision_strategy = m
             arguments.uncertainty_sampling_method = u
             arguments.semi_supervised_method = s
+            arguments.semi_supervised_uncertainty_method = us
+            arguments.load_pretrained = p
             random.seed(arguments.seed)
             torch.manual_seed(arguments.seed)
             np.random.seed(arguments.seed)

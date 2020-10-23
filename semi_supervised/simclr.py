@@ -1,4 +1,6 @@
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
+from active_learning.entropy_based import UncertaintySamplingEntropyBased
+from active_learning.mc_dropout import UncertaintySamplingMCDropout
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
@@ -95,8 +97,15 @@ class SimCLR:
         return model
 
     def train_validate_classifier(self):
-        if self.uncertainty_sampling_method == 'augmentations_based':
+        if self.args.uncertainty_sampling_method == 'mc_dropout':
+            uncertainty_sampler = UncertaintySamplingMCDropout()
+            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
+        elif self.uncertainty_sampling_method == 'augmentations_based':
             uncertainty_sampler = UncertaintySamplingAugmentationBased()
+            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
+        elif self.uncertainty_sampling_method == 'entropy_based':
+            uncertainty_sampler = UncertaintySamplingEntropyBased(verbose=True,
+                                                                  uncertainty_sampling_method='entropy_based')
             self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
         else:
             uncertainty_sampler = None

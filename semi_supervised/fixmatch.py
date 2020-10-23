@@ -1,6 +1,8 @@
 from torch.utils.data import DataLoader
 
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
+from active_learning.entropy_based import UncertaintySamplingEntropyBased
+from active_learning.mc_dropout import UncertaintySamplingMCDropout
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
@@ -34,8 +36,15 @@ class FixMatch:
         self.uncertainty_sampling_method = uncertainty_sampling_method
 
     def main(self):
-        if self.uncertainty_sampling_method == 'augmentations_based':
+        if self.args.uncertainty_sampling_method == 'mc_dropout':
+            uncertainty_sampler = UncertaintySamplingMCDropout()
+            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
+        elif self.uncertainty_sampling_method == 'augmentations_based':
             uncertainty_sampler = UncertaintySamplingAugmentationBased()
+            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
+        elif self.uncertainty_sampling_method == 'entropy_based':
+            uncertainty_sampler = UncertaintySamplingEntropyBased(verbose=True,
+                                                                  uncertainty_sampling_method='entropy_based')
             self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
         else:
             uncertainty_sampler = None
@@ -66,6 +75,7 @@ class FixMatch:
         labeled_dataset_fix, unlabeled_dataset_fix = dataset_cls.get_datasets_fixmatch(base_dataset, labeled_indices,
                                                                                        unlabeled_indices)
 
+        self.args.lr = 0.0003
         model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_cls)
 
         if self.args.load_pretrained:
@@ -176,7 +186,7 @@ class FixMatch:
             data_w, data_s = data_w.cuda(non_blocking=True), data_s.cuda(non_blocking=True)
 
             inputs = torch.cat((data_x, data_w, data_s))
-            logits, _, _ = model(inputs)
+            logits = model(inputs)
             logits_labeled = logits[:self.args.batch_size]
             logits_unlabeled_w, logits_unlabeled_s = logits[self.args.batch_size:].chunk(2)
             del logits
@@ -201,6 +211,7 @@ class FixMatch:
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+            # sch.step(epoch*loaders_len + i)
 
             batch_time.update(time.time() - end)
             end = time.time()
@@ -209,9 +220,11 @@ class FixMatch:
                 print('Epoch Classifier: [{0}][{1}/{2}]\t'
                       'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                       'Loss {loss.val:.4f} ({loss.avg:.4f})\t'
-                      'Last best epoch {last_best_epoch}'
+                      'Last best epoch {last_best_epoch}\t'
+                      'Current LR: {curr_lr}'
                       .format(epoch, i, loaders_len,
-                              batch_time=batch_time, loss=losses, last_best_epoch=last_best_epochs))
+                              batch_time=batch_time, loss=losses,
+                              last_best_epoch=last_best_epochs, curr_lr=optimizer.param_groups[0]['lr']))
 
         return pd.DataFrame.from_dict({f'{k}-train-loss': losses_per_class.avg[i]
                                        for i, k in enumerate(classes)}, orient='index').T
@@ -233,7 +246,7 @@ class FixMatch:
                 data_x = data_x.cuda(non_blocking=True)
                 data_y = data_y.cuda(non_blocking=True)
 
-                output, _, _ = model(data_x)
+                output = model(data_x)
 
                 loss = criterions['labeled'](output, data_y)
 

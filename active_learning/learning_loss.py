@@ -27,7 +27,7 @@ class LearningLoss:
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
                          'jurkat': JurkatDataset}
         self.model = None
-        self.kwargs = {'num_workers': 2, 'pin_memory': False, 'drop_last': True}
+        self.kwargs = {'num_workers': 16, 'pin_memory': False, 'drop_last': True}
 
     def main(self):
         dataset_cl = self.datasets[self.args.dataset](root=self.args.root,
@@ -146,7 +146,7 @@ class LearningLoss:
             optimizers['backbone'].zero_grad()
             optimizers['module'].zero_grad()
 
-            output, _, features = models['backbone'](data_x)
+            output, features = models['backbone'].forward_features(data_x)
             target_loss = criterions['backbone'](output, data_y)
 
             pred_loss = models['module'](features)
@@ -198,7 +198,7 @@ class LearningLoss:
                 data_y = data_y.cuda(non_blocking=True)
                 data_x = data_x.cuda(non_blocking=True)
 
-                output, _, _ = models['backbone'](data_x)
+                output = models['backbone'](data_x)
                 loss = criterions['backbone'](output, data_y)
 
                 losses_per_class.update(loss.cpu().detach().numpy(), data_y.cpu().numpy())
