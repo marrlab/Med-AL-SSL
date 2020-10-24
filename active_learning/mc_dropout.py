@@ -42,9 +42,9 @@ class UncertaintySamplingMCDropout:
 
                 with torch.no_grad():
                     if args.weak_supervision_strategy == 'semi_supervised_active_learning':
-                        output = model.forward_encoder_classifier(data_x)
+                        output = torch.softmax(model.forward_encoder_classifier(data_x), dim=1)
                     else:
-                        output = model(data_x)
+                        output = torch.softmax(model(data_x), dim=1)
 
                 scores = output if scores is None else torch.cat([scores, output])
                 targets = data_y.cpu().numpy() if targets is None \
