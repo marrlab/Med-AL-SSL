@@ -7,9 +7,13 @@ args = get_arguments()
 
 methods = [
     'fixmatch',
-    'fixmatch_with_al',
     'fixmatch_pretrained',
-    'fixmatch_with_al_pretrained',
+    'fixmatch_with_al_augmentations_based',
+    'fixmatch_with_al_augmentations_based_pretrained',
+    'fixmatch_with_al_entropy_based',
+    'fixmatch_with_al_entropy_based_pretrained',
+    'fixmatch_with_al_mc_dropout',
+    'fixmatch_with_al_mc_dropout_pretrained'
 ]
 
 

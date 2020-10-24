@@ -1,4 +1,5 @@
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
+from active_learning.batch_bald import UncertaintySamplingBatchBald
 from active_learning.learning_loss import LearningLoss
 from data.config.cifar10_config import set_cifar_configs
 from options.train_options import get_arguments
@@ -11,7 +12,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-# os.environ['CUDA_VISIBLE_DEVICES'] = '7'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 import torch
 import torch.cuda
@@ -98,6 +99,8 @@ def main(args):
         uncertainty_sampler = UncertaintySamplingMCDropout()
     elif args.uncertainty_sampling_method == 'augmentations_based':
         uncertainty_sampler = UncertaintySamplingAugmentationBased()
+    elif args.uncertainty_sampling_method == 'batch_bald':
+        uncertainty_sampler = UncertaintySamplingBatchBald()
     else:
         uncertainty_sampler = UncertaintySamplingEntropyBased(verbose=True,
                                                               uncertainty_sampling_method='entropy_based')
@@ -295,30 +298,7 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            ('active_learning', 'entropy_based', None, None, False),
-            ('active_learning', 'mc_dropout', None, None, False),
-            ('active_learning', 'augmentations_based', None, None, False),
-            ('random_sampling', None, None, None, False),
-            ('semi_supervised', None, 'simclr', None, False),
-            ('semi_supervised', None, 'simclr_with_al', 'augmentations_based', False),
-            ('semi_supervised', None, 'simclr_with_al', 'entropy_based', False),
-            ('semi_supervised', None, 'simclr_with_al', 'mc_dropout', False),
-            ('semi_supervised', None, 'auto_encoder', None, False),
-            ('semi_supervised', None, 'auto_encoder_with_al', 'augmentations_based', False),
-            ('semi_supervised', None, 'auto_encoder_with_al', 'entropy_based', False),
-            ('semi_supervised', None, 'auto_encoder_with_al', 'mc_dropout', False),
-            ('semi_supervised', None, 'fixmatch', None, False),
-            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', False),
-            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', False),
-            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', False),
-            ('active_learning', 'entropy_based', None, None, True),
-            ('active_learning', 'mc_dropout', None, None, True),
-            ('active_learning', 'augmentations_based', None, None, True),
-            ('random_sampling', None, None, None, True),
-            ('semi_supervised', None, 'fixmatch', None, True),
-            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', True),
-            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', True),
-            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', True),
+            ('active_learning', 'batch_bald', None, None, False),
         ]
 
         for (m, u, s, us, p) in states:

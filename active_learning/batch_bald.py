@@ -268,19 +268,32 @@ class UncertaintySamplingBatchBald:
     def compute_conditional_entropy(probs_N_K_C: torch.Tensor) -> torch.Tensor:
         N, K, C = probs_N_K_C.shape
 
-        nats_N_K_C = probs_N_K_C * torch.log(probs_N_K_C)
-        nats_N_K_C[probs_N_K_C == 0] = 0.
+        entropies_N = torch.empty(N, dtype=torch.double)
 
-        return -torch.sum(nats_N_K_C, dim=(1, 2)) / K
+        @toma.execute.chunked(probs_N_K_C, 1024)
+        def compute(probs_n_K_C, start: int, end: int):
+            nats_n_K_C = probs_n_K_C * torch.log(probs_n_K_C)
+            nats_n_K_C[probs_n_K_C == 0] = 0.
+
+            entropies_N[start:end].copy_(-torch.sum(nats_n_K_C, dim=(1, 2)) / K)
+
+        return entropies_N
 
     @staticmethod
     def compute_entropy(probs_N_K_C: torch.Tensor) -> torch.Tensor:
+        N, K, C = probs_N_K_C.shape
 
-        mean_probs_N_C = probs_N_K_C.mean(dim=1)
-        nats_N_C = mean_probs_N_C * torch.log(mean_probs_N_C)
-        nats_N_C[mean_probs_N_C == 0] = 0.
+        entropies_N = torch.empty(N, dtype=torch.double)
 
-        return -torch.sum(nats_N_C, dim=1)
+        @toma.execute.chunked(probs_N_K_C, 1024)
+        def compute(probs_n_K_C, start: int, end: int):
+            mean_probs_n_C = probs_n_K_C.mean(dim=1)
+            nats_n_C = mean_probs_n_C * torch.log(mean_probs_n_C)
+            nats_n_C[mean_probs_n_C == 0] = 0.
+
+            entropies_N[start:end].copy_(-torch.sum(nats_n_C, dim=1))
+
+        return entropies_N
 
     def get_batchbald_batch(self, probs_N_K_C: torch.Tensor,
                             batch_size: int,
@@ -298,7 +311,7 @@ class UncertaintySamplingBatchBald:
 
         batch_joint_entropy = DynamicJointEntropy(num_samples, batch_size - 1, K, C, dtype=dtype, device=device)
 
-        scores_N = torch.empty(N, dtype=torch.double, device='cuda')
+        scores_N = torch.empty(N, dtype=torch.double, device=device)
 
         for i in range(batch_size):
             if i > 0:
@@ -325,19 +338,25 @@ class UncertaintySamplingBatchBald:
     def get_samples(self, epoch, args, model, _, unlabeled_loader, number):
         batch_time = AverageMeter()
         targets = None
+        all_scores = None
 
         end = time.time()
 
         model.train()
 
         for j in range(args.mc_dropout_iterations):
+            scores = None
             for i, (data_x, data_y) in enumerate(unlabeled_loader):
                 data_x = data_x.cuda(non_blocking=True)
                 data_y = data_y.cuda(non_blocking=True)
 
                 with torch.no_grad():
-                    output = model(data_x)
+                    if args.weak_supervision_strategy == 'semi_supervised_active_learning':
+                        output = torch.softmax(model.forward_encoder_classifier(data_x), dim=1)
+                    else:
+                        output = torch.softmax(model(data_x), dim=1)
 
+                scores = output if scores is None else torch.cat([scores, output])
                 targets = data_y.cpu().numpy() if targets is None \
                     else np.concatenate([targets, data_y.cpu().numpy().tolist()])
 
@@ -350,9 +369,16 @@ class UncertaintySamplingBatchBald:
                           'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                           .format(args.uncertainty_sampling_method, epoch, i, len(unlabeled_loader),
                                   batch_time=batch_time))
+            if all_scores is None:
+                all_scores = scores
+            elif all_scores.dim() > 2:
+                all_scores = torch.cat([all_scores, scores.unsqueeze(dim=1)], dim=1)
+            else:
+                all_scores = torch.cat([all_scores.unsqueeze(dim=1), scores.unsqueeze(dim=1)], dim=1)
+
             print('\n BatchBald sample: ', j+1)
 
-        scores, indices = self.get_batchbald_batch(targets, batch_size=args.batch_size,
+        scores, indices = self.get_batchbald_batch(all_scores, batch_size=number,
                                                    num_samples=args.mc_dropout_iterations)
 
-        return indices[:number]
+        return indices
