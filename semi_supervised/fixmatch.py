@@ -36,7 +36,7 @@ class FixMatch:
         self.uncertainty_sampling_method = uncertainty_sampling_method
 
     def main(self):
-        if self.args.uncertainty_sampling_method == 'mc_dropout':
+        if self.uncertainty_sampling_method == 'mc_dropout':
             uncertainty_sampler = UncertaintySamplingMCDropout()
             self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
         elif self.uncertainty_sampling_method == 'augmentations_based':

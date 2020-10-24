@@ -295,29 +295,6 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            ('active_learning', 'entropy_based', None, None, False),
-            ('active_learning', 'mc_dropout', None, None, False),
-            ('active_learning', 'augmentations_based', None, None, False),
-            ('random_sampling', None, None, None, False),
-            ('semi_supervised', None, 'simclr', None, False),
-            ('semi_supervised', None, 'simclr_with_al', 'augmentations_based', False),
-            ('semi_supervised', None, 'simclr_with_al', 'entropy_based', False),
-            ('semi_supervised', None, 'simclr_with_al', 'mc_dropout', False),
-            ('semi_supervised', None, 'auto_encoder', None, False),
-            ('semi_supervised', None, 'auto_encoder_with_al', 'augmentations_based', False),
-            ('semi_supervised', None, 'auto_encoder_with_al', 'entropy_based', False),
-            ('semi_supervised', None, 'auto_encoder_with_al', 'mc_dropout', False),
-            ('semi_supervised', None, 'fixmatch', None, False),
-            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', False),
-            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', False),
-            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', False),
-            ('active_learning', 'entropy_based', None, None, True),
-            ('active_learning', 'mc_dropout', None, None, True),
-            ('active_learning', 'augmentations_based', None, None, True),
-            ('random_sampling', None, None, None, True),
-            ('semi_supervised', None, 'fixmatch', None, True),
-            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', True),
-            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', True),
             ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', True),
         ]
 

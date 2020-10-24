@@ -97,7 +97,7 @@ class SimCLR:
         return model
 
     def train_validate_classifier(self):
-        if self.args.uncertainty_sampling_method == 'mc_dropout':
+        if self.uncertainty_sampling_method == 'mc_dropout':
             uncertainty_sampler = UncertaintySamplingMCDropout()
             self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
         elif self.uncertainty_sampling_method == 'augmentations_based':
