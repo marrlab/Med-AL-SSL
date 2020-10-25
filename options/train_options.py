@@ -177,8 +177,8 @@ parser.add_argument('--fixmatch-epochs', default=600, type=int,
 parser.add_argument('--fixmatch-warmup', default=0, type=int,
                     help='warmup epochs with unlabeled data')
 
-parser.add_argument('--fixmatch-init', default='fixmatch_with_al', type=str,
-                    choices=['random', 'pretrained', 'simclr', 'autoencoder'],
+parser.add_argument('--fixmatch-init', default=None, type=str,
+                    choices=[None, 'random', 'pretrained', 'simclr', 'autoencoder'],
                     help='the semi supervised method to use')
 
 parser.add_argument('--learning-loss-weight', default=1.0, type=float,

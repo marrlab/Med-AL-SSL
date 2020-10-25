@@ -27,7 +27,7 @@ Courtesy to: https://github.com/kekmodel/FixMatch-pytorch
 
 
 class FixMatch:
-    def __init__(self, args, verbose=True, uncertainty_sampling_method='random_sampling', init='random'):
+    def __init__(self, args, verbose=True, uncertainty_sampling_method='random_sampling'):
         self.args = args
         self.verbose = verbose
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
@@ -35,7 +35,7 @@ class FixMatch:
         self.model = None
         self.kwargs = {'num_workers': 16, 'pin_memory': False, 'drop_last': True}
         self.uncertainty_sampling_method = uncertainty_sampling_method
-        self.init = init
+        self.init = self.args.fixmatch_init
 
     def main(self):
         if self.uncertainty_sampling_method == 'mc_dropout':
@@ -85,7 +85,7 @@ class FixMatch:
         elif self.init == 'autoencoder':
             model, optimizer, _ = create_model_optimizer_autoencoder(self.args, dataset_cls)
         elif self.init == 'simclr':
-            model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_cls)
+            model, optimizer, _, _ = create_model_optimizer_simclr(self.args, dataset_cls)
 
         labeled_loader_fix = DataLoader(dataset=labeled_dataset_fix, batch_size=self.args.batch_size,
                                         shuffle=True, **self.kwargs)

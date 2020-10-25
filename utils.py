@@ -323,7 +323,7 @@ def create_model_optimizer_simclr(args, dataset_class):
         model, _, _ = resume_model(args, model)
         args.start_epoch = args.epochs
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     scheduler = None
 
     return model, optimizer, scheduler, args
@@ -339,7 +339,7 @@ def create_model_optimizer_autoencoder(args, dataset_class):
         model, _, _ = resume_model(args, model)
         args.start_epoch = args.epochs
 
-    optimizer = torch.optim.Adam(model.parameters())
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     return model, optimizer, args
 
@@ -428,6 +428,7 @@ def set_model_name(args):
     name = f'{name}{"_pretrained" if args.load_pretrained else ""}'
     name = f'{name}{"_k_medoids_100" if args.k_medoids else ""}'
     name = f'{name}{"_novel_class_detection" if args.novel_class_detection else ""}'
+    name = f'{name}{f"_{args.fixmatch_init}" if args.fixmatch_init is not None else ""}'
 
     return name
 
