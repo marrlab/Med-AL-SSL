@@ -29,14 +29,10 @@ credits to: Alex Olteanu (https://www.dataquest.io/blog/making-538-plots/) for t
 
 
 methods = [
-    'fixmatch',
-    'fixmatch_pretrained',
-    'fixmatch_with_al_augmentations_based',
-    'fixmatch_with_al_augmentations_based_pretrained',
-    'fixmatch_with_al_entropy_based',
-    'fixmatch_with_al_entropy_based_pretrained',
-    'fixmatch_with_al_mc_dropout',
-    'fixmatch_with_al_mc_dropout_pretrained'
+    'random_sampling',
+    'random_sampling_pretrained',
+    'mc_dropout',
+    'mc_dropout_pretrained',
 ]
 
 
@@ -181,3 +177,18 @@ if __name__ == "__main__":
 
     ae_loss_logs = ae_loss(args.dataset)
     plot_ae_loss(losses=['bce', 'l1', 'l2', 'ssim'], logs=ae_loss_logs, epochs=list(range(len(ae_loss_logs[0]))))
+
+
+"""
+Combinations:
+    'fixmatch',
+    'fixmatch_pretrained',
+    'fixmatch_with_al_augmentations_based',
+    'fixmatch_with_al_augmentations_based_pretrained',
+    'fixmatch_with_al_entropy_based',
+    'fixmatch_with_al_entropy_based_pretrained',
+    'fixmatch_with_al_mc_dropout',
+    'fixmatch_with_al_mc_dropout_pretrained'
+    
+    
+"""

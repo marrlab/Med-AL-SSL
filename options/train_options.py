@@ -61,7 +61,7 @@ parser.add_argument('--autoencoder-resume', action='store_false',
 parser.add_argument('--name', default=' ', type=str,
                     help='name of experiment')
 
-parser.add_argument('--add-labeled-epochs', default=2, type=int,
+parser.add_argument('--add-labeled-epochs', default=20, type=int,
                     help='add labeled data through sampling strategy after epochs')
 
 parser.add_argument('--add-labeled', default=100, type=int,
@@ -73,7 +73,7 @@ parser.add_argument('--start-labeled', default=100, type=int,
 parser.add_argument('--stop-labeled', default=1020, type=int,
                     help='amount of labeled data to stop the training process at')
 
-parser.add_argument('--labeled-warmup-epochs', default=1, type=int,
+parser.add_argument('--labeled-warmup-epochs', default=35, type=int,
                     help='how many epochs to warmup for, without sampling or pseudo labeling')
 
 parser.add_argument('--unlabeled-subset', default=0.3, type=float,
@@ -93,7 +93,7 @@ parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet',
 parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
-parser.add_argument('--log-path', default=f'{home}/{code_dir}/logs_plasmodium/', type=str,
+parser.add_argument('--log-path', default=f'{home}/{code_dir}/logs_matek/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
@@ -101,7 +101,7 @@ parser.add_argument('--uncertainty-sampling-method', default='entropy_based', ty
                              'mc_dropout', 'learning_loss', 'augmentations_based'],
                     help='the uncertainty sampling method to use')
 
-parser.add_argument('--mc-dropout-iterations', default=2, type=int,
+parser.add_argument('--mc-dropout-iterations', default=25, type=int,
                     help='number of iterations for mc dropout')
 
 parser.add_argument('--augmentations_based_iterations', default=25, type=int,
