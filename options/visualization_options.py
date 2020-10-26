@@ -15,7 +15,7 @@ parser.add_argument('--metric-ratio', default='macro avg', type=str,
 parser.add_argument('--root', default=home+'/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
 
-parser.add_argument('--dataset', default='jurkat', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat',
+parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat',
                                                                       'plasmodium'], help='the dataset to train on')
 
 parser.add_argument('--oversampling', action='store_true', help='perform oversampling for labeled dataset')

@@ -12,7 +12,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '7'
 
 import torch
 import torch.cuda
@@ -298,23 +298,23 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            ('semi_supervised', None, 'fixmatch', None, True, 'simclr'),
-            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', True, 'simclr'),
-            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', True, 'simclr'),
-            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', True, 'simclr'),
-            ('semi_supervised', None, 'fixmatch', None, True, 'autoencoder'),
-            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', True, 'autoencoder'),
-            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', True, 'autoencoder'),
-            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', True, 'autoencoder'),
+            ('semi_supervised', None, 'auto_encoder', None, False, None),
+            ('semi_supervised', None, 'auto_encoder_with_al', 'augmentations_based', False, None),
+            ('semi_supervised', None, 'auto_encoder_with_al', 'entropy_based', False, None),
+            ('semi_supervised', None, 'auto_encoder_with_al', 'mc_dropout', False, None),
+            ('active_learning', 'entropy_based', None, None, True, None),
+            ('active_learning', 'mc_dropout', None, None, True, None),
+            ('active_learning', 'augmentations_based', None, None, True, None),
+            ('random_sampling', None, None, None, True, None),
         ]
 
-        for (m, u, s, us, p, i) in states:
+        for (m, u, s, us, p, init) in states:
             arguments.weak_supervision_strategy = m
             arguments.uncertainty_sampling_method = u
             arguments.semi_supervised_method = s
             arguments.semi_supervised_uncertainty_method = us
             arguments.load_pretrained = p
-            arguments.fixmatch_init = i
+            arguments.fixmatch_init = init
             random.seed(arguments.seed)
             torch.manual_seed(arguments.seed)
             np.random.seed(arguments.seed)
@@ -324,3 +324,40 @@ if __name__ == '__main__':
             main(args=arguments)
     else:
         main(args=arguments)
+
+
+'''
+All Batch states:
+    ('active_learning', 'entropy_based', None, None, False, None),
+    ('active_learning', 'mc_dropout', None, None, False, None),
+    ('active_learning', 'augmentations_based', None, None, False, None),
+    ('random_sampling', None, None, None, False, None),
+    ('semi_supervised', None, 'simclr', None, False, None),
+    ('semi_supervised', None, 'simclr_with_al', 'augmentations_based', False, None),
+    ('semi_supervised', None, 'simclr_with_al', 'entropy_based', False, None),
+    ('semi_supervised', None, 'simclr_with_al', 'mc_dropout', False, None),
+    ('semi_supervised', None, 'auto_encoder', None, False, None),
+    ('semi_supervised', None, 'auto_encoder_with_al', 'augmentations_based', False, None),
+    ('semi_supervised', None, 'auto_encoder_with_al', 'entropy_based', False, None),
+    ('semi_supervised', None, 'auto_encoder_with_al', 'mc_dropout', False, None),
+    ('semi_supervised', None, 'fixmatch', None, False, None),
+    ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', False, None),
+    ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', False, None),
+    ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', False, None),
+    ('active_learning', 'entropy_based', None, None, True, None),
+    ('active_learning', 'mc_dropout', None, None, True, None),
+    ('active_learning', 'augmentations_based', None, None, True, None),
+    ('random_sampling', None, None, None, True, None),
+    ('semi_supervised', None, 'fixmatch', None, True, 'pretrained'),
+    ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', True, 'pretrained'),
+    ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', True, 'pretrained'),
+    ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', True, 'pretrained'),
+    ('semi_supervised', None, 'fixmatch', None, True, 'simclr'),
+    ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', True, 'simclr'),
+    ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', True, 'simclr'),
+    ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', True, 'simclr'),
+    ('semi_supervised', None, 'fixmatch', None, True, 'autoencoder'),
+    ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', True, 'autoencoder'),
+    ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', True, 'autoencoder'),
+    ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', True, 'autoencoder'),
+'''
