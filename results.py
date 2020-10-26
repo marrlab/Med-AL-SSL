@@ -6,10 +6,14 @@ import pandas as pd
 args = get_arguments()
 
 methods = [
-    'fixmatch',
-    'fixmatch_with_al',
-    'fixmatch_pretrained',
-    'fixmatch_with_al_pretrained',
+    'random_sampling',
+    'mc_dropout',
+    'entropy_based',
+    'augmentations_based',
+    'random_sampling_pretrained',
+    'mc_dropout_pretrained',
+    'entropy_based_pretrained',
+    'augmentations_based_pretrained',
 ]
 
 

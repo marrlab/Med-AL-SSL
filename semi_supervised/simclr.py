@@ -50,6 +50,7 @@ class SimCLR:
 
         criterion = NTXent(self.args.simclr_batch_size, self.args.simclr_temperature, torch.device("cuda"))
 
+        self.args.lr = 3e-4
         model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_class)
 
         best_loss = np.inf

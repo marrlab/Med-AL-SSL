@@ -7,3 +7,6 @@ Pillow>=7.1.2
 matplotlib>=3.2.1
 toma>=1.1.0
 scikit-image>=0.17.2
+pytorch-msssim
+scikit-learn-extra
+dataclasses

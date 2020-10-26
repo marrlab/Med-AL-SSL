@@ -12,7 +12,8 @@ import torch
 import time
 
 from utils import create_model_optimizer_scheduler, AverageMeter, accuracy, Metrics, perform_sampling, \
-    store_logs, save_checkpoint, get_loss, LossPerClassMeter, create_loaders, novel_class_detected, load_pretrained
+    store_logs, save_checkpoint, get_loss, LossPerClassMeter, create_loaders, novel_class_detected, load_pretrained, \
+    create_model_optimizer_autoencoder, create_model_optimizer_simclr
 
 import pandas as pd
 from copy import deepcopy
@@ -34,6 +35,7 @@ class FixMatch:
         self.model = None
         self.kwargs = {'num_workers': 16, 'pin_memory': False, 'drop_last': True}
         self.uncertainty_sampling_method = uncertainty_sampling_method
+        self.init = self.args.fixmatch_init
 
     def main(self):
         if self.uncertainty_sampling_method == 'mc_dropout':
@@ -78,8 +80,12 @@ class FixMatch:
         self.args.lr = 0.0003
         model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_cls)
 
-        if self.args.load_pretrained:
+        if self.init == 'pretrained':
             model = load_pretrained(model)
+        elif self.init == 'autoencoder':
+            model, optimizer, _ = create_model_optimizer_autoencoder(self.args, dataset_cls)
+        elif self.init == 'simclr':
+            model, optimizer, _, _ = create_model_optimizer_simclr(self.args, dataset_cls)
 
         labeled_loader_fix = DataLoader(dataset=labeled_dataset_fix, batch_size=self.args.batch_size,
                                         shuffle=True, **self.kwargs)
@@ -138,7 +144,12 @@ class FixMatch:
                 last_best_epochs = 0
 
                 if self.args.reset_model:
-                    model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_cls)
+                    if self.init == 'pretrained':
+                        model = load_pretrained(model)
+                    elif self.init == 'autoencoder':
+                        model, optimizer, _ = create_model_optimizer_autoencoder(self.args, dataset_cls)
+                    elif self.init == 'simclr':
+                        model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_cls)
 
                 if self.args.novel_class_detection:
                     if novel_class_detected(train_loader, dataset_cls, self.args):
@@ -186,7 +197,7 @@ class FixMatch:
             data_w, data_s = data_w.cuda(non_blocking=True), data_s.cuda(non_blocking=True)
 
             inputs = torch.cat((data_x, data_w, data_s))
-            logits = model(inputs)
+            logits = model.forward_encoder_classifier(inputs)
             logits_labeled = logits[:self.args.batch_size]
             logits_unlabeled_w, logits_unlabeled_s = logits[self.args.batch_size:].chunk(2)
             del logits
@@ -246,7 +257,7 @@ class FixMatch:
                 data_x = data_x.cuda(non_blocking=True)
                 data_y = data_y.cuda(non_blocking=True)
 
-                output = model(data_x)
+                output = model.forward_encoder_classifier(data_x)
 
                 loss = criterions['labeled'](output, data_y)
 

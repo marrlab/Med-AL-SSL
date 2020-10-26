@@ -29,10 +29,14 @@ credits to: Alex Olteanu (https://www.dataquest.io/blog/making-538-plots/) for t
 
 
 methods = [
-    'fixmatch',
-    'fixmatch_with_al',
-    'fixmatch_pretrained',
-    'fixmatch_with_al_pretrained',
+    'random_sampling',
+    'mc_dropout',
+    'entropy_based',
+    'augmentations_based',
+    'random_sampling_pretrained',
+    'mc_dropout_pretrained',
+    'entropy_based_pretrained',
+    'augmentations_based_pretrained',
 ]
 
 
@@ -79,8 +83,8 @@ def plot_ratio_metrics(prop, metric, label_y):
               [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1], [211 / 255, 95 / 255, 183 / 255, 1],
               [238 / 255, 136 / 255, 102 / 255, 1]]
 
-    # plt.errorbar(prop, [0.92] * len(prop), yerr=[0] * len(prop), color=colors[0],
-    #             label='fully_supervised', linewidth=2, linestyle='--', marker='o', capsize=3)
+    plt.errorbar(prop, [0.8621] * len(prop), yerr=[0.003] * len(prop), color=colors[0],
+                 label='fully_supervised', linewidth=2, linestyle='--', marker='o', capsize=3)
 
     for i, method in enumerate(methods):
         if len(metric[i]) == 0:
@@ -177,3 +181,43 @@ if __name__ == "__main__":
 
     ae_loss_logs = ae_loss(args.dataset)
     plot_ae_loss(losses=['bce', 'l1', 'l2', 'ssim'], logs=ae_loss_logs, epochs=list(range(len(ae_loss_logs[0]))))
+
+
+"""
+Combinations:
+    'fixmatch',
+    'fixmatch_pretrained',
+    'fixmatch_with_al_augmentations_based',
+    'fixmatch_with_al_augmentations_based_pretrained',
+    'fixmatch_with_al_entropy_based',
+    'fixmatch_with_al_entropy_based_pretrained',
+    'fixmatch_with_al_mc_dropout',
+    'fixmatch_with_al_mc_dropout_pretrained'
+    
+    'simclr',
+    'simclr_pretrained',
+    'simclr_with_al_augmentations_based',
+    'simclr_with_al_augmentations_based_pretrained',
+    'simclr_with_al_entropy_based',
+    'simclr_with_al_entropy_based_pretrained',
+    'simclr_with_al_mc_dropout',
+    'simclr_with_al_mc_dropout_pretrained'
+    
+    'random_sampling',
+    'mc_dropout',
+    'entropy_based',
+    'augmentations_based',
+    'random_sampling_pretrained',
+    'mc_dropout_pretrained',
+    'entropy_based_pretrained',
+    'augmentations_based_pretrained',
+    
+    'auto_encoder',
+    'auto_encoder_pretrained',
+    'auto_encoder_with_al_augmentations_based',
+    'auto_encoder_with_al_augmentations_based_pretrained',
+    'auto_encoder_with_al_entropy_based',
+    'auto_encoder_with_al_entropy_based_pretrained',
+    'auto_encoder_with_al_mc_dropout',
+    'auto_encoder_with_al_mc_dropout_pretrained'
+"""

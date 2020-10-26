@@ -2,7 +2,7 @@ import argparse
 from os.path import expanduser
 
 home = expanduser("~")
-code_dir = 'Med-AL-SSL'
+code_dir = 'med_active_learning'
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
 
@@ -93,7 +93,7 @@ parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet',
 parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
-parser.add_argument('--log-path', default=f'{home}/{code_dir}/logs/', type=str,
+parser.add_argument('--log-path', default=f'{home}/{code_dir}/logs_matek/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
@@ -176,6 +176,10 @@ parser.add_argument('--fixmatch-epochs', default=600, type=int,
 
 parser.add_argument('--fixmatch-warmup', default=0, type=int,
                     help='warmup epochs with unlabeled data')
+
+parser.add_argument('--fixmatch-init', default=None, type=str,
+                    choices=[None, 'random', 'pretrained', 'simclr', 'autoencoder'],
+                    help='the semi supervised method to use')
 
 parser.add_argument('--learning-loss-weight', default=1.0, type=float,
                     help='the weight for the loss network, loss term in the objective function')
