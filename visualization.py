@@ -3,6 +3,8 @@ import matplotlib.style as style
 
 from data.cifar10_dataset import Cifar10Dataset
 from data.config.cifar10_config import set_cifar_configs
+from data.config.isic_config import set_isic_configs
+from data.isic_dataset import ISICDataset
 from data.jurkat_dataset import JurkatDataset
 from data.matek_dataset import MatekDataset
 from data.plasmodium_dataset import PlasmodiumDataset
@@ -12,9 +14,10 @@ from data.config.plasmodium_config import set_plasmodium_configs
 from results import ratio_metrics, ratio_class_wise_metrics, epoch_class_wise_loss, ae_loss
 from options.visualization_options import get_arguments
 
-datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset, 'jurkat': JurkatDataset}
+datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
+            'jurkat': JurkatDataset, 'isic': ISICDataset}
 configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs,
-           'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs}
+           'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs, 'isic': set_isic_configs}
 
 plot_configs = {'matek': (2, 5),
                 'jurkat': (2, 4),

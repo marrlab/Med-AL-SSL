@@ -2,6 +2,8 @@ from active_learning.augmentations_based import UncertaintySamplingAugmentationB
 from active_learning.batch_bald import UncertaintySamplingBatchBald
 from active_learning.learning_loss import LearningLoss
 from data.config.cifar10_config import set_cifar_configs
+from data.config.isic_config import set_isic_configs
+from data.isic_dataset import ISICDataset
 from options.train_options import get_arguments
 import os
 import time
@@ -42,9 +44,10 @@ from semi_supervised.simclr import SimCLR
 from semi_supervised.auto_encoder_cl import AutoEncoderCl
 
 arguments = get_arguments()
-datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset, 'jurkat': JurkatDataset}
+datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
+            'jurkat': JurkatDataset, 'isic': ISICDataset}
 configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs,
-           'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs}
+           'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs, 'isic': set_isic_configs}
 
 
 def main(args):
