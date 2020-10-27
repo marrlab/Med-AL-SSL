@@ -3,6 +3,8 @@ import matplotlib.style as style
 
 from data.cifar10_dataset import Cifar10Dataset
 from data.config.cifar10_config import set_cifar_configs
+from data.config.isic_config import set_isic_configs
+from data.isic_dataset import ISICDataset
 from data.jurkat_dataset import JurkatDataset
 from data.matek_dataset import MatekDataset
 from data.plasmodium_dataset import PlasmodiumDataset
@@ -12,14 +14,16 @@ from data.config.plasmodium_config import set_plasmodium_configs
 from results import ratio_metrics, ratio_class_wise_metrics, epoch_class_wise_loss, ae_loss
 from options.visualization_options import get_arguments
 
-datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset, 'jurkat': JurkatDataset}
+datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
+            'jurkat': JurkatDataset, 'isic': ISICDataset}
 configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs,
-           'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs}
+           'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs, 'isic': set_isic_configs}
 
 plot_configs = {'matek': (2, 5),
                 'jurkat': (2, 4),
                 'plasmodium': (1, 2),
-                'cifar10': (2, 5)}
+                'cifar10': (2, 5),
+                'isic': (2, 4)}
 
 """
 plot the accuracy vs data proportion being used, graph
@@ -29,14 +33,14 @@ credits to: Alex Olteanu (https://www.dataquest.io/blog/making-538-plots/) for t
 
 
 methods = [
-    'random_sampling',
-    'mc_dropout',
-    'entropy_based',
-    'augmentations_based',
-    'random_sampling_pretrained',
-    'mc_dropout_pretrained',
-    'entropy_based_pretrained',
-    'augmentations_based_pretrained',
+    'auto_encoder',
+    'auto_encoder_pretrained',
+    'auto_encoder_with_al_augmentations_based',
+    'auto_encoder_with_al_augmentations_based_pretrained',
+    'auto_encoder_with_al_entropy_based',
+    'auto_encoder_with_al_entropy_based_pretrained',
+    'auto_encoder_with_al_mc_dropout',
+    'auto_encoder_with_al_mc_dropout_pretrained'
 ]
 
 
@@ -164,7 +168,7 @@ if __name__ == "__main__":
     dataset, _, _, _, _, _ = dataset_class.get_dataset()
 
     dataset_title = {'cifar10': ' cifar-10 dataset', 'matek': ' matek dataset', 'jurkat': ' jurkat dataset',
-                     'plasmodium': ' plasmodium dataset'}
+                     'plasmodium': ' plasmodium dataset', 'isic': 'isic dataset'}
     y_label = f'{args.metric_ratio} of {args.metric} on {dataset_title[args.dataset]}'
     y_label_alt = f'Losses for {methods[args.method_id]} on {dataset_title[args.dataset]}'
 
@@ -197,11 +201,11 @@ Combinations:
     'simclr',
     'simclr_pretrained',
     'simclr_with_al_augmentations_based',
-    'simclr_with_al_augmentations_based_pretrained',
+    'fixmatch_with_al_augmentations_based_pretrained_simclr',
     'simclr_with_al_entropy_based',
-    'simclr_with_al_entropy_based_pretrained',
+    'fixmatch_with_al_entropy_based_pretrained_simclr',
     'simclr_with_al_mc_dropout',
-    'simclr_with_al_mc_dropout_pretrained'
+    'fixmatch_with_al_mc_dropout_pretrained_simclr'
     
     'random_sampling',
     'mc_dropout',

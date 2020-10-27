@@ -2,6 +2,7 @@ import time
 import torch
 
 from active_learning.entropy_based import UncertaintySamplingEntropyBased
+from data.isic_dataset import ISICDataset
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
@@ -25,7 +26,7 @@ class LearningLoss:
         self.args = args
         self.verbose = verbose
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
-                         'jurkat': JurkatDataset}
+                         'jurkat': JurkatDataset, 'isic': ISICDataset}
         self.model = None
         self.kwargs = {'num_workers': 16, 'pin_memory': False, 'drop_last': True}
 

@@ -1,6 +1,7 @@
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
 from active_learning.entropy_based import UncertaintySamplingEntropyBased
 from active_learning.mc_dropout import UncertaintySamplingMCDropout
+from data.isic_dataset import ISICDataset
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
@@ -28,7 +29,7 @@ class SimCLR:
         self.args = args
         self.verbose = verbose
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
-                         'jurkat': JurkatDataset}
+                         'jurkat': JurkatDataset, 'isic': ISICDataset}
         self.model = None
         self.kwargs = {'num_workers': 16, 'pin_memory': False}
         self.uncertainty_sampling_method = uncertainty_sampling_method

@@ -6,14 +6,14 @@ import pandas as pd
 args = get_arguments()
 
 methods = [
-    'random_sampling',
-    'mc_dropout',
-    'entropy_based',
-    'augmentations_based',
-    'random_sampling_pretrained',
-    'mc_dropout_pretrained',
-    'entropy_based_pretrained',
-    'augmentations_based_pretrained',
+    'auto_encoder',
+    'auto_encoder_pretrained',
+    'auto_encoder_with_al_augmentations_based',
+    'auto_encoder_with_al_augmentations_based_pretrained',
+    'auto_encoder_with_al_entropy_based',
+    'auto_encoder_with_al_entropy_based_pretrained',
+    'auto_encoder_with_al_mc_dropout',
+    'auto_encoder_with_al_mc_dropout_pretrained'
 ]
 
 

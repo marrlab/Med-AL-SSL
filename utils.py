@@ -356,7 +356,6 @@ def get_loss(args, labeled_class_samples, reduction='mean'):
         if args.weighted:
             classes_weights = np.clip(np.sum(labeled_class_samples) / np.array(labeled_class_samples),
                                       a_min=1, a_max=50)
-
             # noinspection PyArgumentList
             criterion = nn.CrossEntropyLoss(weight=torch.FloatTensor(classes_weights).cuda(), reduction=reduction)
         else:
