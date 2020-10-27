@@ -6,7 +6,7 @@ code_dir = 'med_active_learning'
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
 
-parser.add_argument('--epochs', default=1000, type=int,
+parser.add_argument('--epochs', default=300, type=int,
                     help='number of total epochs to run')
 
 parser.add_argument('--autoencoder-train-epochs', default=20, type=int,
@@ -61,7 +61,7 @@ parser.add_argument('--autoencoder-resume', action='store_false',
 parser.add_argument('--name', default=' ', type=str,
                     help='name of experiment')
 
-parser.add_argument('--add-labeled-epochs', default=20, type=int,
+parser.add_argument('--add-labeled-epochs', default=50, type=int,
                     help='add labeled data through sampling strategy after epochs')
 
 parser.add_argument('--add-labeled', default=100, type=int,
@@ -93,7 +93,7 @@ parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet',
 parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
-parser.add_argument('--log-path', default=f'{home}/{code_dir}/logs_matek/', type=str,
+parser.add_argument('--log-path', default=f'{home}/{code_dir}/logs_isic/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,

@@ -14,7 +14,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '7'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import torch
 import torch.cuda
@@ -162,6 +162,7 @@ def main(args):
         metrics_per_epoch = pd.concat([metrics_per_epoch, val_report])
 
         if epoch > args.labeled_warmup_epochs and last_best_epochs > args.add_labeled_epochs:
+            break
             metrics_per_cycle = pd.concat([metrics_per_cycle, best_report])
 
             train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
@@ -301,14 +302,38 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
+            ('active_learning', 'entropy_based', None, None, False, None),
+            ('active_learning', 'mc_dropout', None, None, False, None),
+            ('active_learning', 'augmentations_based', None, None, False, None),
+            ('random_sampling', None, None, None, False, None),
+            ('semi_supervised', None, 'simclr', None, False, None),
+            ('semi_supervised', None, 'simclr_with_al', 'augmentations_based', False, None),
+            ('semi_supervised', None, 'simclr_with_al', 'entropy_based', False, None),
+            ('semi_supervised', None, 'simclr_with_al', 'mc_dropout', False, None),
             ('semi_supervised', None, 'auto_encoder', None, False, None),
             ('semi_supervised', None, 'auto_encoder_with_al', 'augmentations_based', False, None),
             ('semi_supervised', None, 'auto_encoder_with_al', 'entropy_based', False, None),
             ('semi_supervised', None, 'auto_encoder_with_al', 'mc_dropout', False, None),
+            ('semi_supervised', None, 'fixmatch', None, False, None),
+            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', False, None),
+            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', False, None),
+            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', False, None),
             ('active_learning', 'entropy_based', None, None, True, None),
             ('active_learning', 'mc_dropout', None, None, True, None),
             ('active_learning', 'augmentations_based', None, None, True, None),
             ('random_sampling', None, None, None, True, None),
+            ('semi_supervised', None, 'fixmatch', None, True, 'pretrained'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', True, 'pretrained'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', True, 'pretrained'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', True, 'pretrained'),
+            ('semi_supervised', None, 'fixmatch', None, True, 'simclr'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', True, 'simclr'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', True, 'simclr'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', True, 'simclr'),
+            ('semi_supervised', None, 'fixmatch', None, True, 'autoencoder'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', True, 'autoencoder'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', True, 'autoencoder'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', True, 'autoencoder'),
         ]
 
         for (m, u, s, us, p, init) in states:

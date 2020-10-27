@@ -22,7 +22,8 @@ configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs,
 plot_configs = {'matek': (2, 5),
                 'jurkat': (2, 4),
                 'plasmodium': (1, 2),
-                'cifar10': (2, 5)}
+                'cifar10': (2, 5),
+                'isic': (2, 4)}
 
 """
 plot the accuracy vs data proportion being used, graph
@@ -32,14 +33,14 @@ credits to: Alex Olteanu (https://www.dataquest.io/blog/making-538-plots/) for t
 
 
 methods = [
-    'random_sampling',
-    'mc_dropout',
-    'entropy_based',
-    'augmentations_based',
-    'random_sampling_pretrained',
-    'mc_dropout_pretrained',
-    'entropy_based_pretrained',
-    'augmentations_based_pretrained',
+    'auto_encoder',
+    'auto_encoder_pretrained',
+    'auto_encoder_with_al_augmentations_based',
+    'auto_encoder_with_al_augmentations_based_pretrained',
+    'auto_encoder_with_al_entropy_based',
+    'auto_encoder_with_al_entropy_based_pretrained',
+    'auto_encoder_with_al_mc_dropout',
+    'auto_encoder_with_al_mc_dropout_pretrained'
 ]
 
 
@@ -167,7 +168,7 @@ if __name__ == "__main__":
     dataset, _, _, _, _, _ = dataset_class.get_dataset()
 
     dataset_title = {'cifar10': ' cifar-10 dataset', 'matek': ' matek dataset', 'jurkat': ' jurkat dataset',
-                     'plasmodium': ' plasmodium dataset'}
+                     'plasmodium': ' plasmodium dataset', 'isic': 'isic dataset'}
     y_label = f'{args.metric_ratio} of {args.metric} on {dataset_title[args.dataset]}'
     y_label_alt = f'Losses for {methods[args.method_id]} on {dataset_title[args.dataset]}'
 
@@ -200,11 +201,11 @@ Combinations:
     'simclr',
     'simclr_pretrained',
     'simclr_with_al_augmentations_based',
-    'simclr_with_al_augmentations_based_pretrained',
+    'fixmatch_with_al_augmentations_based_pretrained_simclr',
     'simclr_with_al_entropy_based',
-    'simclr_with_al_entropy_based_pretrained',
+    'fixmatch_with_al_entropy_based_pretrained_simclr',
     'simclr_with_al_mc_dropout',
-    'simclr_with_al_mc_dropout_pretrained'
+    'fixmatch_with_al_mc_dropout_pretrained_simclr'
     
     'random_sampling',
     'mc_dropout',
