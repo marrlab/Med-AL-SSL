@@ -15,8 +15,8 @@ class ISICDataset:
         self.root = root
         self.train_path = os.path.join(self.root, "isic", "train")
         self.test_path = os.path.join(self.root, "isic", "test")
-        self.isic_mean = (0.8206, 0.7280, 0.8362)
-        self.isic_std = (0.1630, 0.2506, 0.0919)
+        self.isic_mean = (0.6679, 0.5297, 0.5246)
+        self.isic_std = (0.1338, 0.1470, 0.1577)
         self.input_size = 128
         self.crop_size = 128
         self.expand_labeled = expand_labeled
