@@ -2,7 +2,7 @@ import argparse
 from os.path import expanduser
 
 home = expanduser("~")
-code_dir = 'med_active_learning'
+code_dir = 'Med-AL-SSL'
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
 
@@ -61,7 +61,7 @@ parser.add_argument('--autoencoder-resume', action='store_false',
 parser.add_argument('--name', default=' ', type=str,
                     help='name of experiment')
 
-parser.add_argument('--add-labeled-epochs', default=50, type=int,
+parser.add_argument('--add-labeled-epochs', default=20, type=int,
                     help='add labeled data through sampling strategy after epochs')
 
 parser.add_argument('--add-labeled', default=100, type=int,
