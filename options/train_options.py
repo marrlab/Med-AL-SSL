@@ -6,7 +6,7 @@ code_dir = 'Med-AL-SSL'
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
 
-parser.add_argument('--epochs', default=300, type=int,
+parser.add_argument('--epochs', default=1000, type=int,
                     help='number of total epochs to run')
 
 parser.add_argument('--autoencoder-train-epochs', default=20, type=int,
