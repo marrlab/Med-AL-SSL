@@ -162,7 +162,6 @@ def main(args):
         metrics_per_epoch = pd.concat([metrics_per_epoch, val_report])
 
         if epoch > args.labeled_warmup_epochs and last_best_epochs > args.add_labeled_epochs:
-            break
             metrics_per_cycle = pd.concat([metrics_per_cycle, best_report])
 
             train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
