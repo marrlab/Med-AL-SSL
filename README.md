@@ -1,4 +1,4 @@
-# Med-AL-SSL [![CodeFactor](https://www.codefactor.io/repository/github/ahmadqasim/med-al-ssl/badge)](https://www.codefactor.io/repository/github/ahmadqasim/med-al-ssl)
+# Med-AL-SSL [![CodeFactor](https://www.codefactor.io/repository/github/ahmadqasim/med-al-ssl/badge)](https://www.codefactor.io/repository/github/ahmadqasim/med-al-ssl) [![Known Vulnerabilities](https://snyk.io/test/github/AhmadQasim/Med-AL-SSL/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/AhmadQasim/Med-AL-SSL?targetFile=requirements.txt)
 Repository for implementation of active learning and semi-supervised learning algorithms and applying it to medical imaging datasets
 
 ## Active Learning algorithms
