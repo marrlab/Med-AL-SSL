@@ -1,4 +1,4 @@
-# Med-AL-SSL
+# Med-AL-SSL [![CodeFactor](https://www.codefactor.io/repository/github/ahmadqasim/med-al-ssl/badge)](https://www.codefactor.io/repository/github/ahmadqasim/med-al-ssl)
 Repository for implementation of active learning and semi-supervised learning algorithms and applying it to medical imaging datasets
 
 ## Active Learning algorithms
