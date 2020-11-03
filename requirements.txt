@@ -10,3 +10,4 @@ scikit-image>=0.17.2
 pytorch-msssim
 scikit-learn-extra
 dataclasses
+SciencePlots

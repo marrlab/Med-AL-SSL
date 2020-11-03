@@ -11,8 +11,15 @@ from data.plasmodium_dataset import PlasmodiumDataset
 from data.config.matek_config import set_matek_configs
 from data.config.jurkat_config import set_jurkat_configs
 from data.config.plasmodium_config import set_plasmodium_configs
-from results import ratio_metrics, ratio_class_wise_metrics, epoch_class_wise_loss, ae_loss
+from results import ratio_metrics
 from options.visualization_options import get_arguments
+import os
+
+"""
+plot the accuracy vs data proportion being used, graph
+credits to: Alex Olteanu (https://www.dataquest.io/blog/making-538-plots/) for the plot style
+:return: None
+"""
 
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
             'jurkat': JurkatDataset, 'isic': ISICDataset}
@@ -23,24 +30,23 @@ plot_configs = {'matek': (2, 5),
                 'jurkat': (2, 4),
                 'plasmodium': (1, 2),
                 'cifar10': (2, 5),
-                'isic': (2, 4)}
+                'isic': (2, 4)
+                }
 
-"""
-plot the accuracy vs data proportion being used, graph
-credits to: Alex Olteanu (https://www.dataquest.io/blog/making-538-plots/) for the plot style
-:return: None
-"""
+fully_supervised = {
+                'matek': 0.8621,
+                'jurkat': 0.6125,
+                'plasmodium': 0.9763,
+                'cifar10': 0.75,
+                'isic': 0.6752
+                }
 
 
 methods = [
-    'auto_encoder',
-    'auto_encoder_pretrained',
-    'auto_encoder_with_al_augmentations_based',
-    'auto_encoder_with_al_augmentations_based_pretrained',
-    'auto_encoder_with_al_entropy_based',
-    'auto_encoder_with_al_entropy_based_pretrained',
-    'auto_encoder_with_al_mc_dropout',
-    'auto_encoder_with_al_mc_dropout_pretrained'
+    'fixmatch_with_al_augmentations_based',
+    'fixmatch_with_al_augmentations_based_pretrained',
+    'fixmatch_with_al_augmentations_based_pretrained_simclr',
+    'fixmatch_with_al_augmentations_based_pretrained_autoencoder'
 ]
 
 
@@ -75,11 +81,11 @@ def plot_ratio_class_wise_metrics(metric, classes, label_y, prop, plot_config):
     plt.show()
 
 
-def plot_ratio_metrics(prop, metric, label_y):
+def plot_ratio_metrics(prop, metric, label_y, fully_supervised_metric):
     plt.figure(figsize=(14, 10))
     plt.rc('xtick', labelsize=20)
     plt.rc('ytick', labelsize=20)
-    plt.grid(color='black')
+    # plt.grid(color='black')
     style.use('fivethirtyeight')
 
     colors = [[0, 0, 0, 1], [230 / 255, 159 / 255, 0, 1], [86 / 255, 180 / 255, 233 / 255, 1],
@@ -87,7 +93,7 @@ def plot_ratio_metrics(prop, metric, label_y):
               [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1], [211 / 255, 95 / 255, 183 / 255, 1],
               [238 / 255, 136 / 255, 102 / 255, 1]]
 
-    plt.errorbar(prop, [0.8621] * len(prop), yerr=[0.003] * len(prop), color=colors[0],
+    plt.errorbar(prop, [fully_supervised_metric] * len(prop), yerr=[0] * len(prop), color=colors[0],
                  label='fully_supervised', linewidth=2, linestyle='--', marker='o', capsize=3)
 
     for i, method in enumerate(methods):
@@ -156,8 +162,7 @@ def plot_ae_loss(losses, logs, epochs):
     plt.show()
 
 
-if __name__ == "__main__":
-    args = get_arguments()
+def main(args):
     args = configs[args.dataset](args)
 
     num = [i for i, n in enumerate(range(args.add_labeled, args.stop_labeled + 10, args.add_labeled))]
@@ -170,21 +175,48 @@ if __name__ == "__main__":
     dataset_title = {'cifar10': ' cifar-10 dataset', 'matek': ' matek dataset', 'jurkat': ' jurkat dataset',
                      'plasmodium': ' plasmodium dataset', 'isic': 'isic dataset'}
     y_label = f'{args.metric_ratio} of {args.metric} on {dataset_title[args.dataset]}'
-    y_label_alt = f'Losses for {methods[args.method_id]} on {dataset_title[args.dataset]}'
 
+    '''
     ratio_class_wise_metrics_log = ratio_class_wise_metrics(args.metric, dataset.classes, args.dataset)
     plot_ratio_class_wise_metrics(ratio_class_wise_metrics_log, dataset.classes, y_label, num,
                                   plot_configs[args.dataset])
+    '''
 
     ratio_metrics_logs = ratio_metrics(args.metric, args.dataset, cls=args.metric_ratio)
-    plot_ratio_metrics(num, ratio_metrics_logs, y_label)
+    plot_ratio_metrics(num, ratio_metrics_logs, y_label, fully_supervised[args.dataset])
 
+    '''
     epoch_class_wise_log = epoch_class_wise_loss(dataset.classes, methods[args.method_id], args.dataset)
     plot_epoch_class_wise_loss(epoch_class_wise_log, dataset.classes, y_label_alt,
                                list(range(len(epoch_class_wise_log[0][0]))), plot_configs[args.dataset])
 
     ae_loss_logs = ae_loss(args.dataset)
     plot_ae_loss(losses=['bce', 'l1', 'l2', 'ssim'], logs=ae_loss_logs, epochs=list(range(len(ae_loss_logs[0]))))
+    '''
+
+
+if __name__ == '__main__':
+    root_vis = '/home/qasima/med_active_learning/visualization'
+    arguments = get_arguments()
+    if arguments.run_batch:
+        states = [
+            ('matek', 'recall', 'macro avg'),
+            ('matek', 'precision', 'macro avg'),
+            ('matek', 'f1-score', 'macro avg'),
+            ('matek', 'recall', 'accuracy'),
+        ]
+
+        for (d, m, r) in states:
+            root_path = os.path.join(root_vis, d, 'a')
+            if not os.path.exists(root_path):
+                os.makedirs(root_path)
+            arguments.dataset = d
+            arguments.metric = m
+            arguments.metric_ratio = r
+            arguments.save_path = os.path.join(root_path, f'{m}_{r}.png')
+            main(args=arguments)
+    else:
+        main(args=arguments)
 
 
 """
@@ -224,4 +256,14 @@ Combinations:
     'auto_encoder_with_al_entropy_based_pretrained',
     'auto_encoder_with_al_mc_dropout',
     'auto_encoder_with_al_mc_dropout_pretrained'
+    
+    'augmentations_based',
+    'augmentations_based_pretrained',
+    'simclr_with_al_augmentations_based',
+    'auto_encoder_with_al_augmentations_based'
+    
+    'fixmatch',
+    'fixmatch_pretrained',
+    'fixmatch_pretrained_simclr',
+    'fixmatch_pretrained_autoencoder',
 """

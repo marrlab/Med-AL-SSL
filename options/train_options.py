@@ -2,7 +2,7 @@ import argparse
 from os.path import expanduser
 
 home = expanduser("~")
-code_dir = 'Med-AL-SSL'
+code_dir = 'med_active_learning'
 
 parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imaging')
 

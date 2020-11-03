@@ -16,7 +16,7 @@ parser.add_argument('--root', default=home+'/datasets/thesis/stratified/', type=
                     help='the root path for the datasets')
 
 parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 'matek', 'cifar100', 'jurkat',
-                                                                     'plasmodium', 'isic'],
+                                                                          'plasmodium', 'isic'],
                     help='the dataset to train on')
 
 parser.add_argument('--oversampling', action='store_true', help='perform oversampling for labeled dataset')
@@ -30,6 +30,8 @@ parser.add_argument('--remove_classes', action='store_true',
 parser.add_argument('--method-id', default=1, type=int, help='the id of the method')
 
 parser.add_argument('--novel-class-detection', action='store_true', help='number of k medoids clusters')
+
+parser.add_argument('--run-batch', action='store_false', help='run all visualizations in batch mode')
 
 parser.set_defaults(augment=True)
 
