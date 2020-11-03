@@ -1,4 +1,4 @@
-# Med-AL-SSL
+# Med-AL-SSL [![CodeFactor](https://www.codefactor.io/repository/github/ahmadqasim/med-al-ssl/badge)](https://www.codefactor.io/repository/github/ahmadqasim/med-al-ssl) [![Known Vulnerabilities](https://snyk.io/test/github/AhmadQasim/Med-AL-SSL/badge.svg?targetFile=requirements.txt)](https://snyk.io/test/github/AhmadQasim/Med-AL-SSL?targetFile=requirements.txt)
 Repository for implementation of active learning and semi-supervised learning algorithms and applying it to medical imaging datasets
 
 ## Active Learning algorithms
@@ -21,12 +21,15 @@ Repository for implementation of active learning and semi-supervised learning al
 numpy>=1.18.5
 torch>=1.4.0
 torchvision>=0.5.0
-sklearn>=0.0
 scikit-learn>=0.23.1
 pandas>=1.0.4
-torchlars>=0.1.2
 Pillow>=7.1.2
 matplotlib>=3.2.1
+toma>=1.1.0
+scikit-image>=0.17.2
+pytorch-msssim
+scikit-learn-extra
+dataclasses
 ```
 
 ## Usage
