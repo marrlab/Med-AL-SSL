@@ -4,7 +4,7 @@ from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
 from data.plasmodium_dataset import PlasmodiumDataset
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
-    store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder, LossPerClassMeter, novel_class_detected
+    store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder, LossPerClassMeter
 import time
 import torch
 import torch.nn as nn
@@ -109,10 +109,6 @@ class AutoEncoderCl:
                 if self.args.reset_model:
                     model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
 
-                if self.args.novel_class_detection:
-                    if novel_class_detected(labeled_loader, dataset_class, self.args):
-                        break
-
                 criterion_cl = get_loss(self.args, dataset_class.labeled_class_samples, reduction='none')
             else:
                 best_recall = val_report['macro avg']['recall'] if is_best else best_recall
@@ -129,9 +125,10 @@ class AutoEncoderCl:
             }, is_best)
 
         if self.args.store_logs:
-            store_logs(self.args, pd.DataFrame(reconstruction_loss_log, columns=['bce', 'l1', 'l2', 'ssim']), ae=True)
+            store_logs(self.args, pd.DataFrame(reconstruction_loss_log, columns=['bce', 'l1', 'l2', 'ssim']),
+                       log_type='ae_loss')
             store_logs(self.args, metrics_per_cycle)
-            store_logs(self.args, metrics_per_epoch, epoch_wise=True)
+            store_logs(self.args, metrics_per_epoch, log_type='epoch_wise')
 
         self.model = model
         return model

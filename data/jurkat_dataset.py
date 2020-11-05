@@ -78,7 +78,6 @@ class JurkatDataset:
         self.k_medoids_model = k_medoids_model
         self.k_medoids_n_clusters = k_medoids_n_clusters
         self.start_labeled = start_labeled
-        self.novel_class = 4
 
     @staticmethod
     def check_file_jurkat(path):

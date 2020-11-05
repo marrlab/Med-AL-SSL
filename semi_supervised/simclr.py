@@ -8,7 +8,7 @@ from data.jurkat_dataset import JurkatDataset
 from data.plasmodium_dataset import PlasmodiumDataset
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
     store_logs, NTXent, get_loss, perform_sampling, \
-    create_model_optimizer_simclr, LossPerClassMeter, novel_class_detected
+    create_model_optimizer_simclr, LossPerClassMeter
 import time
 import torch
 import numpy as np
@@ -179,10 +179,6 @@ class SimCLR:
                     model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_class)
                     optimizer = torch.optim.Adam(model.parameters())
 
-                if self.args.novel_class_detection:
-                    if novel_class_detected(train_loader, dataset_class, self.args):
-                        break
-
                 criterion = get_loss(self.args, dataset_class.labeled_class_samples, reduction='none')
             else:
                 best_recall = val_report['macro avg']['recall'] if is_best else best_recall
@@ -194,7 +190,7 @@ class SimCLR:
 
         if self.args.store_logs:
             store_logs(self.args, metrics_per_cycle)
-            store_logs(self.args, metrics_per_epoch, epoch_wise=True)
+            store_logs(self.args, metrics_per_epoch, log_type='epoch_wise')
 
         return best_recall
 

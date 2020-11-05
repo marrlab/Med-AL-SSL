@@ -79,7 +79,6 @@ class MatekDataset:
         self.k_medoids_model = k_medoids_model
         self.k_medoids_n_clusters = k_medoids_n_clusters
         self.start_labeled = start_labeled
-        self.novel_class = 2
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.ImageFolder(

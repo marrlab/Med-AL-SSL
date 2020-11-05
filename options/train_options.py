@@ -194,10 +194,7 @@ parser.add_argument('--k-medoids', action='store_true', help='to perform k medoi
 
 parser.add_argument('--k-medoids-n-clusters', default=10, type=int, help='number of k medoids clusters')
 
-parser.add_argument('--novel-class-detection', action='store_true', help='number of k medoids clusters')
-
-parser.add_argument('--novel-class-ratio', default=0.75, type=float,
-                    help='the ratio of novel class to be detected for the training to stop')
+parser.add_argument('--novel-class-detection', action='store_true', help='turn on novel class detection')
 
 parser.set_defaults(augment=True)
 

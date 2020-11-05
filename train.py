@@ -34,7 +34,7 @@ from data.config.plasmodium_config import set_plasmodium_configs
 
 from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, \
     create_model_optimizer_scheduler, get_loss, resume_model, set_model_name, perform_sampling, LossPerClassMeter, \
-    load_pretrained, novel_class_detected
+    load_pretrained
 from utils import Metrics, store_logs
 from active_learning.entropy_based import UncertaintySamplingEntropyBased
 from active_learning.mc_dropout import UncertaintySamplingMCDropout
@@ -179,10 +179,6 @@ def main(args):
             if args.reset_model:
                 model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
 
-            if args.novel_class_detection:
-                if novel_class_detected(train_loader, dataset_class, args):
-                    break
-
             criterion = get_loss(args, dataset_class.labeled_class_samples, reduction='none')
         else:
             best_recall = val_report['macro avg']['recall'] if is_best else best_recall
@@ -202,7 +198,7 @@ def main(args):
 
     if args.store_logs:
         store_logs(args, metrics_per_cycle)
-        store_logs(args, metrics_per_epoch, epoch_wise=True)
+        store_logs(args, metrics_per_epoch, log_type='epoch_wise')
 
 
 def train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args):

@@ -10,7 +10,7 @@ from data.plasmodium_dataset import PlasmodiumDataset
 from model.loss_net import LossNet
 from utils import create_loaders, create_model_optimizer_scheduler, create_model_optimizer_loss_net, get_loss, \
     print_args, loss_module_objective_func, AverageMeter, accuracy, Metrics, store_logs, save_checkpoint, \
-    perform_sampling, LossPerClassMeter, novel_class_detected
+    perform_sampling, LossPerClassMeter
 
 import pandas as pd
 from copy import deepcopy
@@ -103,10 +103,6 @@ class LearningLoss:
                     models = {'backbone': model_backbone, 'module': model_module}
                     optimizers = {'backbone': optimizer_backbone, 'module': optimizer_module}
 
-                if self.args.novel_class_detection:
-                    if novel_class_detected(train_loader, dataset_cl, self.args):
-                        break
-
                 criterion_backbone = get_loss(self.args, dataset_cl.labeled_class_samples, reduction='none')
                 criterions = {'backbone': criterion_backbone, 'module': loss_module_objective_func}
             else:
@@ -125,7 +121,7 @@ class LearningLoss:
 
         if self.args.store_logs:
             store_logs(self.args, metrics_per_cycle)
-            store_logs(self.args, metrics_per_epoch, epoch_wise=True)
+            store_logs(self.args, metrics_per_epoch, log_type='epoch_wise')
 
         return best_recall
 

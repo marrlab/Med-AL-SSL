@@ -13,7 +13,7 @@ import torch
 import time
 
 from utils import create_model_optimizer_scheduler, AverageMeter, accuracy, Metrics, perform_sampling, \
-    store_logs, save_checkpoint, get_loss, LossPerClassMeter, create_loaders, novel_class_detected, load_pretrained, \
+    store_logs, save_checkpoint, get_loss, LossPerClassMeter, create_loaders, load_pretrained, \
     create_model_optimizer_autoencoder, create_model_optimizer_simclr
 
 import pandas as pd
@@ -152,10 +152,6 @@ class FixMatch:
                     elif self.init == 'simclr':
                         model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_cls)
 
-                if self.args.novel_class_detection:
-                    if novel_class_detected(train_loader, dataset_cls, self.args):
-                        break
-
                 criterion_labeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='none')
                 criterion_unlabeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='none')
                 criterions = {'labeled': criterion_labeled, 'unlabeled': criterion_unlabeled}
@@ -176,7 +172,7 @@ class FixMatch:
 
         if self.args.store_logs:
             store_logs(self.args, metrics_per_cycle)
-            store_logs(self.args, metrics_per_epoch, epoch_wise=True)
+            store_logs(self.args, metrics_per_epoch, log_type='epoch_wise')
 
         return best_recall
 

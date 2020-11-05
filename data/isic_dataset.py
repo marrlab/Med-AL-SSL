@@ -78,7 +78,6 @@ class ISICDataset:
         self.k_medoids_model = k_medoids_model
         self.k_medoids_n_clusters = k_medoids_n_clusters
         self.start_labeled = start_labeled
-        self.novel_class = 3
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.ImageFolder(

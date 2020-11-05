@@ -669,17 +669,6 @@ def k_medoids_init(base_dataset, k_medoids_model, transform_test, mean, std, see
     return labeled_indices, indices[~np.isin(indices, labeled_indices)]
 
 
-def novel_class_detected(train_loader, dataset_class, args):
-    targets = []
-
-    for i, (data_x, data_y) in enumerate(train_loader):
-        targets.extend(data_y.numpy().tolist())
-
-    targets = np.array(targets)
-
-    return (targets[targets == dataset_class.novel_class].shape[0] / targets.shape[0]) > args.novel_class_ratio
-
-
 def print_args(args):
     print('Arguments:\n'
           f'Model name: {args.name}\t'
@@ -692,11 +681,13 @@ def print_args(args):
           f'Dataset root: {args.root}')
 
 
-def store_logs(args, logs_df, epoch_wise=False, ae=False):
-    if epoch_wise:
+def store_logs(args, logs_df, log_type='al_cycles'):
+    if log_type == 'epoch_wise':
         filename = '{0}-{1}-seed:{2}-epoch'.format(datetime.now().strftime("%d.%m.%Y"), args.name, args.seed)
-    elif ae:
+    elif log_type == 'ae_loss':
         filename = '{0}-{1}-ae-loss'.format(datetime.now().strftime("%d.%m.%Y"), args.name)
+    elif log_type == 'novel_class':
+        filename = '{0}-{1}-seed:{2}-class-nums'.format(datetime.now().strftime("%d.%m.%Y"), args.name, args.seed)
     else:
         filename = '{0}-{1}-seed:{2}'.format(datetime.now().strftime("%d.%m.%Y"), args.name, args.seed)
 
