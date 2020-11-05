@@ -5,7 +5,7 @@ import pandas as pd
 
 args = get_arguments()
 
-methods = [
+methods_default = [
     'fixmatch_with_al_augmentations_based',
     'fixmatch_with_al_augmentations_based_pretrained',
     'fixmatch_with_al_augmentations_based_pretrained_simclr',
@@ -16,7 +16,7 @@ methods = [
 def ratio_class_wise_metrics(metric, classes, dataset):
     logs = os.listdir(args.log_path)
     dump_log = []
-    for i, method in enumerate(methods):
+    for i, method in enumerate(methods_default):
         dump_log.append([])
         for filename in logs:
             if f"{dataset}@resnet@{method}" != filename.split('-')[1] or 'epoch' in filename or 'ae-loss' in filename:
@@ -33,7 +33,7 @@ def ratio_class_wise_metrics(metric, classes, dataset):
 
     metrics_log = []
 
-    for i, method in enumerate(methods):
+    for i, method in enumerate(methods_default):
         metrics_log.append([])
         if len(dump_log[i]) == 0:
             continue
@@ -49,7 +49,7 @@ def ratio_class_wise_metrics(metric, classes, dataset):
     return metrics_log
 
 
-def ratio_metrics(metric, dataset, cls):
+def ratio_metrics(metric, dataset, cls, methods):
     logs = os.listdir(args.log_path)
     dump_log = []
     for i, method in enumerate(methods):
