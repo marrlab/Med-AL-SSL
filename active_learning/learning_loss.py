@@ -10,10 +10,11 @@ from data.plasmodium_dataset import PlasmodiumDataset
 from model.loss_net import LossNet
 from utils import create_loaders, create_model_optimizer_scheduler, create_model_optimizer_loss_net, get_loss, \
     print_args, loss_module_objective_func, AverageMeter, accuracy, Metrics, store_logs, save_checkpoint, \
-    perform_sampling, LossPerClassMeter, novel_class_detected
+    perform_sampling, LossPerClassMeter
 
 import pandas as pd
 from copy import deepcopy
+import numpy as np
 
 '''
 Learning Loss for Active Learning (https://arxiv.org/pdf/1905.03677.pdf)
@@ -65,6 +66,7 @@ class LearningLoss:
         current_labeled = dataset_cl.start_labeled
         metrics_per_cycle = pd.DataFrame([])
         metrics_per_epoch = pd.DataFrame([])
+        num_class_per_cycle = pd.DataFrame([])
 
         print_args(self.args)
 
@@ -104,8 +106,12 @@ class LearningLoss:
                     optimizers = {'backbone': optimizer_backbone, 'module': optimizer_module}
 
                 if self.args.novel_class_detection:
-                    if novel_class_detected(train_loader, dataset_cl, self.args):
-                        break
+                    num_classes = [np.sum(np.array(base_dataset.targets)[labeled_indices] == i)
+                                   for i in range(len(base_dataset.classes))]
+                    num_class_per_cycle = pd.concat([num_class_per_cycle,
+                                                     pd.DataFrame.from_dict({cls: num_classes[i] for i, cls in
+                                                                             enumerate(base_dataset.classes)},
+                                                                            orient='index').T])
 
                 criterion_backbone = get_loss(self.args, dataset_cl.labeled_class_samples, reduction='none')
                 criterions = {'backbone': criterion_backbone, 'module': loss_module_objective_func}
@@ -125,7 +131,8 @@ class LearningLoss:
 
         if self.args.store_logs:
             store_logs(self.args, metrics_per_cycle)
-            store_logs(self.args, metrics_per_epoch, epoch_wise=True)
+            store_logs(self.args, metrics_per_epoch, log_type='epoch_wise')
+            store_logs(self.args, num_class_per_cycle, log_type='novel_class')
 
         return best_recall
 

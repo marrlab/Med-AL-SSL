@@ -4,7 +4,7 @@ from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
 from data.plasmodium_dataset import PlasmodiumDataset
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
-    store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder, LossPerClassMeter, novel_class_detected
+    store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder, LossPerClassMeter
 import time
 import torch
 import torch.nn as nn
@@ -68,6 +68,7 @@ class AutoEncoderCl:
 
         metrics_per_cycle = pd.DataFrame([])
         metrics_per_epoch = pd.DataFrame([])
+        num_class_per_cycle = pd.DataFrame([])
 
         best_recall, best_report, last_best_epochs = 0, None, 0
         best_model = deepcopy(model)
@@ -110,8 +111,12 @@ class AutoEncoderCl:
                     model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
 
                 if self.args.novel_class_detection:
-                    if novel_class_detected(labeled_loader, dataset_class, self.args):
-                        break
+                    num_classes = [np.sum(np.array(base_dataset.targets)[labeled_indices] == i)
+                                   for i in range(len(base_dataset.classes))]
+                    num_class_per_cycle = pd.concat([num_class_per_cycle,
+                                                     pd.DataFrame.from_dict({cls: num_classes[i] for i, cls in
+                                                                             enumerate(base_dataset.classes)},
+                                                                            orient='index').T])
 
                 criterion_cl = get_loss(self.args, dataset_class.labeled_class_samples, reduction='none')
             else:
@@ -129,9 +134,11 @@ class AutoEncoderCl:
             }, is_best)
 
         if self.args.store_logs:
-            store_logs(self.args, pd.DataFrame(reconstruction_loss_log, columns=['bce', 'l1', 'l2', 'ssim']), ae=True)
+            store_logs(self.args, pd.DataFrame(reconstruction_loss_log, columns=['bce', 'l1', 'l2', 'ssim']),
+                       log_type='ae_loss')
             store_logs(self.args, metrics_per_cycle)
-            store_logs(self.args, metrics_per_epoch, epoch_wise=True)
+            store_logs(self.args, metrics_per_epoch, log_type='epoch_wise')
+            store_logs(self.args, num_class_per_cycle, log_type='novel_class')
 
         self.model = model
         return model

@@ -14,7 +14,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '4'
+os.environ['CUDA_VISIBLE_DEVICES'] = '5'
 
 import torch
 import torch.cuda
@@ -34,7 +34,7 @@ from data.config.plasmodium_config import set_plasmodium_configs
 
 from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, \
     create_model_optimizer_scheduler, get_loss, resume_model, set_model_name, perform_sampling, LossPerClassMeter, \
-    load_pretrained, novel_class_detected
+    load_pretrained
 from utils import Metrics, store_logs
 from active_learning.entropy_based import UncertaintySamplingEntropyBased
 from active_learning.mc_dropout import UncertaintySamplingMCDropout
@@ -143,6 +143,7 @@ def main(args):
     current_labeled = dataset_class.start_labeled
     metrics_per_cycle = pd.DataFrame([])
     metrics_per_epoch = pd.DataFrame([])
+    num_class_per_cycle = pd.DataFrame([])
     best_model = deepcopy(model)
 
     print_args(args)
@@ -180,8 +181,10 @@ def main(args):
                 model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
 
             if args.novel_class_detection:
-                if novel_class_detected(train_loader, dataset_class, args):
-                    break
+                num_classes = [np.sum(np.array(base_dataset.targets)[labeled_indices] == i)
+                               for i in range(len(base_dataset.classes))]
+                num_class_per_cycle = pd.concat([num_class_per_cycle, pd.DataFrame.from_dict({cls: num_classes[i]
+                                                 for i, cls in enumerate(base_dataset.classes)}, orient='index').T])
 
             criterion = get_loss(args, dataset_class.labeled_class_samples, reduction='none')
         else:
@@ -202,7 +205,8 @@ def main(args):
 
     if args.store_logs:
         store_logs(args, metrics_per_cycle)
-        store_logs(args, metrics_per_epoch, epoch_wise=True)
+        store_logs(args, metrics_per_epoch, log_type='epoch_wise')
+        store_logs(args, num_class_per_cycle, log_type='novel_class')
 
 
 def train(train_loader, model, criterion, optimizer, epoch, last_best_epochs, args):
@@ -301,10 +305,7 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            ('semi_supervised', None, 'auto_encoder', None, False, None),
-            ('semi_supervised', None, 'auto_encoder_with_al', 'augmentations_based', False, None),
-            ('semi_supervised', None, 'auto_encoder_with_al', 'entropy_based', False, None),
-            ('semi_supervised', None, 'auto_encoder_with_al', 'mc_dropout', False, None),
+            ('semi_supervised', None, 'simclr', None, False, None),
         ]
 
         for (m, u, s, us, p, init) in states:

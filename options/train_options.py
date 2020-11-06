@@ -52,7 +52,7 @@ parser.add_argument('--resume', action='store_true',
 parser.add_argument('--load-pretrained', action='store_false',
                     help='load pretrained imagenet weights for some methods')
 
-parser.add_argument('--simclr-resume', action='store_false',
+parser.add_argument('--simclr-resume', action='store_true',
                     help='flag to be set if an existing simclr model is to be loaded')
 
 parser.add_argument('--autoencoder-resume', action='store_false',
@@ -93,7 +93,7 @@ parser.add_argument('--arch', default='resnet', type=str, choices=['wideresnet',
 parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
-parser.add_argument('--log-path', default=f'{home}/{code_dir}/logs_isic/', type=str,
+parser.add_argument('--log-path', default=f'{home}/{code_dir}/logs_isic_novel/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--uncertainty-sampling-method', default='entropy_based', type=str,
@@ -194,10 +194,7 @@ parser.add_argument('--k-medoids', action='store_true', help='to perform k medoi
 
 parser.add_argument('--k-medoids-n-clusters', default=10, type=int, help='number of k medoids clusters')
 
-parser.add_argument('--novel-class-detection', action='store_true', help='number of k medoids clusters')
-
-parser.add_argument('--novel-class-ratio', default=0.75, type=float,
-                    help='the ratio of novel class to be detected for the training to stop')
+parser.add_argument('--novel-class-detection', action='store_true', help='turn on novel class detection')
 
 parser.set_defaults(augment=True)
 

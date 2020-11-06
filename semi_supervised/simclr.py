@@ -8,7 +8,7 @@ from data.jurkat_dataset import JurkatDataset
 from data.plasmodium_dataset import PlasmodiumDataset
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
     store_logs, NTXent, get_loss, perform_sampling, \
-    create_model_optimizer_simclr, LossPerClassMeter, novel_class_detected
+    create_model_optimizer_simclr, LossPerClassMeter
 import time
 import torch
 import numpy as np
@@ -143,6 +143,7 @@ class SimCLR:
 
         metrics_per_cycle = pd.DataFrame([])
         metrics_per_epoch = pd.DataFrame([])
+        num_class_per_cycle = pd.DataFrame([])
 
         best_recall, best_report, last_best_epochs = 0, None, 0
         best_model = deepcopy(model)
@@ -180,8 +181,12 @@ class SimCLR:
                     optimizer = torch.optim.Adam(model.parameters())
 
                 if self.args.novel_class_detection:
-                    if novel_class_detected(train_loader, dataset_class, self.args):
-                        break
+                    num_classes = [np.sum(np.array(base_dataset.targets)[labeled_indices] == i)
+                                   for i in range(len(base_dataset.classes))]
+                    num_class_per_cycle = pd.concat([num_class_per_cycle,
+                                                     pd.DataFrame.from_dict({cls: num_classes[i] for i, cls in
+                                                                             enumerate(base_dataset.classes)},
+                                                                            orient='index').T])
 
                 criterion = get_loss(self.args, dataset_class.labeled_class_samples, reduction='none')
             else:
@@ -194,7 +199,8 @@ class SimCLR:
 
         if self.args.store_logs:
             store_logs(self.args, metrics_per_cycle)
-            store_logs(self.args, metrics_per_epoch, epoch_wise=True)
+            store_logs(self.args, metrics_per_epoch, log_type='epoch_wise')
+            store_logs(self.args, num_class_per_cycle, log_type='novel_class')
 
         return best_recall
 
