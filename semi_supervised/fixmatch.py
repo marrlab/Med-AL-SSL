@@ -11,6 +11,7 @@ from data.plasmodium_dataset import PlasmodiumDataset
 
 import torch
 import time
+import numpy as np
 
 from utils import create_model_optimizer_scheduler, AverageMeter, accuracy, Metrics, perform_sampling, \
     store_logs, save_checkpoint, get_loss, LossPerClassMeter, create_loaders, load_pretrained, \
@@ -105,6 +106,8 @@ class FixMatch:
 
         metrics_per_cycle = pd.DataFrame([])
         metrics_per_epoch = pd.DataFrame([])
+        num_class_per_cycle = pd.DataFrame([])
+
         self.args.start_epoch = 0
         current_labeled = dataset_cls.start_labeled
 
@@ -152,6 +155,14 @@ class FixMatch:
                     elif self.init == 'simclr':
                         model, optimizer, _, self.args = create_model_optimizer_simclr(self.args, dataset_cls)
 
+                if self.args.novel_class_detection:
+                    num_classes = [np.sum(np.array(base_dataset.targets)[labeled_indices] == i)
+                                   for i in range(len(base_dataset.classes))]
+                    num_class_per_cycle = pd.concat([num_class_per_cycle,
+                                                     pd.DataFrame.from_dict({cls: num_classes[i] for i, cls in
+                                                                             enumerate(base_dataset.classes)},
+                                                                            orient='index').T])
+
                 criterion_labeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='none')
                 criterion_unlabeled = get_loss(self.args, dataset_cls.labeled_class_samples, reduction='none')
                 criterions = {'labeled': criterion_labeled, 'unlabeled': criterion_unlabeled}
@@ -173,6 +184,7 @@ class FixMatch:
         if self.args.store_logs:
             store_logs(self.args, metrics_per_cycle)
             store_logs(self.args, metrics_per_epoch, log_type='epoch_wise')
+            store_logs(self.args, num_class_per_cycle, log_type='novel_class')
 
         return best_recall
 

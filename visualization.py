@@ -195,7 +195,7 @@ def main(args):
     else:
         y_label = 'Accuracy'
 
-    dataset_title = {'matek': 'White blood cells', 'jurkat': 'jurkat cells cycle', 'isic': 'Skin lesions',
+    dataset_title = {'matek': 'White blood cells', 'jurkat': 'Jurkat cells cycle', 'isic': 'Skin lesions',
                      'plasmodium': 'Red blood cells'}
 
     '''
@@ -221,12 +221,14 @@ def main(args):
 
 
 if __name__ == '__main__':
+
     root_vis = '/home/ahmad/thesis/visualization'
     arguments = get_arguments()
     methods_states = {
         'a': ['Random Sampling', 'MC Dropout', 'Entropy Based', 'Augmentations Based'],
         'b': ['Random', 'ImageNet', 'SimCLR', 'Autoencoder'],
-        'c': ['Supervised', 'Semi-supervised'],
+        'c': ['Supervised', 'Semi-supervised', 'Semi-supervised + ImageNet', 'Semi-supervised + Autoencoder',
+              'Semi-supervised + SimCLR'],
         'd': ['Random Sampling',
               'Semi-supervised + Augmentations Based',
               'Semi-supervised + Augmentations Based + ImageNet',
@@ -236,7 +238,7 @@ if __name__ == '__main__':
               'Semi-supervised + Augmentations Based',
               'Semi-supervised + Entropy Based',
               'Semi-supervised + MC Dropout'],
-        'f': ['Random Sampling', 'Semi-supervised + ImageNet',
+        'f': ['Random Sampling', 'Semi-supervised', 'Semi-supervised + ImageNet',
               'Semi-supervised + Augmentations Based + ImageNet',
               'Semi-supervised + Entropy Based + ImageNet',
               'Semi-supervised + MC Dropout + ImageNet'],
@@ -276,7 +278,8 @@ if __name__ == '__main__':
     methods_states_results = {
         'a': ['random_sampling', 'mc_dropout', 'entropy_based', 'augmentations_based'],
         'b': ['random_sampling', 'random_sampling_pretrained', 'simclr', 'auto_encoder'],
-        'c': ['random_sampling', 'fixmatch'],
+        'c': ['random_sampling', 'fixmatch', 'fixmatch_pretrained',
+              'fixmatch_pretrained_autoencoder', 'fixmatch_pretrained_simclr'],
         'd': ['random_sampling', 'fixmatch_with_al_augmentations_based',
               'fixmatch_with_al_augmentations_based_pretrained',
               'fixmatch_with_al_augmentations_based_pretrained_simclr',
@@ -285,7 +288,7 @@ if __name__ == '__main__':
               'fixmatch_with_al_augmentations_based',
               'fixmatch_with_al_entropy_based',
               'fixmatch_with_al_mc_dropout'],
-        'f': ['random_sampling', 'fixmatch_pretrained',
+        'f': ['random_sampling', 'fixmatch', 'fixmatch_pretrained',
               'fixmatch_with_al_augmentations_based_pretrained',
               'fixmatch_with_al_entropy_based_pretrained',
               'fixmatch_with_al_mc_dropout_pretrained'],
@@ -299,27 +302,29 @@ if __name__ == '__main__':
                 'entropy_based_pretrained',
                 'augmentations_based_pretrained',
                 'auto_encoder',
-                'auto_encoder_with_al_augmentations_based',
-                'auto_encoder_with_al_entropy_based',
                 'auto_encoder_with_al_mc_dropout',
-                'fixmatch',
-                'fixmatch_with_al_augmentations_based',
-                'fixmatch_with_al_entropy_based',
-                'fixmatch_with_al_mc_dropout',
-                'fixmatch_pretrained',
-                'fixmatch_with_al_augmentations_based_pretrained',
-                'fixmatch_with_al_entropy_based_pretrained',
-                'fixmatch_with_al_mc_dropout_pretrained',
+                'auto_encoder_with_al_entropy_based',
+                'auto_encoder_with_al_augmentations_based',
                 'simclr',
-                'simclr_with_al_augmentations_based',
-                'simclr_with_al_entropy_based',
                 'simclr_with_al_mc_dropout',
-                'fixmatch_with_al_augmentations_based_pretrained_simclr',
-                'fixmatch_with_al_entropy_based_pretrained_simclr',
-                'fixmatch_with_al_mc_dropout_pretrained_simclr',
-                'fixmatch_with_al_augmentations_based_pretrained_autoencoder',
-                'fixmatch_with_al_entropy_based_pretrained_autoencoder',
+                'simclr_with_al_entropy_based',
+                'simclr_with_al_augmentations_based',
+                'fixmatch',
+                'fixmatch_with_al_mc_dropout',
+                'fixmatch_with_al_entropy_based',
+                'fixmatch_with_al_augmentations_based',
+                'fixmatch_pretrained',
+                'fixmatch_with_al_mc_dropout_pretrained',
+                'fixmatch_with_al_entropy_based_pretrained',
+                'fixmatch_with_al_augmentations_based_pretrained',
+                'fixmatch_pretrained_autoencoder',
                 'fixmatch_with_al_mc_dropout_pretrained_autoencoder',
+                'fixmatch_with_al_entropy_based_pretrained_autoencoder',
+                'fixmatch_with_al_augmentations_based_pretrained_autoencoder',
+                'fixmatch_pretrained_simclr',
+                'fixmatch_with_al_mc_dropout_pretrained_simclr',
+                'fixmatch_with_al_entropy_based_pretrained_simclr',
+                'fixmatch_with_al_augmentations_based_pretrained_simclr',
         ]
     }
     for k, method_state in methods_states.items():
@@ -356,8 +361,77 @@ if __name__ == '__main__':
                 main(args=arguments)
         else:
             main(args=arguments)
+    '''
+    states = [
+        'random_sampling',
+        'mc_dropout',
+        'entropy_based',
+        'augmentations_based',
+        'random_sampling_pretrained',
+        'mc_dropout_pretrained',
+        'entropy_based_pretrained',
+        'augmentations_based_pretrained',
+        'auto_encoder',
+        'auto_encoder_with_al_mc_dropout',
+        'auto_encoder_with_al_entropy_based',
+        'auto_encoder_with_al_augmentations_based',
+        'simclr',
+        'simclr_with_al_mc_dropout',
+        'simclr_with_al_entropy_based',
+        'simclr_with_al_augmentations_based',
+        'fixmatch',
+        'fixmatch_with_al_mc_dropout',
+        'fixmatch_with_al_entropy_based',
+        'fixmatch_with_al_augmentations_based',
+        'fixmatch_pretrained',
+        'fixmatch_with_al_mc_dropout_pretrained',
+        'fixmatch_with_al_entropy_based_pretrained',
+        'fixmatch_with_al_augmentations_based_pretrained',
+        'fixmatch_pretrained_autoencoder',
+        'fixmatch_with_al_mc_dropout_pretrained_autoencoder',
+        'fixmatch_with_al_entropy_based_pretrained_autoencoder',
+        'fixmatch_with_al_augmentations_based_pretrained_autoencoder',
+        'fixmatch_pretrained_simclr',
+        'fixmatch_with_al_mc_dropout_pretrained_simclr',
+        'fixmatch_with_al_entropy_based_pretrained_simclr',
+        'fixmatch_with_al_augmentations_based_pretrained_simclr',
+    ]
 
+    datasets = ['isic', 'matek', 'jurkat']
+    datasets_rep = ['Skin Lesions', 'White blood cells', 'Jurkat cells cycle']
+    inits = ['Random', 'ImageNet', 'Autoencoder', 'SimCLR']
+    trainings = ['Supervised learning', 'Semi-supervised learning']
+    uncertainty_samplings = ['Random', 'MC dropout', 'Entropy Based', 'Augmentations Based']
+    metrics = ['recall', 'precision', 'f1-score', 'accuracy']
+    metrics_rep = ['Recall', 'Precision', 'F1-score', 'Accuracy']
 
+    rows = []
+    for dataset, dataset_rep in zip(datasets, datasets_rep):
+        i = 0
+        for training in trainings:
+            for init in inits:
+                for uncertainty_sampling in uncertainty_samplings:
+                    row = {'Dataset': dataset_rep, 'Network Initialization': init, 'Training Method': training,
+                           'Uncertainty Sampling': uncertainty_sampling}
+                    for metric, metric_rep in zip(metrics, metrics_rep):
+                        if metric == 'accuracy':
+                            ratio_metrics_logs = ratio_metrics('recall', dataset, cls='accuracy', methods=[states[i]])
+                        else:
+                            print(i)
+                            ratio_metrics_logs = ratio_metrics(metric, dataset, cls='macro avg', methods=[states[i]])
+                        if len(ratio_metrics_logs[0]) == 0:
+                            print(row, states[i])
+                            continue
+                        row.update({metric_rep: ratio_metrics_logs[0][1][-1]})
+                    i = i + 1
+                    if len(ratio_metrics_logs[0]) == 0:
+                        continue
+                    else:
+                        rows.append(row)
+    import pandas as pd
+    df = pd.DataFrame(rows)
+    df.to_csv('results.csv')
+'''
 """
 Combinations:
     'random_sampling',

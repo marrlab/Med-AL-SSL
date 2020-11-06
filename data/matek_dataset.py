@@ -69,10 +69,7 @@ class MatekDataset:
         self.remove_classes = remove_classes
         self.unlabeled_augmentations = unlabeled_augmentations
         self.labeled_class_samples = None
-        # self.classes_to_remove = [0, 1, 2, 3, 4, 6, 7, 9, 11, 13, 14]
-        self.classes_to_remove = [2]
-        self.num_classes = self.num_classes - len(self.classes_to_remove) \
-            if self.remove_classes else self.num_classes
+        self.classes_to_remove = [0, 1, 2, 3, 5, 6, 7, 8]
         self.seed = seed
         self.labeled_amount = self.num_classes
         self.k_medoids = k_medoids
@@ -92,10 +89,6 @@ class MatekDataset:
         if self.merged and len(self.merge_classes) > 0:
             base_dataset = merge(base_dataset, self.merge_classes)
             test_dataset = merge(test_dataset, self.merge_classes)
-
-        if self.remove_classes and len(self.classes_to_remove) > 0:
-            base_dataset = remove(base_dataset, self.classes_to_remove)
-            test_dataset = remove(test_dataset, self.classes_to_remove)
 
         test_dataset = WeaklySupervisedDataset(test_dataset, range(len(test_dataset)),
                                                transform=self.transform_test,
@@ -127,6 +120,10 @@ class MatekDataset:
         if self.oversampling:
             labeled_indices = oversampling_indices(labeled_indices,
                                                    np.array(base_dataset.targets)[labeled_indices])
+
+        if self.remove_classes and len(self.classes_to_remove) > 0:
+            labeled_indices = labeled_indices[~np.isin(np.array(base_dataset.targets)[labeled_indices],
+                                                       self.classes_to_remove)]
 
         labeled_dataset = WeaklySupervisedDataset(base_dataset, labeled_indices,
                                                   transform=self.transform_train,

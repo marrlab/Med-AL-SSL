@@ -149,6 +149,7 @@ class AutoEncoder:
 
         metrics_per_cycle = pd.DataFrame([])
         metrics_per_epoch = pd.DataFrame([])
+        num_class_per_cycle = pd.DataFrame([])
 
         best_recall, best_report, last_best_epochs = 0, None, 0
         best_model = deepcopy(model)
@@ -184,6 +185,14 @@ class AutoEncoder:
                 if self.args.reset_model:
                     model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
 
+                if self.args.novel_class_detection:
+                    num_classes = [np.sum(np.array(base_dataset.targets)[labeled_indices] == i)
+                                   for i in range(len(base_dataset.classes))]
+                    num_class_per_cycle = pd.concat([num_class_per_cycle,
+                                                     pd.DataFrame.from_dict({cls: num_classes[i] for i, cls in
+                                                                             enumerate(base_dataset.classes)},
+                                                                            orient='index').T])
+
                 criterion = get_loss(self.args, dataset_class.labeled_class_samples, reduction='none')
             else:
                 best_recall = val_report['macro avg']['recall'] if is_best else best_recall
@@ -196,6 +205,7 @@ class AutoEncoder:
         if self.args.store_logs:
             store_logs(self.args, metrics_per_cycle)
             store_logs(self.args, metrics_per_epoch, log_type='epoch_wise')
+            store_logs(self.args, num_class_per_cycle, log_type='novel_class')
 
         return best_recall
 
