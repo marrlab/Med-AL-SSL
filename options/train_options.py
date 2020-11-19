@@ -196,6 +196,8 @@ parser.add_argument('--k-medoids-n-clusters', default=10, type=int, help='number
 
 parser.add_argument('--novel-class-detection', action='store_true', help='turn on novel class detection')
 
+parser.add_argument('--gpu-id', default=0, type=int, help='the id of the GPU to use')
+
 parser.set_defaults(augment=True)
 
 arguments = parser.parse_args()

@@ -14,8 +14,6 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
-
 import torch
 import torch.cuda
 import torch.backends.cudnn as cudnn
@@ -48,6 +46,8 @@ datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': Plas
             'jurkat': JurkatDataset, 'isic': ISICDataset}
 configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs,
            'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs, 'isic': set_isic_configs}
+
+os.environ['CUDA_VISIBLE_DEVICES'] = arguments.gpu_id
 
 
 def main(args):
