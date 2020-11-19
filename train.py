@@ -14,7 +14,7 @@ import pandas as pd
 
 from semi_supervised.fixmatch import FixMatch
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '5'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 import torch
 import torch.cuda
@@ -305,7 +305,7 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            ('semi_supervised', None, 'simclr', None, False, None),
+            ('random_sampling', None, None, None, True, None),
         ]
 
         for (m, u, s, us, p, init) in states:
