@@ -31,44 +31,39 @@ pytorch-msssim
 scikit-learn-extra
 dataclasses
 ```
-
 ## Arguments and Usage
 ### Usage
 ```
-usage: argdown [-h] [--epochs EPOCHS]
-               [--autoencoder-train-epochs AUTOENCODER_TRAIN_EPOCHS]
-               [--simclr-train-epochs SIMCLR_TRAIN_EPOCHS]
-               [--start-epoch START_EPOCH] [-b BATCH_SIZE] [--lr LR]
-               [--momentum MOMENTUM] [--nesterov NESTEROV]
-               [--weight-decay WEIGHT_DECAY] [--print-freq PRINT_FREQ]
+usage: python3 train.py [-h] [-n NAME] [-e EPOCHS] [--start-epoch START_EPOCH] [-r]
+               [--load-pretrained] [-b BATCH_SIZE] [--lr LR] [--mo MO]
+               [--nesterov NESTEROV] [--wd WD] [-p PRINT_FREQ]
                [--layers LAYERS] [--widen-factor WIDEN_FACTOR]
-               [--drop-rate DROP_RATE] [--no-augment] [--resume]
-               [--load-pretrained] [--simclr-resume] [--autoencoder-resume]
-               [--name NAME] [--add-labeled-epochs ADD_LABELED_EPOCHS]
+               [--drop-rate DROP_RATE] [--no-augment]
+               [--add-labeled-epochs ADD_LABELED_EPOCHS]
                [--add-labeled ADD_LABELED] [--start-labeled START_LABELED]
                [--stop-labeled STOP_LABELED]
                [--labeled-warmup-epochs LABELED_WARMUP_EPOCHS]
-               [--unlabeled-subset UNLABELED_SUBSET] [--oversampling]
-               [--merged] [--remove-classes]
-               [--arch {wideresnet,densenet,lenet,resnet}] [--loss {ce,fl}]
+               [--unlabeled-subset UNLABELED_SUBSET] [-o] [-m] [--rem]
+               [--arch {wideresnet,densenet,lenet,resnet}] [-l {ce,fl}]
                [--log-path LOG_PATH]
-               [--uncertainty-sampling-method {least_confidence,margin_confidence,ratio_confidence,entropy_based,mc_dropout,learning_loss,augmentations_based}]
+               [--al {least_confidence,margin_confidence,ratio_confidence,entropy_based,mc_dropout,learning_loss,augmentations_based}]
                [--mc-dropout-iterations MC_DROPOUT_ITERATIONS]
                [--augmentations_based_iterations AUGMENTATIONS_BASED_ITERATIONS]
                [--root ROOT]
                [--weak-supervision-strategy {active_learning,semi_supervised,random_sampling,fully_supervised}]
-               [--semi-supervised-method {pseudo_labeling,auto_encoder,simclr,fixmatch,auto_encoder_cl,auto_encoder_no_feat,simclr_with_al,auto_encoder_with_al,fixmatch_with_al}]
+               [--ssl {pseudo_labeling,auto_encoder,simclr,fixmatch,auto_encoder_cl,auto_encoder_no_feat,simclr_with_al,auto_encoder_with_al,fixmatch_with_al}]
                [--semi-supervised-uncertainty-method {entropy_based,augmentations_based}]
                [--pseudo-labeling-threshold PSEUDO_LABELING_THRESHOLD]
+               [--simclr-train-epochs SIMCLR_TRAIN_EPOCHS]
                [--simclr-temperature SIMCLR_TEMPERATURE] [--simclr-normalize]
                [--simclr-batch-size SIMCLR_BATCH_SIZE]
                [--simclr-arch {lenet,resnet}]
                [--simclr-base-lr SIMCLR_BASE_LR]
-               [--simclr-optimizer {adam,lars}] [--weighted] [--eval]
-               [--dataset {cifar10,matek,cifar100,jurkat,plasmodium,isic}]
-               [--checkpoint-path CHECKPOINT_PATH]
-               [--seed {6666,9999,2323,5555}] [--store-logs] [--run-batch]
-               [--reset-model] [--fixmatch-mu FIXMATCH_MU]
+               [--simclr-optimizer {adam,lars}] [--simclr-resume] [--weighted]
+               [--eval] [-d {cifar10,matek,cifar100,jurkat,plasmodium,isic}]
+               [--checkpoint-path CHECKPOINT_PATH] [-s {6666,9999,2323,5555}]
+               [--store-logs] [--run-batch] [--reset-model]
+               [--fixmatch-mu FIXMATCH_MU]
                [--fixmatch-lambda-u FIXMATCH_LAMBDA_U]
                [--fixmatch-threshold FIXMATCH_THRESHOLD]
                [--fixmatch-k-img FIXMATCH_K_IMG]
@@ -77,236 +72,229 @@ usage: argdown [-h] [--epochs EPOCHS]
                [--fixmatch-init {None,random,pretrained,simclr,autoencoder}]
                [--learning-loss-weight LEARNING_LOSS_WEIGHT]
                [--dlctcs-loss-weight DLCTCS_LOSS_WEIGHT]
-               [--autoencoder-z-dim AUTOENCODER_Z_DIM] [--k-medoids]
-               [--k-medoids-n-clusters K_MEDOIDS_N_CLUSTERS]
+               [--autoencoder-train-epochs AUTOENCODER_TRAIN_EPOCHS]
+               [--autoencoder-z-dim AUTOENCODER_Z_DIM] [--autoencoder-resume]
+               [--k-medoids] [--k-medoids-n-clusters K_MEDOIDS_N_CLUSTERS]
                [--novel-class-detection] [--gpu-id GPU_ID]
 ```
 ### Arguments
 #### Quick reference table
-|Short|Long                                  |Default                                           |Description                                                                        |
-|-----|--------------------------------------|--------------------------------------------------|-----------------------------------------------------------------------------------|
-|`-h` |`--help`                              |                                                  |show this help message and exit                                                    |
-|     |`--epochs`                            |`1000`                                            |number of total epochs to run                                                      |
-|     |`--autoencoder-train-epochs`          |`20`                                              |number of total epochs to run                                                      |
-|     |`--simclr-train-epochs`               |`200`                                             |number of total epochs to run                                                      |
-|     |`--start-epoch`                       |`0`                                               |manual epoch number (useful on restarts)                                           |
-|`-b` |`--batch-size`                        |`256`                                             |mini-batch size (default: 256)                                                     |
-|     |`--learning-rate`                     |`0.001`                                           |initial learning rate                                                              |
-|     |`--momentum`                          |`0.9`                                             |momentum                                                                           |
-|     |`--nesterov`                          |                                                  |nesterov momentum                                                                  |
-|     |`--wd`                                |`0.0005`                                          |weight decay (default: 5e-4)                                                       |
-|`-p` |`--print-freq`                        |`10`                                              |print frequency (default: 10)                                                      |
-|     |`--layers`                            |`28`                                              |total number of layers (default: 28)                                               |
-|     |`--widen-factor`                      |`10`                                              |widen factor (default: 10)                                                         |
-|     |`--drop-rate`                         |`0.15`                                            |dropout probability (default: 0.3)                                                 |
-|     |`--no-augment`                        |                                                  |whether to use standard augmentation (default: True)                               |
-|     |`--resume`                            |                                                  |flag to be set if an existing model is to be loaded                                |
-|     |`--load-pretrained`                   |                                                  |load pretrained imagenet weights for some methods                                  |
-|     |`--simclr-resume`                     |                                                  |flag to be set if an existing simclr model is to be loaded                         |
-|     |`--autoencoder-resume`                |                                                  |flag to be set if an existing autoencoder model is to be loaded                    |
-|     |`--name`                              |` `                                               |name of experiment                                                                 |
-|     |`--add-labeled-epochs`                |`20`                                              |add labeled data through sampling strategy after epochs                            |
-|     |`--add-labeled`                       |`100`                                             |amount of labeled data to be added in each cycle                                   |
-|     |`--start-labeled`                     |`100`                                             |amount of labeled data to start the training process with                          |
-|     |`--stop-labeled`                      |`1020`                                            |amount of labeled data to stop the training process at                             |
-|     |`--labeled-warmup-epochs`             |`35`                                              |how many epochs to warmup for, without sampling or pseudo labeling                 |
-|     |`--unlabeled-subset`                  |`0.3`                                             |the subset of the unlabeled data to use, to avoid choosing similar data points     |
-|     |`--oversampling`                      |                                                  |perform oversampling for labeled dataset                                           |
-|     |`--merged`                            |                                                  |to merge certain classes in the dataset (see dataset scripts to see which classes) |
-|     |`--remove-classes`                    |                                                  |to remove certain classes in the dataset (see dataset scripts to see which classes)|
-|     |`--arch`                              |`resnet`                                          |arch name                                                                          |
-|     |`--loss`                              |`ce`                                              |the loss to be used. ce = cross entropy and fl = focal loss                        |
-|     |`--log-path`                          |`/home/ahmad/med_active_learning/logs_isic_novel/`|the directory root for storing/retrieving the logs                                 |
-|     |`--uncertainty-sampling-method`       |`entropy_based`                                   |the uncertainty sampling method to use                                             |
-|     |`--mc-dropout-iterations`             |`25`                                              |number of iterations for mc dropout                                                |
-|     |`--augmentations_based_iterations`    |`25`                                              |number of iterations for augmentations based uncertainty sampling                  |
-|     |`--root`                              |`/home/ahmad/datasets/thesis/stratified/`         |the root path for the datasets                                                     |
-|     |`--weak-supervision-strategy`         |`semi_supervised`                                 |the weakly supervised strategy to use                                              |
-|     |`--semi-supervised-method`            |`fixmatch_with_al`                                |the semi supervised method to use                                                  |
-|     |`--semi-supervised-uncertainty-method`|`entropy_based`                                   |the uncertainty sampling method to use for SSL methods                             |
-|     |`--pseudo-labeling-threshold`         |`0.9`                                             |the threshold for considering the pseudo label as the actual label                 |
-|     |`--simclr-temperature`                |`0.1`                                             |the temperature term for simclr loss                                               |
-|     |`--simclr-normalize`                  |                                                  |normalize the hidden feat vectors in simclr                                        |
-|     |`--simclr-batch-size`                 |`1024`                                            |mini-batch size for simclr (default: 1024)                                         |
-|     |`--simclr-arch`                       |`resnet`                                          |which encoder architecture to use for simclr                                       |
-|     |`--simclr-base-lr`                    |`0.25`                                            |base learning rate, rescaled by batch_size/256                                     |
-|     |`--simclr-optimizer`                  |`adam`                                            |which optimizer to use for simclr                                                  |
-|     |`--weighted`                          |                                                  |to use weighted loss or not                                                        |
-|     |`--eval`                              |                                                  |only perform evaluation and exit                                                   |
-|     |`--dataset`                           |`matek`                                           |the dataset to train on                                                            |
-|     |`--checkpoint-path`                   |`/home/ahmad/med_active_learning/runs/`           |the directory root for saving/resuming checkpoints from                            |
-|     |`--seed`                              |`9999`                                            |the random seed to set                                                             |
-|     |`--store-logs`                        |                                                  |store the logs after training                                                      |
-|     |`--run-batch`                         |                                                  |run all methods in batch mode                                                      |
-|     |`--reset-model`                       |                                                  |reset models after every labels injection cycle                                    |
-|     |`--fixmatch-mu`                       |`8`                                               |coefficient of unlabeled batch size i.e. mu.B from paper                           |
-|     |`--fixmatch-lambda-u`                 |`1`                                               |coefficient of unlabeled loss                                                      |
-|     |`--fixmatch-threshold`                |`0.95`                                            |pseudo label threshold                                                             |
-|     |`--fixmatch-k-img`                    |`8192`                                            |number of labeled examples                                                         |
-|     |`--fixmatch-epochs`                   |`600`                                             |epochs for fixmatch algorithm                                                      |
-|     |`--fixmatch-warmup`                   |`0`                                               |warmup epochs with unlabeled data                                                  |
-|     |`--fixmatch-init`                     |`None`                                            |the semi supervised method to use                                                  |
-|     |`--learning-loss-weight`              |`1.0`                                             |the weight for the loss network, loss term in the objective function               |
-|     |`--dlctcs-loss-weight`                |`100`                                             |the weight for classification loss in dlctcs                                       |
-|     |`--autoencoder-z-dim`                 |`128`                                             |the bottleneck dimension for the autoencoder architecture                          |
-|     |`--k-medoids`                         |                                                  |to perform k medoids init with SimCLR                                              |
-|     |`--k-medoids-n-clusters`              |`10`                                              |number of k medoids clusters                                                       |
-|     |`--novel-class-detection`             |                                                  |turn on novel class detection                                                      |
-|     |`--gpu-id`                            |`0`                                               |the id of the GPU to use                                                           |
+|Short|Long                                  |Default           |Description                                                         |
+|-----|--------------------------------------|------------------|--------------------------------------------------------------------|
+|`-h` |`--help`                              |                  |show this help message and exit                                     |
+|`-n` |`--name`                              |`run_0`           |name of current running experiment                                  |
+|`-e` |`--epochs`                            |`1000`            |number of total epochs for AL training                              |
+|     |`--start-epoch`                       |`0`               |starting epoch number (useful when resuming)                        |
+|`-r` |`--resume`                            |                  |flag to be set if an existing model is to be loaded                 |
+|     |`--load-pretrained`                   |                  |load pretrained imagenet weights or not                             |
+|`-b` |`--batch-size`                        |`256`             |batch size for AL training (default: 256)                           |
+|     |`--learning-rate`                     |`0.001`           |initial learning rate for AL optimizer                              |
+|     |`--momentum`                          |`0.9`             |momentum                                                            |
+|     |`--nesterov`                          |                  |nesterov momentum                                                   |
+|     |`--weight-decay`                      |`0.0005`          |weight decay for AL optimizer                                       |
+|`-p` |`--print-freq`                        |`10`              |print frequency per step                                            |
+|     |`--layers`                            |`28`              |total number of layers for ResNext architecture                     |
+|     |`--widen-factor`                      |`10`              |widen factor for ResNext architecture                               |
+|     |`--drop-rate`                         |`0.15`            |dropout probability for ResNet/LeNet architecture                   |
+|     |`--no-augment`                        |                  |whether to use standard augmentations or not                        |
+|     |`--add-labeled-epochs`                |`20`              |if recall doesn't improve perform AL cycle                          |
+|     |`--add-labeled`                       |`100`             |amount of labeled data to be added during each AL cycle             |
+|     |`--start-labeled`                     |`100`             |amount of labeled data to start the AL training                     |
+|     |`--stop-labeled`                      |`1020`            |amount of labeled data to stop the AL training                      |
+|     |`--labeled-warmup-epochs`             |`35`              |number of warmup epochs before AL training                          |
+|     |`--unlabeled-subset`                  |`0.3`             |the subset of the unlabeled data to use for AL algorithms           |
+|`-o` |`--oversampling`                      |                  |perform oversampling for labeled dataset or not                     |
+|`-m` |`--merged`                            |                  |to merge certain classes in the dataset (see dataset scripts)       |
+|     |`--remove-classes`                    |                  |to remove certain classes in the dataset (see dataset scripts)      |
+|     |`--architecture`                      |`resnet`          |the architecture to use for AL training                             |
+|`-l` |`--loss`                              |`ce`              |the loss to be used. ce = cross entropy and fl = focal loss         |
+|     |`--log-path`                          |`~/logs/`         |the directory root for storing/retrieving the logs                  |
+|     |`--uncertainty-sampling-method`       |`entropy_based`   |the AL algorithm to use                                             |
+|     |`--mc-dropout-iterations`             |`25`              |number of iterations for mc dropout                                 |
+|     |`--augmentations_based_iterations`    |`25`              |number of iterations for augmentations based AL algorithm           |
+|     |`--root`                              |`~/datasets/`     |the root path for the datasets                                      |
+|     |`--weak-supervision-strategy`         |`semi_supervised` |the weakly supervised strategy to use                               |
+|     |`--semi-supervised-method`            |`fixmatch_with_al`|the SSL algorithm to use                                            |
+|     |`--semi-supervised-uncertainty-method`|`entropy_based`   |the AL algorithm to use in conjunction with a SSL algorithm         |
+|     |`--pseudo-labeling-threshold`         |`0.9`             |the threshold for considering the pseudo label as the actual label  |
+|     |`--simclr-train-epochs`               |`200`             |number of total epochs for SimCLR training                          |
+|     |`--simclr-temperature`                |`0.1`             |the temperature term for simclr loss                                |
+|     |`--simclr-normalize`                  |                  |normalize the hidden feat vectors in simclr or not                  |
+|     |`--simclr-batch-size`                 |`1024`            |batch size for simclr training (default: 1024)                      |
+|     |`--simclr-arch`                       |`resnet`          |which encoder architecture to use for simclr                        |
+|     |`--simclr-base-lr`                    |`0.25`            |base learning rate for SimCLR optimizer                             |
+|     |`--simclr-optimizer`                  |`adam`            |which optimizer to use for simclr training                          |
+|     |`--simclr-resume`                     |                  |flag to be set if an existing simclr model is to be loaded          |
+|     |`--weighted`                          |                  |to use weighted loss or not (only in case of ce)                    |
+|     |`--eval`                              |                  |only perform evaluation and exit                                    |
+|`-d` |`--dataset`                           |`matek`           |the dataset to train on                                             |
+|     |`--checkpoint-path`                   |`~/runs/`         |the directory root for saving/resuming checkpoints from             |
+|`-s` |`--seed`                              |`9999`            |the random seed to set                                              |
+|     |`--store-logs`                        |                  |store the logs after training                                       |
+|     |`--run-batch`                         |                  |run all methods in batch mode                                       |
+|     |`--reset-model`                       |                  |reset models after every labels injection cycle                     |
+|     |`--fixmatch-mu`                       |`8`               |coefficient of unlabeled batch size i.e. mu.B from paper            |
+|     |`--fixmatch-lambda-u`                 |`1`               |coefficient of unlabeled loss                                       |
+|     |`--fixmatch-threshold`                |`0.95`            |pseudo label threshold                                              |
+|     |`--fixmatch-k-img`                    |`8192`            |number of labeled examples                                          |
+|     |`--fixmatch-epochs`                   |`1000`            |epochs for SSL or SSL + AL training                                 |
+|     |`--fixmatch-warmup`                   |`0`               |warmup epochs with unlabeled data                                   |
+|     |`--fixmatch-init`                     |`None`            |the semi supervised method to use                                   |
+|     |`--learning-loss-weight`              |`1.0`             |the weight for the loss network, loss term in the objective function|
+|     |`--dlctcs-loss-weight`                |`100`             |the weight for classification loss in dlctcs                        |
+|     |`--autoencoder-train-epochs`          |`20`              |number of total epochs for autoencoder training                     |
+|     |`--autoencoder-z-dim`                 |`128`             |the bottleneck dimension for the autoencoder architecture           |
+|     |`--autoencoder-resume`                |                  |flag to be set if an existing autoencoder model is to be loaded     |
+|     |`--k-medoids`                         |                  |to perform k medoids init with SimCLR                               |
+|     |`--k-medoids-n-clusters`              |`10`              |number of k medoids clusters                                        |
+|     |`--novel-class-detection`             |                  |turn on novel class detection                                       |
+|     |`--gpu-id`                            |`0`               |the id of the GPU to use                                            |
 
 #### `-h`, `--help`
 show this help message and exit
 
-#### `--epochs` (Default: 1000)
-number of total epochs to run
+#### `-n`, `--name` (Default: run_0)
+name of current running experiment
 
-#### `--autoencoder-train-epochs` (Default: 20)
-number of total epochs to run
-
-#### `--simclr-train-epochs` (Default: 200)
-number of total epochs to run
+#### `-e`, `--epochs` (Default: 1000)
+number of total epochs for AL training
 
 #### `--start-epoch` (Default: 0)
-manual epoch number (useful on restarts)
+starting epoch number (useful when resuming)
+
+#### `-r`, `--resume`
+flag to be set if an existing model is to be loaded
+
+#### `--load-pretrained`
+load pretrained imagenet weights or not
 
 #### `-b`, `--batch-size` (Default: 256)
-mini-batch size (default: 256)
+batch size for AL training (default: 256)
 
 #### `--lr`, `--learning-rate` (Default: 0.001)
-initial learning rate
+initial learning rate for AL optimizer
 
-#### `--momentum` (Default: 0.9)
+#### `--mo`, `--momentum` (Default: 0.9)
 momentum
 
 #### `--nesterov`
 nesterov momentum
 
-#### `--weight-decay`, `--wd` (Default: 0.0005)
-weight decay (default: 5e-4)
+#### `--wd`, `--weight-decay` (Default: 0.0005)
+weight decay for AL optimizer
 
-#### `--print-freq`, `-p` (Default: 10)
-print frequency (default: 10)
+#### `-p`, `--print-freq` (Default: 10)
+print frequency per step
 
 #### `--layers` (Default: 28)
-total number of layers (default: 28)
+total number of layers for ResNext architecture
 
 #### `--widen-factor` (Default: 10)
-widen factor (default: 10)
+widen factor for ResNext architecture
 
 #### `--drop-rate` (Default: 0.15)
-dropout probability (default: 0.3)
+dropout probability for ResNet/LeNet architecture
 
 #### `--no-augment`
-whether to use standard augmentation (default: True)
-
-#### `--resume`
-flag to be set if an existing model is to be loaded
-
-#### `--load-pretrained`
-load pretrained imagenet weights for some methods
-
-#### `--simclr-resume`
-flag to be set if an existing simclr model is to be loaded
-
-#### `--autoencoder-resume`
-flag to be set if an existing autoencoder model is to be loaded
-
-#### `--name` (Default:  )
-name of experiment
+whether to use standard augmentations or not
 
 #### `--add-labeled-epochs` (Default: 20)
-add labeled data through sampling strategy after epochs
+if recall doesn't improve perform AL cycle
 
 #### `--add-labeled` (Default: 100)
-amount of labeled data to be added in each cycle
+amount of labeled data to be added during each AL cycle
 
 #### `--start-labeled` (Default: 100)
-amount of labeled data to start the training process with
+amount of labeled data to start the AL training
 
 #### `--stop-labeled` (Default: 1020)
-amount of labeled data to stop the training process at
+amount of labeled data to stop the AL training
 
 #### `--labeled-warmup-epochs` (Default: 35)
-how many epochs to warmup for, without sampling or pseudo labeling
+number of warmup epochs before AL training
 
 #### `--unlabeled-subset` (Default: 0.3)
-the subset of the unlabeled data to use, to avoid choosing similar data points
+the subset of the unlabeled data to use for AL algorithms
 
-#### `--oversampling`
-perform oversampling for labeled dataset
+#### `-o`, `--oversampling`
+perform oversampling for labeled dataset or not
 
-#### `--merged`
-to merge certain classes in the dataset (see dataset scripts to see which
-classes)
+#### `-m`, `--merged`
+to merge certain classes in the dataset (see dataset scripts)
 
-#### `--remove-classes`
-to remove certain classes in the dataset (see dataset scripts to see which
-classes)
+#### `--rem`, `--remove-classes`
+to remove certain classes in the dataset (see dataset scripts)
 
-#### `--arch` (Default: resnet)
-arch name
+#### `--arch`, `--architecture` (Default: resnet)
+the architecture to use for AL training
 
-#### `--loss` (Default: ce)
+#### `-l`, `--loss` (Default: ce)
 the loss to be used. ce = cross entropy and fl = focal loss
 
-#### `--log-path` (Default: /home/ahmad/med_active_learning/logs_isic_novel/)
+#### `--log-path` (Default: ~/logs/)
 the directory root for storing/retrieving the logs
 
-#### `--uncertainty-sampling-method` (Default: entropy_based)
-the uncertainty sampling method to use
+#### `--al`, `--uncertainty-sampling-method` (Default: entropy_based)
+the AL algorithm to use
 
 #### `--mc-dropout-iterations` (Default: 25)
 number of iterations for mc dropout
 
 #### `--augmentations_based_iterations` (Default: 25)
-number of iterations for augmentations based uncertainty sampling
+number of iterations for augmentations based AL algorithm
 
-#### `--root` (Default: /home/ahmad/datasets/thesis/stratified/)
+#### `--root` (Default: ~/datasets/)
 the root path for the datasets
 
 #### `--weak-supervision-strategy` (Default: semi_supervised)
 the weakly supervised strategy to use
 
-#### `--semi-supervised-method` (Default: fixmatch_with_al)
-the semi supervised method to use
+#### `--ssl`, `--semi-supervised-method` (Default: fixmatch_with_al)
+the SSL algorithm to use
 
 #### `--semi-supervised-uncertainty-method` (Default: entropy_based)
-the uncertainty sampling method to use for SSL methods
+the AL algorithm to use in conjunction with a SSL algorithm
 
 #### `--pseudo-labeling-threshold` (Default: 0.9)
 the threshold for considering the pseudo label as the actual label
+
+#### `--simclr-train-epochs` (Default: 200)
+number of total epochs for SimCLR training
 
 #### `--simclr-temperature` (Default: 0.1)
 the temperature term for simclr loss
 
 #### `--simclr-normalize`
-normalize the hidden feat vectors in simclr
+normalize the hidden feat vectors in simclr or not
 
 #### `--simclr-batch-size` (Default: 1024)
-mini-batch size for simclr (default: 1024)
+batch size for simclr training (default: 1024)
 
 #### `--simclr-arch` (Default: resnet)
 which encoder architecture to use for simclr
 
 #### `--simclr-base-lr` (Default: 0.25)
-base learning rate, rescaled by batch_size/256
+base learning rate for SimCLR optimizer
 
 #### `--simclr-optimizer` (Default: adam)
-which optimizer to use for simclr
+which optimizer to use for simclr training
+
+#### `--simclr-resume`
+flag to be set if an existing simclr model is to be loaded
 
 #### `--weighted`
-to use weighted loss or not
+to use weighted loss or not (only in case of ce)
 
 #### `--eval`
 only perform evaluation and exit
 
-#### `--dataset` (Default: matek)
+#### `-d`, `--dataset` (Default: matek)
 the dataset to train on
 
-#### `--checkpoint-path` (Default: /home/ahmad/med_active_learning/runs/)
+#### `--checkpoint-path` (Default: ~/runs/)
 the directory root for saving/resuming checkpoints from
 
-#### `--seed` (Default: 9999)
+#### `-s`, `--seed` (Default: 9999)
 the random seed to set
 
 #### `--store-logs`
@@ -330,8 +318,8 @@ pseudo label threshold
 #### `--fixmatch-k-img` (Default: 8192)
 number of labeled examples
 
-#### `--fixmatch-epochs` (Default: 600)
-epochs for fixmatch algorithm
+#### `--fixmatch-epochs` (Default: 1000)
+epochs for SSL or SSL + AL training
 
 #### `--fixmatch-warmup` (Default: 0)
 warmup epochs with unlabeled data
@@ -345,8 +333,14 @@ the weight for the loss network, loss term in the objective function
 #### `--dlctcs-loss-weight` (Default: 100)
 the weight for classification loss in dlctcs
 
+#### `--autoencoder-train-epochs` (Default: 20)
+number of total epochs for autoencoder training
+
 #### `--autoencoder-z-dim` (Default: 128)
 the bottleneck dimension for the autoencoder architecture
+
+#### `--autoencoder-resume`
+flag to be set if an existing autoencoder model is to be loaded
 
 #### `--k-medoids`
 to perform k medoids init with SimCLR

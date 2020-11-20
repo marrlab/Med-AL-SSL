@@ -1,18 +1,9 @@
-from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
-from active_learning.batch_bald import UncertaintySamplingBatchBald
-from active_learning.learning_loss import LearningLoss
-from data.config.cifar10_config import set_cifar_configs
-from data.config.isic_config import set_isic_configs
-from data.isic_dataset import ISICDataset
-from options.train_options import get_arguments
-import os
-import time
 from copy import deepcopy
-
 import random
 import pandas as pd
-
-from semi_supervised.fixmatch import FixMatch
+import numpy as np
+import os
+import time
 
 import torch
 import torch.cuda
@@ -20,26 +11,35 @@ import torch.backends.cudnn as cudnn
 import torch.optim
 import torch.utils.data
 
-import numpy as np
+from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
+from active_learning.batch_bald import UncertaintySamplingBatchBald
+from active_learning.learning_loss import LearningLoss
+from active_learning.entropy_based import UncertaintySamplingEntropyBased
+from active_learning.mc_dropout import UncertaintySamplingMCDropout
+
+from semi_supervised.pseudo_labeling import PseudoLabeling
+from semi_supervised.auto_encoder import AutoEncoder
+from semi_supervised.simclr import SimCLR
+from semi_supervised.auto_encoder_cl import AutoEncoderCl
+from semi_supervised.fixmatch import FixMatch
 
 from data.matek_dataset import MatekDataset
-from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
 from data.plasmodium_dataset import PlasmodiumDataset
+from data.cifar10_dataset import Cifar10Dataset
+from data.isic_dataset import ISICDataset
 from data.config.matek_config import set_matek_configs
 from data.config.jurkat_config import set_jurkat_configs
 from data.config.plasmodium_config import set_plasmodium_configs
+from data.config.cifar10_config import set_cifar_configs
+from data.config.isic_config import set_isic_configs
+
+from options.train_options import get_arguments
 
 from utils import save_checkpoint, AverageMeter, accuracy, create_loaders, print_args, \
     create_model_optimizer_scheduler, get_loss, resume_model, set_model_name, perform_sampling, LossPerClassMeter, \
     load_pretrained
 from utils import Metrics, store_logs
-from active_learning.entropy_based import UncertaintySamplingEntropyBased
-from active_learning.mc_dropout import UncertaintySamplingMCDropout
-from semi_supervised.pseudo_labeling import PseudoLabeling
-from semi_supervised.auto_encoder import AutoEncoder
-from semi_supervised.simclr import SimCLR
-from semi_supervised.auto_encoder_cl import AutoEncoderCl
 
 arguments = get_arguments()
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
