@@ -13,7 +13,7 @@ import torchvision
 from numpy.random import default_rng
 from sklearn.metrics import precision_recall_fscore_support, classification_report, confusion_matrix, roc_auc_score, \
     pairwise_distances
-from sklearn_extra.cluster import KMedoids
+# from sklearn_extra.cluster import KMedoids
 from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
 

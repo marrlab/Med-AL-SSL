@@ -274,6 +274,7 @@ def main(args):
 
 
 if __name__ == '__main__':
+    '''
     root_vis = '/home/ahmad/thesis/visualization'
     arguments = get_arguments()
     methods_states = {
@@ -484,8 +485,10 @@ if __name__ == '__main__':
                         if len(ratio_metrics_logs[0]) == 0:
                             print(row, states[i])
                             continue
-                        row.update({metric_rep: ratio_metrics_logs[0][1][-1],
-                                    f'{metric_rep} STD.': ratio_metrics_logs[0][1][-1] - ratio_metrics_logs[0][0][-1]})
+                        for iterations in range(len(ratio_metrics_logs[0][1][:5])):
+                            row.update({f'{metric_rep} {iterations}': ratio_metrics_logs[0][1][iterations],
+                                        f'{metric_rep} STD. {iterations}': ratio_metrics_logs[0][1][iterations] -
+                                                                           ratio_metrics_logs[0][0][iterations]})
                     i = i + 1
                     if len(ratio_metrics_logs[0]) == 0:
                         continue
@@ -494,7 +497,7 @@ if __name__ == '__main__':
     import pandas as pd
     df = pd.DataFrame(rows)
     df.to_csv('results.csv')
-    '''
+
 """
 Combinations:
     'random_sampling',
