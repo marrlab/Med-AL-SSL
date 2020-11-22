@@ -31,6 +31,15 @@ pytorch-msssim
 scikit-learn-extra
 dataclasses
 ```
+
+## Data
+The train/test splits for the three datasets can be downloaded here:
+
+White Blood Cell: [Download](https://drive.google.com/file/d/1AWmJPuIjlarQopiltD3r-Ce0jL3KZ2xi/view?usp=sharing "Google Drive Link") <br /> 
+Skin Lesion: [Download](https://drive.google.com/file/d/1lCrQojKHPKop5UZvRSQ2tGdgTeUMoYdF/view?usp=sharing "Google Drive Link") <br /> 
+Cell Cycle: [Download](https://drive.google.com/file/d/17fFhSgTL_QXCn0g5u-0LsPIWoaZ-bUx8/view?usp=sharing "Google Drive Link")
+
+
 ## Arguments and Usage
 ### Usage
 ```
@@ -353,6 +362,23 @@ turn on novel class detection
 
 #### `--gpu-id` (Default: 0)
 the id of the GPU to use
+
+## Examples
+
+```
+To run supervised training with augmentations-based sampling on white blood cell dataset:
+python3 train.py --dataset matek --seed <seed> --root <datasets_root> --al augmentations_based --weak-supervision-strategy active_learning
+
+To run semi-supervised training with augmentations-based sampling on cell cycle dataset:
+python3 train.py --dataset jurkat --seed <seed> --root <datasets_root> --ssl fixmatch_with_al --weak-supervision-strategy semi_supervised --semi-supervised-uncertainty-method augmentations_based
+
+To run SimCLR self-supervised pre-training on skin lesions dataset:
+python3 train.py --dataset isic --seed <seed> --root <datasets_root> --ssl simclr --simclr-resume 
+```
+
+## Results
+
+
 
 ## References
 [1] Settles, B. (2009). Active learning literature survey. University of Wisconsin-Madison Department of Computer Sciences.
