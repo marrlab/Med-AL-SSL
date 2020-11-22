@@ -35,9 +35,9 @@ dataclasses
 ## Data
 The train/test splits for the three datasets can be downloaded here:
 
-White Blood Cell: [Download](https://drive.google.com/file/d/1AWmJPuIjlarQopiltD3r-Ce0jL3KZ2xi/view?usp=sharing "Google Drive Link") <br /> 
-Skin Lesion: [Download](https://drive.google.com/file/d/1lCrQojKHPKop5UZvRSQ2tGdgTeUMoYdF/view?usp=sharing "Google Drive Link") <br /> 
-Cell Cycle: [Download](https://drive.google.com/file/d/17fFhSgTL_QXCn0g5u-0LsPIWoaZ-bUx8/view?usp=sharing "Google Drive Link")
+A. White Blood Cell: [Download](https://drive.google.com/file/d/1AWmJPuIjlarQopiltD3r-Ce0jL3KZ2xi/view?usp=sharing "Google Drive Link") <br /> 
+B. Skin Lesion: [Download](https://drive.google.com/file/d/1lCrQojKHPKop5UZvRSQ2tGdgTeUMoYdF/view?usp=sharing "Google Drive Link") <br /> 
+C. Cell Cycle: [Download](https://drive.google.com/file/d/17fFhSgTL_QXCn0g5u-0LsPIWoaZ-bUx8/view?usp=sharing "Google Drive Link")
 
 
 ## Arguments and Usage
@@ -378,7 +378,13 @@ python3 train.py --dataset isic --seed <seed> --root <datasets_root> --ssl simcl
 
 ## Results
 
+![alt text](https://github.com/marrlab/Med-AL-SSL/blob/master/results/table.png?raw=true)
 
+Results for the three datasets:
+
+A. White Blood Cell <br /> 
+B. Skin Lesion <br /> 
+C. Cell Cycle
 
 ## References
 [1] Settles, B. (2009). Active learning literature survey. University of Wisconsin-Madison Department of Computer Sciences.
