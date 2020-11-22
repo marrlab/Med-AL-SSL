@@ -384,7 +384,9 @@ Results for the three datasets:
 
 A. White Blood Cell <br /> 
 B. Skin Lesion <br /> 
-C. Cell Cycle
+C. Cell Cycle <br />
+
+All results can be downloaded from here: [Download](https://drive.google.com/file/d/1cYHGHTIwpnjjox1Iwg3EwypsOAJlUCD1/view?usp=sharing "Google Drive Link")
 
 ## References
 [1] Settles, B. (2009). Active learning literature survey. University of Wisconsin-Madison Department of Computer Sciences.
