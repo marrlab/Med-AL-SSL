@@ -379,8 +379,6 @@ python3 train.py --dataset isic --seed <seed> --root <datasets_root> --ssl simcl
 ## Results
 
 ![Result Table](https://github.com/marrlab/Med-AL-SSL/blob/master/results/table.png?raw=true)
-![Result Figure 1](https://github.com/marrlab/Med-AL-SSL/blob/master/results/results_1.png?raw=true)
-![Result Figure 2](https://github.com/marrlab/Med-AL-SSL/blob/master/results/results_2.png?raw=true)
 
 
 Results for the three datasets:
