@@ -1,4 +1,5 @@
-# Med-AL-SSL
+# Annotation-efficient classification combining active learning, pre-training and semi-supervised learning for biomedical images
+
 Repository for implementation of active learning and semi-supervised learning algorithms and applying it to medical imaging datasets
 
 ## Active Learning algorithms
