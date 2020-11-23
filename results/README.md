@@ -1,14 +1,14 @@
 # Results
 
-## Fig 2 White Blood Cell:
+## Fig 2 White Blood Cell Dataset:
 This figure is an extension of figure 2 from the paper. In this figure we show the results for the metrics: macro recall, macro precision, macro f1-score and accuracy. The premise of this figure is the same as described in the caption of figure 2 in paper.
 
 
-## Fig 2 Skin Lesion:
+## Fig 2 Skin Lesion Dataset:
 This figure is an extension of figure 2 from the paper. In the paper, figure 2 only shows the macro recall for White Blood Cell dataset. However, In this figure we show the results for the Skin Lesion dataset and we show the following metrics: macro recall, macro precision, macro f1-score and accuracy. The premise of this figure is the same as described in the caption of figure 2 in paper.
 
 
-## Fig 2 Cell Cycle:
+## Fig 2 Cell Cycle Dataset:
 This figure is an extension of figure 2 from the paper. In the paper, figure 2 only shows the macro recall for White Blood Cell dataset. However, In this figure we show the results for the Cell Cycle dataset and we show the following metrics: macro recall, macro precision, macro f1-score and accuracy. The premise of this figure is the same as described in the caption of figure 2 in paper.
 
 
