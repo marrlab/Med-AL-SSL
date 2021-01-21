@@ -21,7 +21,7 @@ from data.dataset_utils import WeaklySupervisedDataset
 from model.densenet import densenet121
 from model.lenet import LeNet
 from model.loss_net import LossNet
-from model.resnet import resnet18
+from model.resnet import resnet50
 from model.resnet_autoencoder import ResnetAutoencoder
 from model.simclr_arch import SimCLRArch
 from model.wideresnet import WideResNet
@@ -278,7 +278,7 @@ def create_model_optimizer_scheduler(args, dataset_class, optimizer='adam', sche
         model = LeNet(num_channels=3, num_classes=dataset_class.num_classes,
                       droprate=args.drop_rate, input_size=dataset_class.input_size)
     elif args.arch == 'resnet':
-        model = resnet18(num_classes=dataset_class.num_classes, input_size=dataset_class.input_size,
+        model = resnet50(num_classes=dataset_class.num_classes, input_size=dataset_class.input_size,
                          drop_rate=args.drop_rate)
     else:
         raise NotImplementedError

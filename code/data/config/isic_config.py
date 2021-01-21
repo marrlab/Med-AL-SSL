@@ -2,8 +2,8 @@ def set_isic_configs(args):
     args.batch_size = 128
     args.fixmatch_k_img = 8192
     args.simclr_batch_size = 768
-    args.stop_labeled = 8106
-    args.add_labeled = 810
+    args.stop_labeled = 8324
+    args.add_labeled = 1015
     args.start_labeled = 203
     args.merged = False
 

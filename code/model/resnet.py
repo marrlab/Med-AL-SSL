@@ -131,5 +131,5 @@ def resnet18(num_classes, input_size, drop_rate):
     return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=num_classes, input_size=input_size, drop_rate=drop_rate)
 
 
-def resnet50(num_classes, input_size):
-    return ResNet(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, input_size=input_size)
+def resnet50(num_classes, input_size, drop_rate):
+    return ResNet(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, input_size=input_size, drop_rate=drop_rate)

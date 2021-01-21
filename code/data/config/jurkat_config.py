@@ -2,8 +2,8 @@ def set_jurkat_configs(args):
     args.batch_size = 256
     args.fixmatch_k_img = 8192
     args.simclr_batch_size = 1024
-    args.stop_labeled = 5168
-    args.add_labeled = 1033
+    args.stop_labeled = 10594
+    args.add_labeled = 1290
     args.start_labeled = 258
     args.merged = False
 

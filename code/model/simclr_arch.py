@@ -33,7 +33,7 @@ class SimCLRArch(nn.Module):
             )
         else:
             self.encoder = modify_resnet_model(
-                torchvision.models.resnet18(), v1=True, input_size=input_size
+                torchvision.models.resnet50(), v1=True, input_size=input_size
             )
             latent_dim = self.encoder.fc.in_features
             self.encoder.fc = Identity()
