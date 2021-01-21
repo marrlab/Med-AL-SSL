@@ -427,14 +427,14 @@ def set_model_name(args):
     name = f'{name}{"_pretrained" if args.load_pretrained else ""}'
     name = f'{name}{"_k_medoids_100" if args.k_medoids else ""}'
     name = f'{name}{"_novel_class_detection" if args.novel_class_detection else ""}'
-    name = f'{name}{f"_{args.fixmatch_init}" if args.fixmatch_init is not None else ""}'
+    name = f'{name}{f"_{args.semi_supervised_init}" if args.semi_supervised_init is not None else ""}'
 
     return name
 
 
-def perform_sampling(args, uncertainty_sampler, pseudo_labeler, epoch, model, train_loader, unlabeled_loader,
-                     dataset_class, labeled_indices, unlabeled_indices, labeled_dataset, unlabeled_dataset,
-                     test_dataset, kwargs, current_labeled, best_model):
+def perform_sampling(args, uncertainty_sampler, epoch, model, train_loader, unlabeled_loader, dataset_class,
+                     labeled_indices, unlabeled_indices, labeled_dataset, unlabeled_dataset, test_dataset, kwargs,
+                     current_labeled):
     print(args.weak_supervision_strategy)
     if args.weak_supervision_strategy == 'active_learning':
         samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
@@ -445,15 +445,6 @@ def perform_sampling(args, uncertainty_sampler, pseudo_labeler, epoch, model, tr
         print(f'Uncertainty Sampling\t '
               f'Current labeled ratio: {current_labeled + args.add_labeled}\t'
               f'Model Reset')
-    elif args.weak_supervision_strategy == 'semi_supervised':
-        samples_indices, samples_targets = pseudo_labeler.get_samples(epoch, args, best_model,
-                                                                      unlabeled_loader,
-                                                                      number=dataset_class.add_labeled)
-
-        print(f'Pseudo labeling\t '
-              f'Current labeled ratio: {current_labeled + args.add_labeled}\t'
-              f'Model Reset')
-
     elif args.weak_supervision_strategy == 'random_sampling':
         samples_indices = random_sampling(unlabeled_indices, number=dataset_class.add_labeled)
 

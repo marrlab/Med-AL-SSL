@@ -1,5 +1,5 @@
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
-from active_learning.entropy_based import UncertaintySamplingEntropyBased
+from active_learning.entropy_based import UncertaintySamplingOthers
 from active_learning.mc_dropout import UncertaintySamplingMCDropout
 from data.isic_dataset import ISICDataset
 from data.matek_dataset import MatekDataset
@@ -105,13 +105,14 @@ class SimCLR:
         elif self.uncertainty_sampling_method == 'augmentations_based':
             uncertainty_sampler = UncertaintySamplingAugmentationBased()
             self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
-        elif self.uncertainty_sampling_method == 'entropy_based':
-            uncertainty_sampler = UncertaintySamplingEntropyBased(verbose=True,
-                                                                  uncertainty_sampling_method='entropy_based')
-            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
-        else:
+        elif self.uncertainty_sampling_method is None:
             uncertainty_sampler = None
             self.args.weak_supervision_strategy = "random_sampling"
+        else:
+            uncertainty_sampler = UncertaintySamplingOthers(verbose=True,
+                                                            uncertainty_sampling_method=
+                                                            self.uncertainty_sampling_method)
+            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
 
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,
                                                          add_labeled=self.args.add_labeled,
@@ -165,13 +166,9 @@ class SimCLR:
                 metrics_per_cycle = pd.concat([metrics_per_cycle, best_report])
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
-                    perform_sampling(self.args, uncertainty_sampler, None,
-                                     epoch, model, train_loader, unlabeled_loader,
-                                     dataset_class, labeled_indices,
-                                     unlabeled_indices, labeled_dataset,
-                                     unlabeled_dataset,
-                                     test_dataset, self.kwargs, current_labeled,
-                                     model)
+                    perform_sampling(self.args, uncertainty_sampler, epoch, model, train_loader, unlabeled_loader,
+                                     dataset_class, labeled_indices, unlabeled_indices, labeled_dataset,
+                                     unlabeled_dataset, test_dataset, self.kwargs, current_labeled)
 
                 current_labeled += self.args.add_labeled
                 last_best_epochs = 0

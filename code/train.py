@@ -14,14 +14,14 @@ import torch.utils.data
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
 from active_learning.batch_bald import UncertaintySamplingBatchBald
 from active_learning.learning_loss import LearningLoss
-from active_learning.entropy_based import UncertaintySamplingEntropyBased
+from active_learning.entropy_based import UncertaintySamplingOthers
 from active_learning.mc_dropout import UncertaintySamplingMCDropout
 
-from semi_supervised.pseudo_labeling import PseudoLabeling
 from semi_supervised.auto_encoder import AutoEncoder
 from semi_supervised.simclr import SimCLR
 from semi_supervised.auto_encoder_cl import AutoEncoderCl
 from semi_supervised.fixmatch import FixMatch
+from semi_supervised.pseudo_labeling import PseudoLabeling
 
 from data.matek_dataset import MatekDataset
 from data.jurkat_dataset import JurkatDataset
@@ -79,6 +79,10 @@ def main(args):
         fixmatch = FixMatch(args)
         best_acc = fixmatch.main()
         return best_acc
+    elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'pseudo_label':
+        pseudo_labeling = PseudoLabeling(args)
+        best_acc = pseudo_labeling.train_validate_classifier()
+        return best_acc
     elif args.weak_supervision_strategy == 'active_learning' and args.uncertainty_sampling_method == 'learning_loss':
         learning_loss = LearningLoss(args)
         best_acc = learning_loss.main()
@@ -97,6 +101,10 @@ def main(args):
         fixmatch = FixMatch(args, uncertainty_sampling_method=args.semi_supervised_uncertainty_method)
         best_acc = fixmatch.main()
         return best_acc
+    elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'pseudo_label_with_al':
+        pseudo_labeling = PseudoLabeling(args, uncertainty_sampling_method=args.semi_supervised_uncertainty_method)
+        best_acc = pseudo_labeling.train_validate_classifier()
+        return best_acc
 
     if args.uncertainty_sampling_method == 'mc_dropout':
         uncertainty_sampler = UncertaintySamplingMCDropout()
@@ -105,8 +113,8 @@ def main(args):
     elif args.uncertainty_sampling_method == 'batch_bald':
         uncertainty_sampler = UncertaintySamplingBatchBald()
     else:
-        uncertainty_sampler = UncertaintySamplingEntropyBased(verbose=True,
-                                                              uncertainty_sampling_method='entropy_based')
+        uncertainty_sampler = UncertaintySamplingOthers(verbose=True,
+                                                        uncertainty_sampling_method='entropy_based')
 
     dataset_class = datasets[args.dataset](root=args.root,
                                            add_labeled=args.add_labeled,
@@ -127,8 +135,6 @@ def main(args):
     train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset,
                                                                 labeled_indices, unlabeled_indices, kwargs,
                                                                 dataset_class.unlabeled_subset_num)
-
-    pseudo_labeler = PseudoLabeling()
 
     model, optimizer, scheduler = create_model_optimizer_scheduler(args, dataset_class)
 
@@ -166,13 +172,9 @@ def main(args):
             metrics_per_cycle = pd.concat([metrics_per_cycle, best_report])
 
             train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
-                perform_sampling(args, uncertainty_sampler, pseudo_labeler,
-                                 epoch, model, train_loader, unlabeled_loader,
-                                 dataset_class, labeled_indices,
-                                 unlabeled_indices, labeled_dataset,
-                                 unlabeled_dataset,
-                                 test_dataset, kwargs, current_labeled,
-                                 model)
+                perform_sampling(args, uncertainty_sampler, epoch, model, train_loader, unlabeled_loader, dataset_class,
+                                 labeled_indices, unlabeled_indices, labeled_dataset, unlabeled_dataset, test_dataset,
+                                 kwargs, current_labeled)
             current_labeled += args.add_labeled
             # best_recall, best_report, last_best_epochs = 0, None, 0
             last_best_epochs = 0
@@ -305,7 +307,13 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            ('random_sampling', None, None, None, True, None),
+            ('active_learning', 'entropy_based', None, None, False, None),
+            ('active_learning', 'mc_dropout', None, None, False, None),
+            ('active_learning', 'augmentations_based', None, None, False, None),
+            ('active_learning', 'least_confidence', None, None, False, None),
+            ('active_learning', 'margin_confidence', None, None, False, None),
+            ('active_learning', 'learning_loss', None, None, False, None),
+            ('random_sampling', None, None, None, False, None),
         ]
 
         for (m, u, s, us, p, init) in states:
@@ -314,7 +322,7 @@ if __name__ == '__main__':
             arguments.semi_supervised_method = s
             arguments.semi_supervised_uncertainty_method = us
             arguments.load_pretrained = p
-            arguments.fixmatch_init = init
+            arguments.semi_supervised_init = init
             random.seed(arguments.seed)
             torch.manual_seed(arguments.seed)
             np.random.seed(arguments.seed)
@@ -356,6 +364,13 @@ All Batch states:
     ('semi_supervised', None, 'fixmatch_with_al', 'least_confidence', False, None),
     ('semi_supervised', None, 'fixmatch_with_al', 'margin_confidence', False, None),
     ('semi_supervised', None, 'fixmatch_with_al', 'learning_loss', False, None),
+    ('semi_supervised', None, 'pseudo_label', None, False, None),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'augmentations_based', False, None),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'entropy_based', False, None),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'mc_dropout', False, None),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'least_confidence', False, None),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'margin_confidence', False, None),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'learning_loss', False, None),
     ('active_learning', 'entropy_based', None, None, True, None),
     ('active_learning', 'mc_dropout', None, None, True, None),
     ('active_learning', 'augmentations_based', None, None, True, None),
@@ -384,4 +399,25 @@ All Batch states:
     ('semi_supervised', None, 'fixmatch_with_al', 'least_confidence', True, 'autoencoder'),
     ('semi_supervised', None, 'fixmatch_with_al', 'margin_confidence', True, 'autoencoder'),
     ('semi_supervised', None, 'fixmatch_with_al', 'learning_loss', True, 'autoencoder'),
+    ('semi_supervised', None, 'pseudo_label', None, True, 'pretrained'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'augmentations_based', True, 'pretrained'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'entropy_based', True, 'pretrained'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'mc_dropout', True, 'pretrained'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'least_confidence', True, 'pretrained'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'margin_confidence', True, 'pretrained'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'learning_loss', True, 'pretrained'),
+    ('semi_supervised', None, 'pseudo_label', None, True, 'simclr'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'augmentations_based', True, 'simclr'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'entropy_based', True, 'simclr'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'mc_dropout', True, 'simclr'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'least_confidence', True, 'simclr'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'margin_confidence', True, 'simclr'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'learning_loss', True, 'simclr'),
+    ('semi_supervised', None, 'pseudo_label', None, True, 'autoencoder'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'augmentations_based', True, 'autoencoder'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'entropy_based', True, 'autoencoder'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'mc_dropout', True, 'autoencoder'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'least_confidence', True, 'autoencoder'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'margin_confidence', True, 'autoencoder'),
+    ('semi_supervised', None, 'pseudo_label_with_al', 'learning_loss', True, 'autoencoder'),
 '''

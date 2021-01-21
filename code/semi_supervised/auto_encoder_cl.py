@@ -96,13 +96,9 @@ class AutoEncoderCl:
                 metrics_per_cycle = pd.concat([metrics_per_cycle, best_report])
 
                 labeled_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
-                    perform_sampling(self.args, None, None,
-                                     epoch, model, labeled_loader, unlabeled_loader,
-                                     dataset_class, labeled_indices,
-                                     unlabeled_indices, labeled_dataset,
-                                     unlabeled_dataset,
-                                     test_dataset, self.kwargs, current_labeled,
-                                     model)
+                    perform_sampling(self.args, None, epoch, model, labeled_loader, unlabeled_loader, dataset_class,
+                                     labeled_indices, unlabeled_indices, labeled_dataset, unlabeled_dataset,
+                                     test_dataset, self.kwargs, current_labeled)
 
                 current_labeled += self.args.add_labeled
                 last_best_epochs = 0

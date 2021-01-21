@@ -101,7 +101,7 @@ parser.add_argument('--semi-supervised-uncertainty-method', default='entropy_bas
                     choices=['entropy_based', 'augmentations_based'],
                     help='the AL algorithm to use in conjunction with a SSL algorithm')
 
-parser.add_argument('--pseudo-labeling-threshold', default=0.9, type=int,
+parser.add_argument('--pseudo-labeling-threshold', default=0.95, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
 
 parser.add_argument('--simclr-train-epochs', default=200, type=int, help='number of total epochs for SimCLR training')
@@ -163,9 +163,9 @@ parser.add_argument('--fixmatch-epochs', default=1000, type=int,
 parser.add_argument('--fixmatch-warmup', default=0, type=int,
                     help='warmup epochs with unlabeled data')
 
-parser.add_argument('--fixmatch-init', default=None, type=str,
+parser.add_argument('--semi-supervised-init', default=None, type=str,
                     choices=[None, 'random', 'pretrained', 'simclr', 'autoencoder'],
-                    help='the semi supervised method to use')
+                    help='the self-supervised method to use for semi-supervised methods')
 
 parser.add_argument('--learning-loss-weight', default=1.0, type=float,
                     help='the weight for the loss network, loss term in the objective function')

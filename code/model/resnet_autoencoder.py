@@ -12,62 +12,6 @@ Unet: https://arxiv.org/abs/1505.04597
 """
 
 
-class DoubleConv(nn.Module):
-
-    def __init__(self, in_channels, out_channels, mid_channels=None):
-        super().__init__()
-        if not mid_channels:
-            mid_channels = out_channels
-        self.double_conv = nn.Sequential(
-            nn.Conv2d(in_channels, mid_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(mid_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
-        )
-
-    def forward(self, x):
-        return self.double_conv(x)
-
-
-class Up(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-
-        self.up = nn.ConvTranspose2d(in_channels, in_channels, kernel_size=2, stride=2)
-        self.conv = DoubleConv(in_channels, out_channels)
-
-    def forward(self, x):
-        x = self.up(x)
-        return self.conv(x)
-
-
-class UnetDec(nn.Module):
-    def __init__(self, nc=3, z_dim=128, input_size=32):
-        super(UnetDec, self).__init__()
-
-        self.linear = nn.Linear(z_dim, 512)
-        self.input_size = input_size
-        self.up1 = Up(512, 256)
-        self.up2 = Up(256, 128)
-        self.up3 = Up(128, 64)
-        self.up4 = Up(64, 64)
-        self.outc = nn.ConvTranspose2d(64, nc, kernel_size=3, stride=int(math.log2(input_size) - 4), padding=1,
-                                       bias=False)
-
-    def forward(self, z):
-        x = self.linear(z)
-        x = x.view(x.size(0), 512, 1, 1)
-        x = self.up1(x)
-        x = self.up2(x)
-        x = self.up3(x)
-        x = self.up4(x)
-        x = self.outc(x)
-        x = F.pad(x, [self.input_size - x.size(2), 0, self.input_size - x.size(3), 0])
-        return x
-
-
 class ResizeConv2d(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, scale_factor, mode='nearest'):
         super().__init__()

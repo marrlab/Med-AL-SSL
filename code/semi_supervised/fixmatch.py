@@ -1,7 +1,7 @@
 from torch.utils.data import DataLoader
 
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
-from active_learning.entropy_based import UncertaintySamplingEntropyBased
+from active_learning.entropy_based import UncertaintySamplingOthers
 from active_learning.mc_dropout import UncertaintySamplingMCDropout
 from data.isic_dataset import ISICDataset
 from data.matek_dataset import MatekDataset
@@ -37,7 +37,7 @@ class FixMatch:
         self.model = None
         self.kwargs = {'num_workers': 16, 'pin_memory': False, 'drop_last': True}
         self.uncertainty_sampling_method = uncertainty_sampling_method
-        self.init = self.args.fixmatch_init
+        self.init = self.args.semi_supervised_init
 
     def main(self):
         if self.uncertainty_sampling_method == 'mc_dropout':
@@ -46,13 +46,14 @@ class FixMatch:
         elif self.uncertainty_sampling_method == 'augmentations_based':
             uncertainty_sampler = UncertaintySamplingAugmentationBased()
             self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
-        elif self.uncertainty_sampling_method == 'entropy_based':
-            uncertainty_sampler = UncertaintySamplingEntropyBased(verbose=True,
-                                                                  uncertainty_sampling_method='entropy_based')
-            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
-        else:
+        elif self.uncertainty_sampling_method is None:
             uncertainty_sampler = None
             self.args.weak_supervision_strategy = "random_sampling"
+        else:
+            uncertainty_sampler = UncertaintySamplingOthers(verbose=True,
+                                                            uncertainty_sampling_method=
+                                                            self.uncertainty_sampling_method)
+            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
 
         dataset_cls = self.datasets[self.args.dataset](root=self.args.root,
                                                        add_labeled=self.args.add_labeled,
@@ -127,13 +128,9 @@ class FixMatch:
                 metrics_per_cycle = pd.concat([metrics_per_cycle, best_report])
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
-                    perform_sampling(self.args, uncertainty_sampler, None,
-                                     epoch, model, train_loader, unlabeled_loader,
-                                     dataset_cls, labeled_indices,
-                                     unlabeled_indices, labeled_dataset,
-                                     unlabeled_dataset,
-                                     test_dataset, self.kwargs, current_labeled,
-                                     model)
+                    perform_sampling(self.args, uncertainty_sampler, epoch, model, train_loader, unlabeled_loader,
+                                     dataset_cls, labeled_indices, unlabeled_indices, labeled_dataset,
+                                     unlabeled_dataset, test_dataset, self.kwargs, current_labeled)
 
                 labeled_dataset_fix, unlabeled_dataset_fix = dataset_cls.get_datasets_fixmatch(base_dataset,
                                                                                                labeled_indices,
@@ -148,6 +145,8 @@ class FixMatch:
                 last_best_epochs = 0
 
                 if self.args.reset_model:
+                    model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_cls)
+
                     if self.init == 'pretrained':
                         model = load_pretrained(model)
                     elif self.init == 'autoencoder':

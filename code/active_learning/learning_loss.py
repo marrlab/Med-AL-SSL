@@ -1,7 +1,7 @@
 import time
 import torch
 
-from active_learning.entropy_based import UncertaintySamplingEntropyBased
+from active_learning.entropy_based import UncertaintySamplingOthers
 from data.isic_dataset import ISICDataset
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
@@ -59,9 +59,9 @@ class LearningLoss:
 
         criterions = {'backbone': criterion_backbone, 'module': loss_module_objective_func}
 
-        uncertainty_sampler = UncertaintySamplingEntropyBased(verbose=True,
-                                                              uncertainty_sampling_method=self.args.
-                                                              uncertainty_sampling_method)
+        uncertainty_sampler = UncertaintySamplingOthers(verbose=True,
+                                                        uncertainty_sampling_method=self.args.
+                                                        uncertainty_sampling_method)
 
         current_labeled = dataset_cl.start_labeled
         metrics_per_cycle = pd.DataFrame([])
@@ -87,13 +87,9 @@ class LearningLoss:
                 metrics_per_cycle = pd.concat([metrics_per_cycle, best_report])
 
                 train_loader, unlabeled_loader, val_loader, labeled_indices, unlabeled_indices = \
-                    perform_sampling(self.args, uncertainty_sampler, None,
-                                     epoch, models, train_loader, unlabeled_loader,
-                                     dataset_cl, labeled_indices,
-                                     unlabeled_indices, labeled_dataset,
-                                     unlabeled_dataset,
-                                     test_dataset, self.kwargs, current_labeled,
-                                     None)
+                    perform_sampling(self.args, uncertainty_sampler, epoch, models, train_loader, unlabeled_loader,
+                                     dataset_cl, labeled_indices, unlabeled_indices, labeled_dataset, unlabeled_dataset,
+                                     test_dataset, self.kwargs, current_labeled)
 
                 current_labeled += self.args.add_labeled
                 last_best_epochs = 0
