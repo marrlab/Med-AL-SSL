@@ -8,6 +8,7 @@ from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
 from data.plasmodium_dataset import PlasmodiumDataset
+from data.retinopathy_dataset import RetinopathyDataset
 
 import torch
 import time
@@ -33,7 +34,7 @@ class FixMatch:
         self.args = args
         self.verbose = verbose
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
-                         'jurkat': JurkatDataset, 'isic': ISICDataset}
+                         'jurkat': JurkatDataset, 'isic': ISICDataset, 'retinopathy': RetinopathyDataset}
         self.model = None
         self.kwargs = {'num_workers': 16, 'pin_memory': False, 'drop_last': True}
         self.uncertainty_sampling_method = uncertainty_sampling_method
@@ -46,7 +47,7 @@ class FixMatch:
         elif self.uncertainty_sampling_method == 'augmentations_based':
             uncertainty_sampler = UncertaintySamplingAugmentationBased()
             self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
-        elif self.uncertainty_sampling_method is None:
+        elif self.uncertainty_sampling_method == 'random_sampling':
             uncertainty_sampler = None
             self.args.weak_supervision_strategy = "random_sampling"
         else:

@@ -28,11 +28,13 @@ from data.jurkat_dataset import JurkatDataset
 from data.plasmodium_dataset import PlasmodiumDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.isic_dataset import ISICDataset
+from data.retinopathy_dataset import RetinopathyDataset
 from data.config.matek_config import set_matek_configs
 from data.config.jurkat_config import set_jurkat_configs
 from data.config.plasmodium_config import set_plasmodium_configs
 from data.config.cifar10_config import set_cifar_configs
 from data.config.isic_config import set_isic_configs
+from data.config.retinopathy_config import set_retinopathy_configs
 
 from options.train_options import get_arguments
 
@@ -43,9 +45,10 @@ from utils import Metrics, store_logs
 
 arguments = get_arguments()
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
-            'jurkat': JurkatDataset, 'isic': ISICDataset}
+            'jurkat': JurkatDataset, 'isic': ISICDataset, 'retinopathy': RetinopathyDataset}
 configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs,
-           'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs, 'isic': set_isic_configs}
+           'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs, 'isic': set_isic_configs,
+           'retinopathy': set_retinopathy_configs}
 
 os.environ['CUDA_VISIBLE_DEVICES'] = arguments.gpu_id
 
@@ -114,7 +117,7 @@ def main(args):
         uncertainty_sampler = UncertaintySamplingBatchBald()
     else:
         uncertainty_sampler = UncertaintySamplingOthers(verbose=True,
-                                                        uncertainty_sampling_method='entropy_based')
+                                                        uncertainty_sampling_method=args.uncertainty_sampling_method)
 
     dataset_class = datasets[args.dataset](root=args.root,
                                            add_labeled=args.add_labeled,
@@ -307,6 +310,8 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
+            ('active_learning', 'least_confidence', None, None, False, None),
+            ('semi_supervised', None, 'pseudo_label', None, False, None),
             ('active_learning', 'entropy_based', None, None, False, None),
             ('active_learning', 'mc_dropout', None, None, False, None),
             ('active_learning', 'augmentations_based', None, None, False, None),

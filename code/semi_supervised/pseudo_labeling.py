@@ -6,6 +6,8 @@ from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
 from data.jurkat_dataset import JurkatDataset
 from data.plasmodium_dataset import PlasmodiumDataset
+from data.retinopathy_dataset import RetinopathyDataset
+
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
     store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder, LossPerClassMeter, load_pretrained,\
     create_model_optimizer_simclr, create_model_optimizer_scheduler, postprocess_indices
@@ -15,6 +17,7 @@ import torch.nn as nn
 import numpy as np
 import pandas as pd
 from copy import deepcopy
+import torch.nn.functional as F
 
 
 class PseudoLabeling:
@@ -22,7 +25,7 @@ class PseudoLabeling:
         self.args = args
         self.verbose = verbose
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
-                         'jurkat': JurkatDataset, 'isic': ISICDataset}
+                         'jurkat': JurkatDataset, 'isic': ISICDataset, 'retinopathy': RetinopathyDataset}
         self.model = None
         self.kwargs = {'num_workers': 16, 'pin_memory': False, 'drop_last': True}
         self.uncertainty_sampling_method = uncertainty_sampling_method
@@ -35,7 +38,7 @@ class PseudoLabeling:
         elif self.uncertainty_sampling_method == 'augmentations_based':
             uncertainty_sampler = UncertaintySamplingAugmentationBased()
             self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
-        elif self.uncertainty_sampling_method is None:
+        elif self.uncertainty_sampling_method == 'random_sampling':
             uncertainty_sampler = None
             self.args.weak_supervision_strategy = "random_sampling"
         else:
@@ -63,14 +66,14 @@ class PseudoLabeling:
                                                                     test_dataset, labeled_indices, unlabeled_indices,
                                                                     self.kwargs, dataset_class.unlabeled_subset_num)
 
-        model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_cls)
+        model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_class)
 
         if self.init == 'pretrained':
             model = load_pretrained(model)
         elif self.init == 'autoencoder':
-            model, optimizer, _ = create_model_optimizer_autoencoder(self.args, dataset_cls)
+            model, optimizer, _ = create_model_optimizer_autoencoder(self.args, dataset_class)
         elif self.init == 'simclr':
-            model, optimizer, _, _ = create_model_optimizer_simclr(self.args, dataset_cls)
+            model, optimizer, _, _ = create_model_optimizer_simclr(self.args, dataset_class)
 
         criterion = get_loss(self.args, dataset_class.labeled_class_samples, reduction='none')
 
@@ -102,10 +105,15 @@ class PseudoLabeling:
             labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
                                                                      samples_indices)
 
-            train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset,
+            train_loader, unlabeled_loader, val_loader = create_loaders(self.args, labeled_dataset, unlabeled_dataset,
                                                                         test_dataset, labeled_indices,
-                                                                        unlabeled_indices, kwargs,
+                                                                        unlabeled_indices, self.kwargs,
                                                                         dataset_class.unlabeled_subset_num)
+
+            current_labeled += len(samples_indices)
+
+            print('Epoch Classifier: [{0}]\t'
+                  'Pseudo Labels Added: [{1}]'.format(epoch, len(samples_indices)))
 
             if epoch > self.args.labeled_warmup_epochs and last_best_epochs > self.args.add_labeled_epochs:
                 metrics_per_cycle = pd.concat([metrics_per_cycle, best_report])
@@ -119,14 +127,14 @@ class PseudoLabeling:
                 last_best_epochs = 0
 
                 if self.args.reset_model:
-                    model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_cls)
+                    model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_class)
 
                     if self.init == 'pretrained':
                         model = load_pretrained(model)
                     elif self.init == 'autoencoder':
-                        model, optimizer, _ = create_model_optimizer_autoencoder(self.args, dataset_cls)
+                        model, optimizer, _ = create_model_optimizer_autoencoder(self.args, dataset_class)
                     elif self.init == 'simclr':
-                        model, optimizer, _, _ = create_model_optimizer_simclr(self.args, dataset_cls)
+                        model, optimizer, _, _ = create_model_optimizer_simclr(self.args, dataset_class)
 
                 if self.args.novel_class_detection:
                     num_classes = [np.sum(np.array(base_dataset.targets)[labeled_indices] == i)
@@ -267,11 +275,8 @@ class PseudoLabeling:
             batch_time.update(time.time() - end)
             end = time.time()
 
-            if i % args.print_freq == 0:
-                print('{0}\t'
-                      'Epoch: [{1}][{2}/{3}]\t'
-                      'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
-                      .format('Pseudo Labeling', epoch, i, len(unlabeled_loader), batch_time=batch_time))
+            if i % self.args.print_freq == 0:
+                pass
 
         samples_targets = samples_targets[samples > self.args.pseudo_labeling_threshold]
         samples = samples[samples > self.args.pseudo_labeling_threshold]
