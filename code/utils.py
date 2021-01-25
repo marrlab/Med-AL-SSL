@@ -21,7 +21,7 @@ from data.dataset_utils import WeaklySupervisedDataset
 from model.densenet import densenet121
 from model.lenet import LeNet
 from model.loss_net import LossNet
-from model.resnet import resnet50
+from model.resnet import resnet18
 from model.resnet_autoencoder import ResnetAutoencoder
 from model.simclr_arch import SimCLRArch
 from model.wideresnet import WideResNet

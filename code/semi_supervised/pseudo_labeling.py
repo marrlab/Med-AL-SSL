@@ -100,15 +100,15 @@ class PseudoLabeling:
             metrics_per_epoch = pd.concat([metrics_per_epoch, val_report])
 
             samples_indices, samples_targets = self.get_samples(epoch, best_model, unlabeled_loader,
-                                                                number=dataset_class.add_labeled)
+                                                                number=30)
+            if len(samples_indices) != 0:
+                labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
+                                                                         samples_indices)
 
-            labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
-                                                                     samples_indices)
-
-            train_loader, unlabeled_loader, val_loader = create_loaders(self.args, labeled_dataset, unlabeled_dataset,
-                                                                        test_dataset, labeled_indices,
-                                                                        unlabeled_indices, self.kwargs,
-                                                                        dataset_class.unlabeled_subset_num)
+                train_loader, unlabeled_loader, val_loader = create_loaders(self.args, labeled_dataset, unlabeled_dataset,
+                                                                            test_dataset, labeled_indices,
+                                                                            unlabeled_indices, self.kwargs,
+                                                                            dataset_class.unlabeled_subset_num)
 
             current_labeled += len(samples_indices)
 
@@ -278,11 +278,15 @@ class PseudoLabeling:
             if i % self.args.print_freq == 0:
                 pass
 
-        samples_targets = samples_targets[samples > self.args.pseudo_labeling_threshold]
-        samples = samples[samples > self.args.pseudo_labeling_threshold]
+        if samples is not None:
+            samples_targets = samples_targets[samples > self.args.pseudo_labeling_threshold]
+            samples = samples[samples > self.args.pseudo_labeling_threshold]
 
-        samples_indices = samples.argsort(descending=True)[:number]
-        samples_targets = samples_targets[samples_indices]
+            samples_indices = samples.argsort(descending=True)[:number]
+            samples_targets = samples_targets[samples_indices]
+        else:
+            samples_indices = []
+            samples_targets = []
 
         model.train()
 
