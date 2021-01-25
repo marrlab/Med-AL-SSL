@@ -278,7 +278,7 @@ def create_model_optimizer_scheduler(args, dataset_class, optimizer='adam', sche
         model = LeNet(num_channels=3, num_classes=dataset_class.num_classes,
                       droprate=args.drop_rate, input_size=dataset_class.input_size)
     elif args.arch == 'resnet':
-        model = resnet50(num_classes=dataset_class.num_classes, input_size=dataset_class.input_size,
+        model = resnet18(num_classes=dataset_class.num_classes, input_size=dataset_class.input_size,
                          drop_rate=args.drop_rate)
     else:
         raise NotImplementedError
@@ -321,7 +321,7 @@ def create_model_optimizer_simclr(args, dataset_class):
 
     if args.simclr_resume:
         model, _, _ = resume_model(args, model)
-        args.start_epoch = args.epochs
+        args.start_epoch = args.simclr_train_epochs
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     scheduler = None

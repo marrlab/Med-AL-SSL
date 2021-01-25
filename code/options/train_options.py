@@ -70,7 +70,7 @@ parser.add_argument('--arch', default='resnet',
 parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
-parser.add_argument('--log-path', default='~/logs/', type=str,
+parser.add_argument('--log-path', default='/home/qasima/med_active_learning/code/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--al', '--uncertainty-sampling-method', default='entropy_based', type=str,
@@ -121,7 +121,7 @@ parser.add_argument('--simclr-base-lr', default=0.25, type=float, help='base lea
 parser.add_argument('--simclr-optimizer', default='adam', type=str, choices=['adam', 'lars'],
                     help='which optimizer to use for simclr training')
 
-parser.add_argument('--simclr-resume', action='store_true',
+parser.add_argument('--simclr-resume', action='store_false',
                     help='flag to be set if an existing simclr model is to be loaded')
 
 parser.add_argument('--weighted', action='store_false', help='to use weighted loss or not (only in case of ce)')
@@ -132,7 +132,7 @@ parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 
                                                                      'plasmodium', 'isic', 'retinopathy'],
                     help='the dataset to train on')
 
-parser.add_argument('--checkpoint-path', default=f'~/runs/', type=str,
+parser.add_argument('--checkpoint-path', default=f'/home/qasima/med_active_learning/code/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
 
 parser.add_argument('--seed', default=9999, type=int, choices=[6666, 9999, 2323, 5555],
