@@ -310,9 +310,8 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            ('active_learning', 'learning_loss', None, None, False, None),
             ('semi_supervised', None, 'pseudo_label', None, False, None),
-            ('active_learning', 'entropy_based', None, None, False, None),
+            """('active_learning', 'entropy_based', None, None, False, None),
             ('active_learning', 'mc_dropout', None, None, False, None),
             ('active_learning', 'augmentations_based', None, None, False, None),
             ('active_learning', 'least_confidence', None, None, False, None),
@@ -395,7 +394,7 @@ if __name__ == '__main__':
             ('semi_supervised', None, 'pseudo_label_with_al', 'mc_dropout', True, 'autoencoder'),
             ('semi_supervised', None, 'pseudo_label_with_al', 'least_confidence', True, 'autoencoder'),
             ('semi_supervised', None, 'pseudo_label_with_al', 'margin_confidence', True, 'autoencoder'),
-            ('semi_supervised', None, 'pseudo_label_with_al', 'learning_loss', True, 'autoencoder'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'learning_loss', True, 'autoencoder'),"""
         ]
 
         for (m, u, s, us, p, init) in states:

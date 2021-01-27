@@ -76,7 +76,6 @@ class RetinopathyDataset:
         self.k_medoids_model = k_medoids_model
         self.k_medoids_n_clusters = k_medoids_n_clusters
         self.start_labeled = start_labeled
-        self.pseudo_labeled_num = None
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.ImageFolder(
@@ -113,7 +112,6 @@ class RetinopathyDataset:
                 labeled_indices, unlabeled_indices = indices[:self.start_labeled], indices[self.start_labeled:]
 
         self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
-        self.pseudo_labeled_num = len(unlabeled_indices) - self.unlabeled_subset_num
 
         self.labeled_class_samples = [np.sum(np.array(base_dataset.targets)[unlabeled_indices] == i)
                                       for i in range(len(base_dataset.classes))]

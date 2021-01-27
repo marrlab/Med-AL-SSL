@@ -150,7 +150,7 @@ class PseudoLabeling:
                 best_report = val_report if is_best else best_report
                 best_model = deepcopy(model) if is_best else best_model
 
-            if current_labeled > self.args.stop_labeled or current_pseudo_labeled > dataset_class.pseudo_labeled_num:
+            if (current_labeled > self.args.stop_labeled) or (current_pseudo_labeled > self.args.pseudo_labeling_num):
                 break
 
         if self.args.store_logs:
