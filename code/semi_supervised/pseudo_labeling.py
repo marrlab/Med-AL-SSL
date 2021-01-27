@@ -8,12 +8,11 @@ from data.jurkat_dataset import JurkatDataset
 from data.plasmodium_dataset import PlasmodiumDataset
 from data.retinopathy_dataset import RetinopathyDataset
 
-from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
+from utils import AverageMeter, create_loaders, accuracy, Metrics, \
     store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder, LossPerClassMeter, load_pretrained,\
     create_model_optimizer_simclr, create_model_optimizer_scheduler, postprocess_indices
 import time
 import torch
-import torch.nn as nn
 import numpy as np
 import pandas as pd
 from copy import deepcopy
@@ -43,8 +42,8 @@ class PseudoLabeling:
             self.args.weak_supervision_strategy = "random_sampling"
         else:
             uncertainty_sampler = UncertaintySamplingOthers(verbose=True,
-                                                            uncertainty_sampling_method=
-                                                            self.uncertainty_sampling_method)
+                                                            uncertainty_sampling_method=self.
+                                                            uncertainty_sampling_method)
             self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
 
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,
@@ -88,6 +87,7 @@ class PseudoLabeling:
 
         self.args.start_epoch = 0
         current_labeled = dataset_class.start_labeled
+        current_pseudo_labeled = 0
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
             train_loss = self.train_classifier(train_loader, model, criterion, optimizer, last_best_epochs, epoch)
@@ -99,18 +99,18 @@ class PseudoLabeling:
             val_report = pd.concat([val_report, train_loss, val_loss], axis=1)
             metrics_per_epoch = pd.concat([metrics_per_epoch, val_report])
 
-            samples_indices, samples_targets = self.get_samples(epoch, best_model, unlabeled_loader,
-                                                                number=30)
-            if len(samples_indices) != 0:
-                labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
-                                                                         samples_indices)
+            samples_indices, samples_targets = self.get_samples(best_model, unlabeled_loader,
+                                                                number=int(dataset_class.pseudo_labeled_num / 300))
+            labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
+                                                                     samples_indices)
 
-                train_loader, unlabeled_loader, val_loader = create_loaders(self.args, labeled_dataset, unlabeled_dataset,
-                                                                            test_dataset, labeled_indices,
-                                                                            unlabeled_indices, self.kwargs,
-                                                                            dataset_class.unlabeled_subset_num)
+            train_loader, unlabeled_loader, val_loader = create_loaders(self.args, labeled_dataset,
+                                                                        unlabeled_dataset, test_dataset,
+                                                                        labeled_indices, unlabeled_indices,
+                                                                        self.kwargs,
+                                                                        dataset_class.unlabeled_subset_num)
 
-            current_labeled += len(samples_indices)
+            current_pseudo_labeled += len(samples_indices)
 
             print('Epoch Classifier: [{0}]\t'
                   'Pseudo Labels Added: [{1}]'.format(epoch, len(samples_indices)))
@@ -150,7 +150,7 @@ class PseudoLabeling:
                 best_report = val_report if is_best else best_report
                 best_model = deepcopy(model) if is_best else best_model
 
-            if current_labeled > self.args.stop_labeled:
+            if current_labeled > self.args.stop_labeled or current_pseudo_labeled > dataset_class.pseudo_labeled_num:
                 break
 
         if self.args.store_logs:
@@ -252,7 +252,7 @@ class PseudoLabeling:
                                        for i, k in enumerate(val_loader.dataset.dataset.classes)}, orient='index').T, \
             pd.DataFrame.from_dict(report)
 
-    def get_samples(self, epoch, model, unlabeled_loader, number):
+    def get_samples(self, model, unlabeled_loader, number):
         batch_time = AverageMeter()
         samples = None
         samples_targets = None
@@ -278,15 +278,11 @@ class PseudoLabeling:
             if i % self.args.print_freq == 0:
                 pass
 
-        if samples is not None:
-            samples_targets = samples_targets[samples > self.args.pseudo_labeling_threshold]
-            samples = samples[samples > self.args.pseudo_labeling_threshold]
+        samples_targets = samples_targets[samples > self.args.pseudo_labeling_threshold]
+        samples = samples[samples > self.args.pseudo_labeling_threshold]
 
-            samples_indices = samples.argsort(descending=True)[:number]
-            samples_targets = samples_targets[samples_indices]
-        else:
-            samples_indices = []
-            samples_targets = []
+        samples_indices = samples.argsort(descending=True)[:number]
+        samples_targets = samples_targets[samples_indices]
 
         model.train()
 

@@ -76,6 +76,7 @@ class JurkatDataset:
         self.k_medoids_model = k_medoids_model
         self.k_medoids_n_clusters = k_medoids_n_clusters
         self.start_labeled = start_labeled
+        self.pseudo_labeled_num = None
 
     @staticmethod
     def check_file_jurkat(path):
@@ -108,7 +109,6 @@ class JurkatDataset:
                 shuffle=True,
                 stratify=base_dataset.targets)
         else:
-            # labeled_indices, unlabeled_indices = class_wise_random_sample(base_dataset.targets, n=1, seed=self.seed)
             if self.k_medoids:
                 labeled_indices, unlabeled_indices = k_medoids_init(base_dataset, self.k_medoids_model,
                                                                     self.transform_test, self.jurkat_mean,
@@ -120,6 +120,7 @@ class JurkatDataset:
                 labeled_indices, unlabeled_indices = indices[:self.start_labeled], indices[self.start_labeled:]
 
         self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
+        self.pseudo_labeled_num = len(unlabeled_indices) - self.unlabeled_subset_num
 
         self.labeled_class_samples = [np.sum(np.array(base_dataset.targets)[unlabeled_indices] == i)
                                       for i in range(len(base_dataset.classes))]

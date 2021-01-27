@@ -13,7 +13,6 @@ import torchvision
 from numpy.random import default_rng
 from sklearn.metrics import precision_recall_fscore_support, classification_report, confusion_matrix, roc_auc_score, \
     pairwise_distances
-# from sklearn_extra.cluster import KMedoids
 from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
 
@@ -437,10 +436,7 @@ def perform_sampling(args, uncertainty_sampler, epoch, model, train_loader, unla
                      current_labeled):
     print(args.weak_supervision_strategy)
     if args.weak_supervision_strategy == 'active_learning':
-        samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
-                                                          train_loader,
-                                                          unlabeled_loader,
-                                                          number=dataset_class.add_labeled)
+        samples_indices = uncertainty_sampler.get_samples(args, model, train_loader)
 
         print(f'Uncertainty Sampling\t '
               f'Current labeled ratio: {current_labeled + args.add_labeled}\t'
@@ -453,10 +449,7 @@ def perform_sampling(args, uncertainty_sampler, epoch, model, train_loader, unla
               f'Model Reset')
 
     else:
-        samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
-                                                          train_loader,
-                                                          unlabeled_loader,
-                                                          number=dataset_class.add_labeled)
+        samples_indices = uncertainty_sampler.get_samples(args, model, train_loader)
 
         print(f'Semi Supervised with Active Learning Sampling\t '
               f'Current labeled ratio: {current_labeled + args.add_labeled}\t'
@@ -645,6 +638,7 @@ def k_medoids_init(base_dataset, k_medoids_model, transform_test, mean, std, see
     features_h = features_h.cpu().numpy()
     dist_mat = pairwise_distances(features_h)
 
+    from sklearn_extra.cluster import KMedoids
     k_medoids_clusterer = KMedoids(n_clusters=k_medoids_n_clusters, metric='precomputed', random_state=seed)
     k_medoids = k_medoids_clusterer.fit(dist_mat)
 
