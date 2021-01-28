@@ -100,7 +100,7 @@ class PseudoLabeling:
             metrics_per_epoch = pd.concat([metrics_per_epoch, val_report])
 
             samples_indices, samples_targets = self.get_samples(best_model, unlabeled_loader,
-                                                                number=int(dataset_class.pseudo_labeled_num / 300))
+                                                                number=int(self.args.pseudo_labeling_num / 500))
             labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
                                                                      samples_indices)
 
