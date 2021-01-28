@@ -231,7 +231,6 @@ class FixMatch:
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            # sch.step(epoch*loaders_len + i)
 
             batch_time.update(time.time() - end)
             end = time.time()

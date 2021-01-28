@@ -64,7 +64,12 @@ def main(args):
     args.name = set_model_name(args)
     args = configs[args.dataset](args)
 
-    if args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'auto_encoder':
+    if args.uncertainty_sampling_method == 'learning_loss' or \
+            args.semi_supervised_uncertainty_method == 'learning_loss':
+        learning_loss = LearningLoss(args)
+        best_acc = learning_loss.main()
+        return best_acc
+    elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'auto_encoder':
         auto_encoder = AutoEncoder(args)
         auto_encoder.train()
         best_acc = auto_encoder.train_validate_classifier()
@@ -85,10 +90,6 @@ def main(args):
     elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'pseudo_label':
         pseudo_labeling = PseudoLabeling(args)
         best_acc = pseudo_labeling.train_validate_classifier()
-        return best_acc
-    elif args.weak_supervision_strategy == 'active_learning' and args.uncertainty_sampling_method == 'learning_loss':
-        learning_loss = LearningLoss(args)
-        best_acc = learning_loss.main()
         return best_acc
     elif args.weak_supervision_strategy == 'semi_supervised' and args.semi_supervised_method == 'simclr_with_al':
         simclr = SimCLR(args, train_feat=True, uncertainty_sampling_method=args.semi_supervised_uncertainty_method)
@@ -310,7 +311,7 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            ('semi_supervised', None, 'simclr', None, False, None),
+            ('active_learning', 'learning_loss', None, None, False, None),
         ]
 
         for (m, u, s, us, p, init) in states:
