@@ -181,7 +181,7 @@ parser.add_argument('--autoencoder-train-epochs', default=20, type=int,
 parser.add_argument('--autoencoder-z-dim', default=128, type=float,
                     help='the bottleneck dimension for the autoencoder architecture')
 
-parser.add_argument('--autoencoder-resume', action='store_false',
+parser.add_argument('--autoencoder-resume', action='store_true',
                     help='flag to be set if an existing autoencoder model is to be loaded')
 
 parser.add_argument('--k-medoids', action='store_true', help='to perform k medoids init with SimCLR')

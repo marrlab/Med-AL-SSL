@@ -12,7 +12,8 @@ from data.retinopathy_dataset import RetinopathyDataset
 from model.loss_net import LossNet
 from utils import create_loaders, create_model_optimizer_scheduler, create_model_optimizer_loss_net, get_loss, \
     print_args, loss_module_objective_func, AverageMeter, accuracy, Metrics, store_logs, save_checkpoint, \
-    perform_sampling, LossPerClassMeter
+    perform_sampling, LossPerClassMeter, create_model_optimizer_autoencoder, load_pretrained, \
+    create_model_optimizer_simclr
 
 import pandas as pd
 from copy import deepcopy
@@ -25,13 +26,14 @@ Code adapted from: https://github.com/Mephisto405/Learning-Loss-for-Active-Learn
 
 
 class LearningLoss:
-    def __init__(self, args, verbose=True):
+    def __init__(self, args, verbose=True, init=None):
         self.args = args
         self.verbose = verbose
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
                          'jurkat': JurkatDataset, 'isic': ISICDataset, 'retinopathy': RetinopathyDataset}
         self.model = None
         self.kwargs = {'num_workers': 16, 'pin_memory': False, 'drop_last': True}
+        self.init = init
 
     def main(self):
         dataset_cl = self.datasets[self.args.dataset](root=self.args.root,
@@ -51,6 +53,14 @@ class LearningLoss:
                                                                     self.kwargs, dataset_cl.unlabeled_subset_num)
 
         model_backbone, optimizer_backbone, _ = create_model_optimizer_scheduler(self.args, dataset_cl)
+
+        if self.init == 'pretrained':
+            model_backbone = load_pretrained(model_backbone)
+        elif self.init == 'autoencoder':
+            model_backbone, optimizer_backbone, _ = create_model_optimizer_autoencoder(self.args, dataset_cl)
+        elif self.init == 'simclr':
+            model_backbone, optimizer_backbone, _, _ = create_model_optimizer_simclr(self.args, dataset_cl)
+
         model_module = LossNet().cuda()
         optimizer_module = torch.optim.Adam(model_module.parameters())
 
