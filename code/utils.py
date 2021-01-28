@@ -436,7 +436,10 @@ def perform_sampling(args, uncertainty_sampler, epoch, model, train_loader, unla
                      current_labeled):
     print(args.weak_supervision_strategy)
     if args.weak_supervision_strategy == 'active_learning':
-        samples_indices = uncertainty_sampler.get_samples(args, model, train_loader)
+        samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
+                                                          train_loader,
+                                                          unlabeled_loader,
+                                                          number=dataset_class.add_labeled)
 
         print(f'Uncertainty Sampling\t '
               f'Current labeled ratio: {current_labeled + args.add_labeled}\t'
@@ -449,7 +452,10 @@ def perform_sampling(args, uncertainty_sampler, epoch, model, train_loader, unla
               f'Model Reset')
 
     else:
-        samples_indices = uncertainty_sampler.get_samples(args, model, train_loader)
+        samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
+                                                          train_loader,
+                                                          unlabeled_loader,
+                                                          number=dataset_class.add_labeled)
 
         print(f'Semi Supervised with Active Learning Sampling\t '
               f'Current labeled ratio: {current_labeled + args.add_labeled}\t'

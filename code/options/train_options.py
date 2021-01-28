@@ -37,7 +37,7 @@ parser.add_argument('--drop-rate', default=0.15, type=float, help='dropout proba
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentations or not')
 
-parser.add_argument('--add-labeled-epochs', default=20, type=int,
+parser.add_argument('--add-labeled-epochs', default=2, type=int,
                     help='if recall doesn\'t improve perform AL cycle')
 
 parser.add_argument('--add-labeled', default=100, type=int,
@@ -49,7 +49,7 @@ parser.add_argument('--start-labeled', default=100, type=int,
 parser.add_argument('--stop-labeled', default=1020, type=int,
                     help='amount of labeled data to stop the AL training')
 
-parser.add_argument('--labeled-warmup-epochs', default=35, type=int,
+parser.add_argument('--labeled-warmup-epochs', default=0, type=int,
                     help='number of warmup epochs before AL training')
 
 parser.add_argument('--unlabeled-subset', default=0.3, type=float,

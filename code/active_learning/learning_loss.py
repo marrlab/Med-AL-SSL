@@ -78,7 +78,7 @@ class LearningLoss:
         uncertainty_sampler = UncertaintySamplingOthers(verbose=True,
                                                         uncertainty_sampling_method='learning_loss')
 
-        if self.semi_supervised == 'fixmatch':
+        if 'fixmatch' in self.semi_supervised:
             labeled_dataset_fix, unlabeled_dataset_fix = dataset_cl.get_datasets_fixmatch(base_dataset,
                                                                                           labeled_indices,
                                                                                           unlabeled_indices)
@@ -98,7 +98,7 @@ class LearningLoss:
         best_model = deepcopy(models['backbone'])
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
-            if self.semi_supervised == 'fixmatch':
+            if 'fixmatch' in self.semi_supervised:
                 loaders_cat = zip(train_loader, unlabeled_loader)
                 train_loss = self.train_fixmatch(loaders_cat, models, optimizers, criterions, epoch,
                                                  len(train_loader), base_dataset.classes, last_best_epochs)
@@ -121,7 +121,7 @@ class LearningLoss:
                                      dataset_cl, labeled_indices, unlabeled_indices, labeled_dataset, unlabeled_dataset,
                                      test_dataset, self.kwargs, current_labeled)
 
-                if self.semi_supervised == 'fixmatch':
+                if 'fixmatch' in self.semi_supervised:
                     labeled_dataset_fix, unlabeled_dataset_fix = dataset_cl.get_datasets_fixmatch(base_dataset,
                                                                                                   labeled_indices,
                                                                                                   unlabeled_indices)
@@ -252,7 +252,7 @@ class LearningLoss:
                 data_y = data_y.cuda(non_blocking=True)
                 data_x = data_x.cuda(non_blocking=True)
 
-                output = models['backbone'](data_x)
+                output = models['backbone'].forward_encoder_classifier(data_x)
                 loss = criterions['backbone'](output, data_y)
 
                 losses_per_class.update(loss.cpu().detach().numpy(), data_y.cpu().numpy())
