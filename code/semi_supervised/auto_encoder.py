@@ -1,5 +1,5 @@
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
-from active_learning.entropy_based import UncertaintySamplingOthers
+from active_learning.others import UncertaintySamplingOthers
 from active_learning.mc_dropout import UncertaintySamplingMCDropout
 from data.isic_dataset import ISICDataset
 from data.matek_dataset import MatekDataset

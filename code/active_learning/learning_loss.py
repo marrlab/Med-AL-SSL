@@ -1,7 +1,7 @@
 import time
 import torch
 
-from active_learning.entropy_based import UncertaintySamplingOthers
+from active_learning.others import UncertaintySamplingOthers
 from data.isic_dataset import ISICDataset
 from data.matek_dataset import MatekDataset
 from data.cifar10_dataset import Cifar10Dataset
@@ -62,8 +62,7 @@ class LearningLoss:
         criterions = {'backbone': criterion_backbone, 'module': loss_module_objective_func}
 
         uncertainty_sampler = UncertaintySamplingOthers(verbose=True,
-                                                        uncertainty_sampling_method=self.args.
-                                                        uncertainty_sampling_method)
+                                                        uncertainty_sampling_method='learning_loss')
 
         current_labeled = dataset_cl.start_labeled
         metrics_per_cycle = pd.DataFrame([])

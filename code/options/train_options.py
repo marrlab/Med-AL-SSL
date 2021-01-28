@@ -124,7 +124,7 @@ parser.add_argument('--simclr-base-lr', default=0.25, type=float, help='base lea
 parser.add_argument('--simclr-optimizer', default='adam', type=str, choices=['adam', 'lars'],
                     help='which optimizer to use for simclr training')
 
-parser.add_argument('--simclr-resume', action='store_false',
+parser.add_argument('--simclr-resume', action='store_true',
                     help='flag to be set if an existing simclr model is to be loaded')
 
 parser.add_argument('--weighted', action='store_false', help='to use weighted loss or not (only in case of ce)')
