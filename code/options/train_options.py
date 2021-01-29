@@ -103,8 +103,8 @@ parser.add_argument('--semi-supervised-uncertainty-method', default='entropy_bas
 parser.add_argument('--pseudo-labeling-threshold', default=0.99, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
 
-parser.add_argument('--pseudo-labeling-num', default=30, type=int,
-                    help='the number of points to be pseudo labeled at each iteration')
+parser.add_argument('--pseudo-labeling-num', default=3000, type=int,
+                    help='the total number of points in the unlabeled dataset which can be pseudo labeled')
 
 parser.add_argument('--simclr-train-epochs', default=200, type=int, help='number of total epochs for SimCLR training')
 
