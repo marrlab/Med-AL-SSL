@@ -393,7 +393,7 @@ def loss_module_objective_func(pred, target, margin=1.0, reduction='mean'):
 def resume_model(args, model, optimizer=None, scheduler=None):
     if 'simclr' in args.name:
         name = f"{args.dataset}@{args.arch}@{'simclr'}"
-    elif 'auto_encoder' in args.name:
+    elif 'auto_encoder' in args.name or 'autoencoder' in args.name:
         name = f"{args.dataset}@{args.arch}@{'auto_encoder'}"
     else:
         name = args.name

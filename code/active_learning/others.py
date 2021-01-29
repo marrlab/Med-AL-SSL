@@ -78,7 +78,8 @@ class UncertaintySamplingOthers:
 
         end = time.time()
 
-        if args.uncertainty_sampling_method == 'learning_loss':
+        if args.uncertainty_sampling_method == 'learning_loss' or \
+                args.semi_supervised_uncertainty_method == 'learning_loss':
             scores = self.learning_loss(model, unlabeled_loader, args, epoch, self.uncertainty_sampling_method)
             return scores.argsort(descending=True)[:number]
 

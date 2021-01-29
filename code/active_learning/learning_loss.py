@@ -14,11 +14,13 @@ from model.loss_net import LossNet
 from utils import create_loaders, create_model_optimizer_scheduler, create_model_optimizer_loss_net, get_loss, \
     print_args, loss_module_objective_func, AverageMeter, accuracy, Metrics, store_logs, save_checkpoint, \
     perform_sampling, LossPerClassMeter, create_model_optimizer_autoencoder, load_pretrained, \
-    create_model_optimizer_simclr
+    create_model_optimizer_simclr, postprocess_indices
 
 import pandas as pd
 from copy import deepcopy
 import numpy as np
+import torch.nn.functional as F
+
 
 '''
 Learning Loss for Active Learning (https://arxiv.org/pdf/1905.03677.pdf)
@@ -27,7 +29,7 @@ Code adapted from: https://github.com/Mephisto405/Learning-Loss-for-Active-Learn
 
 
 class LearningLoss:
-    def __init__(self, args, verbose=True, init=None, semi_supervised=None):
+    def __init__(self, args, verbose=True):
         self.args = args
         self.verbose = verbose
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
@@ -78,14 +80,16 @@ class LearningLoss:
         uncertainty_sampler = UncertaintySamplingOthers(verbose=True,
                                                         uncertainty_sampling_method='learning_loss')
 
+        train_loader_fix, unlabeled_loader_fix = None, None
+
         if 'fixmatch' in self.semi_supervised:
             labeled_dataset_fix, unlabeled_dataset_fix = dataset_cl.get_datasets_fixmatch(base_dataset,
                                                                                           labeled_indices,
                                                                                           unlabeled_indices)
-            train_loader = DataLoader(dataset=labeled_dataset_fix, batch_size=self.args.batch_size,
-                                      shuffle=True, **self.kwargs)
-            unlabeled_loader = DataLoader(dataset=unlabeled_dataset_fix, batch_size=self.args.batch_size,
+            train_loader_fix = DataLoader(dataset=labeled_dataset_fix, batch_size=self.args.batch_size,
                                           shuffle=True, **self.kwargs)
+            unlabeled_loader_fix = DataLoader(dataset=unlabeled_dataset_fix, batch_size=self.args.batch_size,
+                                              shuffle=True, **self.kwargs)
 
         current_labeled = dataset_cl.start_labeled
         metrics_per_cycle = pd.DataFrame([])
@@ -94,18 +98,31 @@ class LearningLoss:
 
         print_args(self.args)
 
+        self.args.start_epoch = 0
         best_recall, best_report, last_best_epochs = 0, None, 0
         best_model = deepcopy(models['backbone'])
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
             if 'fixmatch' in self.semi_supervised:
-                loaders_cat = zip(train_loader, unlabeled_loader)
-                train_loss = self.train_fixmatch(loaders_cat, models, optimizers, criterions, epoch,
-                                                 len(train_loader), base_dataset.classes, last_best_epochs)
+                loaders_fix = zip(train_loader_fix, unlabeled_loader_fix)
+                train_loss = self.train_fixmatch(loaders_fix, models, optimizers, criterions, epoch,
+                                                 len(train_loader_fix), base_dataset.classes, last_best_epochs)
             else:
                 train_loss = self.train(train_loader, models, optimizers, criterions, epoch, last_best_epochs)
 
             val_loss, val_report = self.validate(val_loader, models, criterions, last_best_epochs)
+
+            if 'pseudo_label' in self.semi_supervised:
+                samples_indices, samples_targets = self.get_pseudo_samples(best_model, unlabeled_loader,
+                                                                           number=int(self.args.pseudo_labeling_num / 500))
+                labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
+                                                                         samples_indices)
+
+                train_loader, unlabeled_loader, val_loader = create_loaders(self.args, labeled_dataset,
+                                                                            unlabeled_dataset, test_dataset,
+                                                                            labeled_indices, unlabeled_indices,
+                                                                            self.kwargs,
+                                                                            dataset_cl.unlabeled_subset_num)
 
             is_best = val_report['macro avg']['recall'] > best_recall
             last_best_epochs = 0 if is_best else last_best_epochs + 1
@@ -125,10 +142,10 @@ class LearningLoss:
                     labeled_dataset_fix, unlabeled_dataset_fix = dataset_cl.get_datasets_fixmatch(base_dataset,
                                                                                                   labeled_indices,
                                                                                                   unlabeled_indices)
-                    train_loader = DataLoader(dataset=labeled_dataset_fix, batch_size=self.args.batch_size,
-                                              shuffle=True, **self.kwargs)
-                    unlabeled_loader = DataLoader(dataset=unlabeled_dataset_fix, batch_size=self.args.batch_size,
+                    train_loader_fix = DataLoader(dataset=labeled_dataset_fix, batch_size=self.args.batch_size,
                                                   shuffle=True, **self.kwargs)
+                    unlabeled_loader_fix = DataLoader(dataset=unlabeled_dataset_fix, batch_size=self.args.batch_size,
+                                                      shuffle=True, **self.kwargs)
 
                 current_labeled += self.args.add_labeled
                 last_best_epochs = 0
@@ -351,3 +368,39 @@ class LearningLoss:
 
         return pd.DataFrame.from_dict({f'{k}-train-loss': losses_per_class.avg[i]
                                        for i, k in enumerate(cl)}, orient='index').T
+
+    def get_pseudo_samples(self, model, unlabeled_loader, number):
+        batch_time = AverageMeter()
+        samples = None
+        samples_targets = None
+
+        end = time.time()
+
+        model.eval()
+
+        for i, (data_x, _) in enumerate(unlabeled_loader):
+            data_x = data_x.cuda(non_blocking=True)
+
+            with torch.no_grad():
+                output = model(data_x)
+            score = F.softmax(output, dim=1)
+            score = torch.max(score, dim=1)
+
+            samples = score[0] if samples is None else torch.cat([samples, score[0]])
+            samples_targets = score[1] if samples_targets is None else torch.cat([samples_targets, score[1]])
+
+            batch_time.update(time.time() - end)
+            end = time.time()
+
+            if i % self.args.print_freq == 0:
+                pass
+
+        samples_targets = samples_targets[samples > self.args.pseudo_labeling_threshold]
+        samples = samples[samples > self.args.pseudo_labeling_threshold]
+
+        samples_indices = samples.argsort(descending=True)[:number]
+        samples_targets = samples_targets[samples_indices]
+
+        model.train()
+
+        return samples_indices, samples_targets

@@ -37,7 +37,7 @@ parser.add_argument('--drop-rate', default=0.15, type=float, help='dropout proba
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentations or not')
 
-parser.add_argument('--add-labeled-epochs', default=2, type=int,
+parser.add_argument('--add-labeled-epochs', default=20, type=int,
                     help='if recall doesn\'t improve perform AL cycle')
 
 parser.add_argument('--add-labeled', default=100, type=int,
@@ -49,7 +49,7 @@ parser.add_argument('--start-labeled', default=100, type=int,
 parser.add_argument('--stop-labeled', default=1020, type=int,
                     help='amount of labeled data to stop the AL training')
 
-parser.add_argument('--labeled-warmup-epochs', default=0, type=int,
+parser.add_argument('--labeled-warmup-epochs', default=35, type=int,
                     help='number of warmup epochs before AL training')
 
 parser.add_argument('--unlabeled-subset', default=0.3, type=float,
@@ -124,7 +124,7 @@ parser.add_argument('--simclr-base-lr', default=0.25, type=float, help='base lea
 parser.add_argument('--simclr-optimizer', default='adam', type=str, choices=['adam', 'lars'],
                     help='which optimizer to use for simclr training')
 
-parser.add_argument('--simclr-resume', action='store_true',
+parser.add_argument('--simclr-resume', action='store_false',
                     help='flag to be set if an existing simclr model is to be loaded')
 
 parser.add_argument('--weighted', action='store_false', help='to use weighted loss or not (only in case of ce)')
@@ -181,7 +181,7 @@ parser.add_argument('--autoencoder-train-epochs', default=20, type=int,
 parser.add_argument('--autoencoder-z-dim', default=128, type=float,
                     help='the bottleneck dimension for the autoencoder architecture')
 
-parser.add_argument('--autoencoder-resume', action='store_true',
+parser.add_argument('--autoencoder-resume', action='store_false',
                     help='flag to be set if an existing autoencoder model is to be loaded')
 
 parser.add_argument('--k-medoids', action='store_true', help='to perform k medoids init with SimCLR')
