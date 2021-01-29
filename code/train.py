@@ -311,7 +311,6 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
-            ('semi_supervised', None, 'pseudo_label_with_al', 'learning_loss', True, 'autoencoder'),
             ('active_learning', 'entropy_based', None, None, False, None),
             ('active_learning', 'mc_dropout', None, None, False, None),
             ('active_learning', 'augmentations_based', None, None, False, None),
