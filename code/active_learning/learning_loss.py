@@ -82,7 +82,7 @@ class LearningLoss:
 
         train_loader_fix, unlabeled_loader_fix = None, None
 
-        if 'fixmatch' in self.semi_supervised:
+        if 'fixmatch_with_al' == self.semi_supervised:
             labeled_dataset_fix, unlabeled_dataset_fix = dataset_cl.get_datasets_fixmatch(base_dataset,
                                                                                           labeled_indices,
                                                                                           unlabeled_indices)
@@ -98,12 +98,12 @@ class LearningLoss:
 
         print_args(self.args)
 
-        self.args.start_epoch = 0
+        self.args.start_epoch, current_pseudo_labeled = 0, 0
         best_recall, best_report, last_best_epochs = 0, None, 0
         best_model = deepcopy(models['backbone'])
 
         for epoch in range(self.args.start_epoch, self.args.epochs):
-            if 'fixmatch' in self.semi_supervised:
+            if 'fixmatch_with_al' == self.semi_supervised:
                 loaders_fix = zip(train_loader_fix, unlabeled_loader_fix)
                 train_loss = self.train_fixmatch(loaders_fix, models, optimizers, criterions, epoch,
                                                  len(train_loader_fix), base_dataset.classes, last_best_epochs)
@@ -112,7 +112,7 @@ class LearningLoss:
 
             val_loss, val_report = self.validate(val_loader, models, criterions, last_best_epochs)
 
-            if 'pseudo_label' in self.semi_supervised:
+            if 'pseudo_label_with_al' == self.semi_supervised:
                 samples_indices, samples_targets = self.get_pseudo_samples(best_model, unlabeled_loader,
                                                                            number=int(self.args.pseudo_labeling_num / 500))
                 labeled_indices, unlabeled_indices = postprocess_indices(labeled_indices, unlabeled_indices,
@@ -123,6 +123,11 @@ class LearningLoss:
                                                                             labeled_indices, unlabeled_indices,
                                                                             self.kwargs,
                                                                             dataset_cl.unlabeled_subset_num)
+
+                current_pseudo_labeled += len(samples_indices)
+
+                print('Epoch Classifier: [{0}]\t'
+                      'Pseudo Labels Added: [{1}]'.format(epoch, len(samples_indices)))
 
             is_best = val_report['macro avg']['recall'] > best_recall
             last_best_epochs = 0 if is_best else last_best_epochs + 1
@@ -138,7 +143,7 @@ class LearningLoss:
                                      dataset_cl, labeled_indices, unlabeled_indices, labeled_dataset, unlabeled_dataset,
                                      test_dataset, self.kwargs, current_labeled)
 
-                if 'fixmatch' in self.semi_supervised:
+                if 'fixmatch_with_al' == self.semi_supervised:
                     labeled_dataset_fix, unlabeled_dataset_fix = dataset_cl.get_datasets_fixmatch(base_dataset,
                                                                                                   labeled_indices,
                                                                                                   unlabeled_indices)
@@ -183,7 +188,7 @@ class LearningLoss:
                 best_report = val_report if is_best else best_report
                 best_model = deepcopy(models['backbone']) if is_best else best_model
 
-            if current_labeled > self.args.stop_labeled:
+            if (current_labeled > self.args.stop_labeled) or (current_pseudo_labeled > self.args.pseudo_labeling_num):
                 break
 
             save_checkpoint(self.args, {
@@ -382,7 +387,7 @@ class LearningLoss:
             data_x = data_x.cuda(non_blocking=True)
 
             with torch.no_grad():
-                output = model(data_x)
+                output = model.forward_encoder_classifier(data_x)
             score = F.softmax(output, dim=1)
             score = torch.max(score, dim=1)
 

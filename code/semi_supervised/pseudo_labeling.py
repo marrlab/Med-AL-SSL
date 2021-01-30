@@ -174,7 +174,7 @@ class PseudoLabeling:
             data_x = data_x.cuda(non_blocking=True)
             data_y = data_y.cuda(non_blocking=True)
 
-            output = model(data_x)
+            output = model.forward_encoder_classifier(data_x)
             loss = criterion(output, data_y)
 
             losses_per_class.update(loss.cpu().detach().numpy(), data_y.cpu().numpy())
@@ -219,7 +219,7 @@ class PseudoLabeling:
                 data_x = data_x.cuda(non_blocking=True)
                 data_y = data_y.cuda(non_blocking=True)
 
-                output = model(data_x)
+                output = model.forward_encoder_classifier(data_x)
 
                 loss = criterion(output, data_y)
 
@@ -265,7 +265,7 @@ class PseudoLabeling:
             data_x = data_x.cuda(non_blocking=True)
 
             with torch.no_grad():
-                output = model(data_x)
+                output = model.forward_encoder_classifier(data_x)
             score = F.softmax(output, dim=1)
             score = torch.max(score, dim=1)
 

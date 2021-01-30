@@ -116,9 +116,11 @@ def main(args):
         uncertainty_sampler = UncertaintySamplingAugmentationBased()
     elif args.uncertainty_sampling_method == 'batch_bald':
         uncertainty_sampler = UncertaintySamplingBatchBald()
-    else:
+    elif args.uncertainty_sampling_method is not None:
         uncertainty_sampler = UncertaintySamplingOthers(verbose=True,
                                                         uncertainty_sampling_method=args.uncertainty_sampling_method)
+    else:
+        uncertainty_sampler = None
 
     dataset_class = datasets[args.dataset](root=args.root,
                                            add_labeled=args.add_labeled,
@@ -380,6 +382,7 @@ if __name__ == '__main__':
             ('semi_supervised', None, 'pseudo_label_with_al', 'mc_dropout', True, 'pretrained'),
             ('semi_supervised', None, 'pseudo_label_with_al', 'least_confidence', True, 'pretrained'),
             ('semi_supervised', None, 'pseudo_label_with_al', 'margin_confidence', True, 'pretrained'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'learning_loss', True, 'pretrained'),
             ('semi_supervised', None, 'pseudo_label', None, True, 'simclr'),
             ('semi_supervised', None, 'pseudo_label_with_al', 'augmentations_based', True, 'simclr'),
             ('semi_supervised', None, 'pseudo_label_with_al', 'entropy_based', True, 'simclr'),
@@ -393,6 +396,7 @@ if __name__ == '__main__':
             ('semi_supervised', None, 'pseudo_label_with_al', 'mc_dropout', True, 'autoencoder'),
             ('semi_supervised', None, 'pseudo_label_with_al', 'least_confidence', True, 'autoencoder'),
             ('semi_supervised', None, 'pseudo_label_with_al', 'margin_confidence', True, 'autoencoder'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'learning_loss', True, 'autoencoder'),
         ]
 
         for (m, u, s, us, p, init) in states:
