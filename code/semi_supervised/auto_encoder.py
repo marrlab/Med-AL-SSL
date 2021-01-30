@@ -9,7 +9,7 @@ from data.plasmodium_dataset import PlasmodiumDataset
 from data.retinopathy_dataset import RetinopathyDataset
 
 from utils import create_base_loader, AverageMeter, save_checkpoint, create_loaders, accuracy, Metrics, \
-    store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder, LossPerClassMeter
+    store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder, LossPerClassMeter, print_args
 import time
 import torch
 import torch.nn as nn
@@ -55,6 +55,8 @@ class AutoEncoder:
         criterions = {'l1': l1_loss, 'l2': l2_loss, 'ssim': ssim_loss}
 
         model, optimizer, self.args = create_model_optimizer_autoencoder(self.args, dataset_class)
+
+        print_args(self.args)
 
         best_loss = np.inf
 

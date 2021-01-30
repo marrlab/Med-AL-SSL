@@ -31,7 +31,7 @@ import torchvision.models as models
 
 
 def save_checkpoint(args, state, is_best, filename='checkpoint.pth.tar', best_model_filename='model_best.pth.tar'):
-    directory = os.path.join(args.checkpoint_path, args.name)
+    directory = os.path.join(args.checkpoint_path, f'{args.name}_{args.seed}')
     if not os.path.exists(directory):
         os.makedirs(directory)
     filename = os.path.join(directory, filename)

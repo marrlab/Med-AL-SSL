@@ -9,8 +9,8 @@ from data.plasmodium_dataset import PlasmodiumDataset
 from data.retinopathy_dataset import RetinopathyDataset
 
 from utils import AverageMeter, create_loaders, accuracy, Metrics, \
-    store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder, LossPerClassMeter, load_pretrained,\
-    create_model_optimizer_simclr, create_model_optimizer_scheduler, postprocess_indices
+    store_logs, get_loss, perform_sampling, create_model_optimizer_autoencoder, LossPerClassMeter, load_pretrained, \
+    create_model_optimizer_simclr, create_model_optimizer_scheduler, postprocess_indices, print_args
 import time
 import torch
 import numpy as np
@@ -84,6 +84,8 @@ class PseudoLabeling:
 
         best_recall, best_report, last_best_epochs = 0, None, 0
         best_model = deepcopy(model)
+
+        print_args(self.args)
 
         self.args.start_epoch = 0
         current_labeled = dataset_class.start_labeled

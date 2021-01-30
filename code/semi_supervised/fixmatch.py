@@ -16,7 +16,7 @@ import numpy as np
 
 from utils import create_model_optimizer_scheduler, AverageMeter, accuracy, Metrics, perform_sampling, \
     store_logs, save_checkpoint, get_loss, LossPerClassMeter, create_loaders, load_pretrained, \
-    create_model_optimizer_autoencoder, create_model_optimizer_simclr
+    create_model_optimizer_autoencoder, create_model_optimizer_simclr, print_args
 
 import pandas as pd
 from copy import deepcopy
@@ -109,6 +109,8 @@ class FixMatch:
         metrics_per_cycle = pd.DataFrame([])
         metrics_per_epoch = pd.DataFrame([])
         num_class_per_cycle = pd.DataFrame([])
+
+        print_args(self.args)
 
         self.args.start_epoch = 0
         current_labeled = dataset_cls.start_labeled
