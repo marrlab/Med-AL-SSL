@@ -336,7 +336,7 @@ def create_model_optimizer_autoencoder(args, dataset_class):
 
     if args.autoencoder_resume:
         model, _, _ = resume_model(args, model)
-        args.start_epoch = args.epochs
+        args.start_epoch = args.autoencoder_train_epochs
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
