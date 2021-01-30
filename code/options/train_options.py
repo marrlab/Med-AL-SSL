@@ -37,7 +37,7 @@ parser.add_argument('--drop-rate', default=0.15, type=float, help='dropout proba
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentations or not')
 
-parser.add_argument('--add-labeled-epochs', default=2, type=int,
+parser.add_argument('--add-labeled-epochs', default=20, type=int,
                     help='if recall doesn\'t improve perform AL cycle')
 
 parser.add_argument('--add-labeled', default=100, type=int,
@@ -49,7 +49,7 @@ parser.add_argument('--start-labeled', default=100, type=int,
 parser.add_argument('--stop-labeled', default=1020, type=int,
                     help='amount of labeled data to stop the AL training')
 
-parser.add_argument('--labeled-warmup-epochs', default=0, type=int,
+parser.add_argument('--labeled-warmup-epochs', default=35, type=int,
                     help='number of warmup epochs before AL training')
 
 parser.add_argument('--unlabeled-subset', default=0.3, type=float,
@@ -100,7 +100,7 @@ parser.add_argument('--semi-supervised-uncertainty-method', default='entropy_bas
                     choices=['entropy_based', 'augmentations_based'],
                     help='the AL algorithm to use in conjunction with a SSL algorithm')
 
-parser.add_argument('--pseudo-labeling-threshold', default=0.1, type=int,
+parser.add_argument('--pseudo-labeling-threshold', default=0.99, type=int,
                     help='the threshold for considering the pseudo label as the actual label')
 
 parser.add_argument('--pseudo-labeling-num', default=3000, type=int,
