@@ -2,7 +2,7 @@ from utils import AverageMeter
 import time
 import torch
 import numpy as np
-from toma import toma
+# from toma import toma
 
 """
 Implementation of:

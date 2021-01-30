@@ -216,7 +216,7 @@ class FixMatch:
             losses_per_class.update(loss_labeled.cpu().detach().numpy(), data_y.cpu().numpy())
             loss_labeled = torch.sum(loss_labeled) / loss_labeled.size(0)
 
-            pseudo_label = torch.softmax(logits_unlabeled_w.detach_(), dim=-1)
+            pseudo_label = torch.softmax(logits_unlabeled_w.detach(), dim=-1)
             max_probs, data_y_unlabeled = torch.max(pseudo_label, dim=-1)
             mask = max_probs.ge(self.args.fixmatch_threshold).float()
 
