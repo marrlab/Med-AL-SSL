@@ -1,4 +1,5 @@
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
+from active_learning.badge_sampling import UncertaintySamplingBadge
 from active_learning.others import UncertaintySamplingOthers
 from active_learning.mc_dropout import UncertaintySamplingMCDropout
 from data.isic_dataset import ISICDataset
@@ -121,6 +122,9 @@ class AutoEncoder:
         elif self.uncertainty_sampling_method == 'random_sampling':
             uncertainty_sampler = None
             self.args.weak_supervision_strategy = "random_sampling"
+        elif self.uncertainty_sampling_method == 'badge':
+            uncertainty_sampler = UncertaintySamplingBadge()
+            self.args.weak_supervision_strategy = 'semi_supervised_active_learning'
         else:
             uncertainty_sampler = UncertaintySamplingOthers(verbose=True,
                                                             uncertainty_sampling_method=

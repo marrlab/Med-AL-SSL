@@ -71,7 +71,7 @@ class UncertaintySamplingOthers:
 
         return uncertainty
 
-    def get_samples(self, epoch, args, model, _, unlabeled_loader, number):
+    def get_samples(self, epoch, args, model, train_loader, unlabeled_loader, num_classes, num_unlabeled, number):
         batch_time = AverageMeter()
         samples = None
         targets = None

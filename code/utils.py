@@ -439,6 +439,8 @@ def perform_sampling(args, uncertainty_sampler, epoch, model, train_loader, unla
         samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
                                                           train_loader,
                                                           unlabeled_loader,
+                                                          num_classes=dataset_class.num_classes,
+                                                          num_unlabeled=dataset_class.unlabeled_subset_num,
                                                           number=dataset_class.add_labeled)
 
         print(f'Uncertainty Sampling\t '
@@ -455,6 +457,8 @@ def perform_sampling(args, uncertainty_sampler, epoch, model, train_loader, unla
         samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
                                                           train_loader,
                                                           unlabeled_loader,
+                                                          num_classes=dataset_class.num_classes,
+                                                          num_unlabeled=dataset_class.unlabeled_subset_num,
                                                           number=dataset_class.add_labeled)
 
         print(f'Semi Supervised with Active Learning Sampling\t '

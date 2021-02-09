@@ -17,7 +17,7 @@ class UncertaintySamplingAugmentationBased:
         self.verbose = verbose
 
     @staticmethod
-    def get_samples(epoch, args, model, _, unlabeled_loader, number):
+    def get_samples(epoch, args, model, train_loader, unlabeled_loader, num_classes, num_unlabeled, number):
         batch_time = AverageMeter()
         end = time.time()
         model.eval()

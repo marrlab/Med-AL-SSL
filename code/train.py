@@ -12,6 +12,7 @@ import torch.optim
 import torch.utils.data
 
 from active_learning.augmentations_based import UncertaintySamplingAugmentationBased
+from active_learning.badge_sampling import UncertaintySamplingBadge
 from active_learning.batch_bald import UncertaintySamplingBatchBald
 from active_learning.learning_loss import LearningLoss
 from active_learning.others import UncertaintySamplingOthers
@@ -116,6 +117,8 @@ def main(args):
         uncertainty_sampler = UncertaintySamplingAugmentationBased()
     elif args.uncertainty_sampling_method == 'batch_bald':
         uncertainty_sampler = UncertaintySamplingBatchBald()
+    elif args.uncertainty_sampling_method == 'badge':
+        uncertainty_sampler = UncertaintySamplingBadge()
     elif args.uncertainty_sampling_method is not None:
         uncertainty_sampler = UncertaintySamplingOthers(verbose=True,
                                                         uncertainty_sampling_method=args.uncertainty_sampling_method)
@@ -313,7 +316,90 @@ def validate(val_loader, model, criterion, last_best_epochs, args):
 if __name__ == '__main__':
     if arguments.run_batch:
         states = [
+            ('active_learning', 'entropy_based', None, None, False, None),
+            ('active_learning', 'mc_dropout', None, None, False, None),
+            ('active_learning', 'augmentations_based', None, None, False, None),
+            ('active_learning', 'least_confidence', None, None, False, None),
+            ('active_learning', 'margin_confidence', None, None, False, None),
+            ('active_learning', 'learning_loss', None, None, False, None),
+            ('random_sampling', None, None, None, False, None),
+            ('semi_supervised', None, 'simclr', None, False, None),
+            ('semi_supervised', None, 'simclr_with_al', 'augmentations_based', False, None),
+            ('semi_supervised', None, 'simclr_with_al', 'entropy_based', False, None),
+            ('semi_supervised', None, 'simclr_with_al', 'mc_dropout', False, None),
+            ('semi_supervised', None, 'simclr_with_al', 'least_confidence', False, None),
+            ('semi_supervised', None, 'simclr_with_al', 'margin_confidence', False, None),
+            ('semi_supervised', None, 'simclr_with_al', 'learning_loss', False, None),
+            ('semi_supervised', None, 'auto_encoder', None, False, None),
+            ('semi_supervised', None, 'auto_encoder_with_al', 'augmentations_based', False, None),
+            ('semi_supervised', None, 'auto_encoder_with_al', 'entropy_based', False, None),
+            ('semi_supervised', None, 'auto_encoder_with_al', 'mc_dropout', False, None),
+            ('semi_supervised', None, 'auto_encoder_with_al', 'least_confidence', False, None),
+            ('semi_supervised', None, 'auto_encoder_with_al', 'margin_confidence', False, None),
+            ('semi_supervised', None, 'auto_encoder_with_al', 'learning_loss', False, None),
+            ('semi_supervised', None, 'fixmatch', None, False, None),
+            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', False, None),
+            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', False, None),
+            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', False, None),
+            ('semi_supervised', None, 'fixmatch_with_al', 'least_confidence', False, None),
+            ('semi_supervised', None, 'fixmatch_with_al', 'margin_confidence', False, None),
+            ('semi_supervised', None, 'fixmatch_with_al', 'learning_loss', False, None),
             ('semi_supervised', None, 'pseudo_label', None, False, None),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'augmentations_based', False, None),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'entropy_based', False, None),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'mc_dropout', False, None),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'least_confidence', False, None),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'margin_confidence', False, None),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'learning_loss', False, None),
+            ('active_learning', 'entropy_based', None, None, True, None),
+            ('active_learning', 'mc_dropout', None, None, True, None),
+            ('active_learning', 'augmentations_based', None, None, True, None),
+            ('active_learning', 'least_confidence', None, None, True, None),
+            ('active_learning', 'margin_confidence', None, None, True, None),
+            ('active_learning', 'learning_loss', None, None, True, None),
+            ('random_sampling', None, None, None, True, None),
+            ('semi_supervised', None, 'fixmatch', None, True, 'pretrained'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', True, 'pretrained'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', True, 'pretrained'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', True, 'pretrained'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'least_confidence', True, 'pretrained'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'margin_confidence', True, 'pretrained'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'learning_loss', True, 'pretrained'),
+            ('semi_supervised', None, 'fixmatch', None, True, 'simclr'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', True, 'simclr'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', True, 'simclr'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', True, 'simclr'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'least_confidence', True, 'simclr'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'margin_confidence', True, 'simclr'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'learning_loss', True, 'simclr'),
+            ('semi_supervised', None, 'fixmatch', None, True, 'autoencoder'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'augmentations_based', True, 'autoencoder'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'entropy_based', True, 'autoencoder'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'mc_dropout', True, 'autoencoder'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'least_confidence', True, 'autoencoder'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'margin_confidence', True, 'autoencoder'),
+            ('semi_supervised', None, 'fixmatch_with_al', 'learning_loss', True, 'autoencoder'),
+            ('semi_supervised', None, 'pseudo_label', None, True, 'pretrained'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'augmentations_based', True, 'pretrained'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'entropy_based', True, 'pretrained'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'mc_dropout', True, 'pretrained'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'least_confidence', True, 'pretrained'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'margin_confidence', True, 'pretrained'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'learning_loss', True, 'pretrained'),
+            ('semi_supervised', None, 'pseudo_label', None, True, 'simclr'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'augmentations_based', True, 'simclr'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'entropy_based', True, 'simclr'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'mc_dropout', True, 'simclr'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'least_confidence', True, 'simclr'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'margin_confidence', True, 'simclr'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'learning_loss', True, 'simclr'),
+            ('semi_supervised', None, 'pseudo_label', None, True, 'autoencoder'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'augmentations_based', True, 'autoencoder'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'entropy_based', True, 'autoencoder'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'mc_dropout', True, 'autoencoder'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'least_confidence', True, 'autoencoder'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'margin_confidence', True, 'autoencoder'),
+            ('semi_supervised', None, 'pseudo_label_with_al', 'learning_loss', True, 'autoencoder'),
         ]
 
         for (m, u, s, us, p, init) in states:

@@ -131,3 +131,10 @@ class ResnetAutoencoder(nn.Module):
         out, feat_list = self.encoder.forward_features(x)
         out = self.classifier(out)
         return out, feat_list
+
+    def forward_embeddings(self, x):
+        out, feat = self.encoder.forward_embeddings(x)
+        return out, feat
+
+    def get_embedding_dim(self):
+        return self.encoder.embedding_dim

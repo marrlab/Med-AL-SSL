@@ -76,6 +76,13 @@ class SimCLRArch(nn.Module):
         out = self.classifier(out)
         return out, feat_list
 
+    def forward_embeddings(self, x):
+        out, feat = self.encoder.forward_embeddings(x)
+        return out, feat
+
+    def get_embedding_dim(self):
+        return self.encoder.embedding_dim
+
 
 def load_pretrained(model):
     model_dict = model.state_dict()

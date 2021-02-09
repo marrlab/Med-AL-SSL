@@ -92,6 +92,7 @@ class ResNet(nn.Module):
             nn.Dropout(p=drop_rate, inplace=False),
             nn.Linear(84, num_classes)
         )
+        self.embedding_dim = 512*block.expansion
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
@@ -123,8 +124,22 @@ class ResNet(nn.Module):
         out = self.linear(feat)
         return out, [out1, out2, out3, out4]
 
+    def forward_embeddings(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out1 = self.layer1(out)
+        out2 = self.layer2(out1)
+        out3 = self.layer3(out2)
+        out4 = self.layer4(out3)
+        out = F.avg_pool2d(out4, 4)
+        feat = out.view(out.size(0), -1)
+        out = self.linear(feat)
+        return out, feat
+
     def forward_encoder_classifier(self, x):
         return self.forward(x)
+
+    def get_embedding_dim(self):
+        return self.embedding_dim
 
 
 def resnet18(num_classes, input_size, drop_rate):
