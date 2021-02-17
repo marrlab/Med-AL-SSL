@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imag
 
 parser.add_argument('--name', default='run_0', type=str, help='name of current running experiment')
 
-parser.add_argument('--epochs', default=10, type=int, help='number of total epochs for AL training')
+parser.add_argument('--epochs', default=1000, type=int, help='number of total epochs for AL training')
 
 parser.add_argument('--start-epoch', default=0, type=int, help='starting epoch number (useful when resuming)')
 
@@ -37,7 +37,7 @@ parser.add_argument('--drop-rate', default=0.15, type=float, help='dropout proba
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentations or not')
 
-parser.add_argument('--add-labeled-epochs', default=2, type=int,
+parser.add_argument('--add-labeled-epochs', default=20, type=int,
                     help='if recall doesn\'t improve perform AL cycle')
 
 parser.add_argument('--add-labeled', default=100, type=int,
@@ -50,7 +50,7 @@ parser.add_argument('--start-labeled', default=100, type=int,
 parser.add_argument('--stop-labeled', default=1020, type=int,
                     help='amount of labeled data to stop the AL training')
 
-parser.add_argument('--labeled-warmup-epochs', default=0, type=int,
+parser.add_argument('--labeled-warmup-epochs', default=35, type=int,
                     help='number of warmup epochs before AL training')
 
 parser.add_argument('--unlabeled-subset', default=0.3, type=float,
@@ -160,7 +160,7 @@ parser.add_argument('--fixmatch-threshold', default=0.95, type=float,
 parser.add_argument('--fixmatch-k-img', default=8192, type=int,
                     help='number of labeled examples')
 
-parser.add_argument('--fixmatch-epochs', default=10, type=int,
+parser.add_argument('--fixmatch-epochs', default=1000, type=int,
                     help='epochs for SSL or SSL + AL training')
 
 parser.add_argument('--fixmatch-warmup', default=0, type=int,
