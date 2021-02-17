@@ -58,11 +58,12 @@ class LearningLoss:
 
         model_backbone, optimizer_backbone, _ = create_model_optimizer_scheduler(self.args, dataset_cl)
 
-        if self.init == 'pretrained':
+        if self.init == 'pretrained' or (self.args.load_pretrained and self.init is None):
+            print("Loading ImageNet pretrained model!")
             model_backbone = load_pretrained(model_backbone)
-        elif self.init == 'autoencoder':
+        elif self.init == 'autoencoder' or self.semi_supervised == 'auto_encoder_with_al':
             model_backbone, optimizer_backbone, _ = create_model_optimizer_autoencoder(self.args, dataset_cl)
-        elif self.init == 'simclr':
+        elif self.init == 'simclr' or self.semi_supervised == 'simclr_with_al':
             model_backbone, optimizer_backbone, _, _ = create_model_optimizer_simclr(self.args, dataset_cl)
 
         model_module = LossNet().cuda()

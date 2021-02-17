@@ -55,7 +55,8 @@ def ratio_metrics(metric, dataset, cls, methods):
     for i, method in enumerate(methods):
         dump_log.append([])
         for filename in logs:
-            if f"{dataset}@resnet@{method}" != filename.split('-')[1] or 'epoch' in filename or 'ae-loss' in filename:
+            if f"{dataset}@resnet@{method}" != filename.split('-')[1] or 'epoch' in filename or 'ae-loss' in filename \
+                    or 'class-nums' in filename:
                 continue
             df = pd.read_csv(os.path.join(args.log_path, filename), index_col=0)
             dump = df[cls][metric].tolist()
@@ -63,7 +64,7 @@ def ratio_metrics(metric, dataset, cls, methods):
             for k, m in enumerate(dump):
                 max_metric = m if m > max_metric else max_metric
                 dump[k] = max_metric
-            dump_log[i].append(dump[:5])
+            dump_log[i].append(dump[:9])
 
     metrics_log = []
 

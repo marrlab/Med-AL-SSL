@@ -4,6 +4,7 @@ import matplotlib.style as style
 from data.cifar10_dataset import Cifar10Dataset
 from data.config.cifar10_config import set_cifar_configs
 from data.config.isic_config import set_isic_configs
+from data.config.retinopathy_config import set_retinopathy_configs
 from data.isic_dataset import ISICDataset
 from data.jurkat_dataset import JurkatDataset
 from data.matek_dataset import MatekDataset
@@ -11,6 +12,7 @@ from data.plasmodium_dataset import PlasmodiumDataset
 from data.config.matek_config import set_matek_configs
 from data.config.jurkat_config import set_jurkat_configs
 from data.config.plasmodium_config import set_plasmodium_configs
+from data.retinopathy_dataset import RetinopathyDataset
 from results import ratio_metrics
 from options.visualization_options import get_arguments
 import os
@@ -23,9 +25,10 @@ credits to: Alex Olteanu (https://www.dataquest.io/blog/making-538-plots/) for t
 """
 
 datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
-            'jurkat': JurkatDataset, 'isic': ISICDataset}
+            'jurkat': JurkatDataset, 'isic': ISICDataset, 'retinopathy': RetinopathyDataset}
 configs = {'matek': set_matek_configs, 'jurkat': set_jurkat_configs,
-           'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs, 'isic': set_isic_configs}
+           'plasmodium': set_plasmodium_configs, 'cifar10': set_cifar_configs, 'isic': set_isic_configs,
+           'retinopathy': set_retinopathy_configs}
 
 plot_configs = {'matek': (2, 5),
                 'jurkat': (2, 4),
@@ -39,7 +42,8 @@ fully_supervised = {
     'jurkat': {'recall': 0.6351, 'f1-score': 0.6138, 'precision': 0.7056, 'accuracy': 0.7445},
     'plasmodium': 0.9763,
     'cifar10': 0.75,
-    'isic': {'recall': 0.6752, 'f1-score': 0.6702, 'precision': 0.6707, 'accuracy': 0.7452}
+    'isic': {'recall': 0.6752, 'f1-score': 0.6702, 'precision': 0.6707, 'accuracy': 0.7452},
+    'retinopathy': {'recall': 0.6752, 'f1-score': 0.6702, 'precision': 0.6707, 'accuracy': 0.7452}
 }
 
 fully_supervised_std = {
@@ -47,7 +51,8 @@ fully_supervised_std = {
     'jurkat': {'recall': 0.0326, 'f1-score': 0.0326, 'precision': 0.0216, 'accuracy': 0.0265},
     'plasmodium': 0.9763,
     'cifar10': 0.75,
-    'isic': {'recall': 0.0159, 'f1-score': 0.0165, 'precision': 0.0119, 'accuracy': 0.0356}
+    'isic': {'recall': 0.0159, 'f1-score': 0.0165, 'precision': 0.0119, 'accuracy': 0.0356},
+    'retinopathy': {'recall': 0.0159, 'f1-score': 0.0165, 'precision': 0.0119, 'accuracy': 0.0356},
 }
 
 methods_default = [
@@ -61,6 +66,7 @@ dataset_rep = {
     'matek': 'White Blood Cell Dataset',
     'isic': 'Skin Lesion Dataset',
     'jurkat': 'Cell Cycle Dataset',
+    'retinopathy': 'Retinopathy Dataset',
 }
 
 def plot_ratio_class_wise_metrics(metric, classes, label_y, prop, plot_config):
@@ -286,33 +292,57 @@ if __name__ == '__main__':
         'a': ['Augmentations Based +  Random + Supervised',
               'MC Dropout +  Random + Supervised',
               'Entropy Based +  Random + Supervised',
-              'Random Sampling +  Random + Supervised'],
+              'Random Sampling +  Random + Supervised',
+              'Least Confidence +  Random + Supervised',
+              'Margin Confidence +  Random + Supervised',
+              'Learning Loss +  Random + Supervised'],
         'd': ['Augmentations Based + ImageNet + Supervised',
               'Augmentations Based + SimCLR + Supervised',
               'Augmentations Based + Autoencoder + Supervised',
               'Augmentations Based +  Random + Supervised',
+              'Learning Loss + ImageNet + Supervised',
+              'Learning Loss + SimCLR + Supervised',
+              'Learning Loss + Autoencoder + Supervised',
+              'Learning Loss +  Random + Supervised',
               'Random Sampling +  Random + Supervised'],
         'i': ['Augmentations Based + ImageNet + FixMatch',
               'Augmentations Based + SimCLR + FixMatch',
               'Augmentations Based + ImageNet + Supervised',
               'Augmentations Based + SimCLR + Supervised',
+              'Learning Loss + ImageNet + FixMatch',
+              'Learning Loss + SimCLR + FixMatch',
+              'Learning Loss + ImageNet + Supervised',
+              'Learning Loss + SimCLR + Supervised',
+              'Augmentations Based + SimCLR + Pseudo',
+              'Learning Loss + SimCLR + Pseudo',
               'Random Sampling +  Random + Supervised']
     }
     methods_states_results = {
-        'a': ['augmentations_based', 'mc_dropout', 'entropy_based', 'random_sampling'],
+        'a': ['augmentations_based', 'mc_dropout', 'entropy_based',
+              'random_sampling', 'least_confidence', 'margin_confidence', 'learning_loss'],
         'd': ['augmentations_based_pretrained',
               'simclr_with_al_augmentations_based',
               'auto_encoder_with_al_augmentations_based',
               'augmentations_based',
+              'learning_loss_pretrained',
+              'simclr_with_al_learning_loss',
+              'auto_encoder_with_al_learning_loss',
+              'learning_loss',
               'random_sampling'],
-        'i': ['fixmatch_with_al_augmentations_based_pretrained',
+        'i': ['fixmatch_with_al_augmentations_based_pretrained_pretrained',
               'fixmatch_with_al_augmentations_based_pretrained_simclr',
               'augmentations_based_pretrained',
               'simclr_with_al_augmentations_based',
+              'fixmatch_with_al_learning_loss_pretrained_pretrained',
+              'fixmatch_with_al_learning_loss_pretrained_simclr',
+              'learning_loss_pretrained',
+              'simclr_with_al_learning_loss',
+              'pseudo_label_with_al_augmentations_based_pretrained_simclr',
+              'pseudo_label_with_al_learning_loss_pretrained_simclr',
               'random_sampling']
     }
 
-    dataset = 'matek'
+    dataset = 'retinopathy'
 
     plt.rcParams["font.family"] = "Times New Roman"
     plt.rcParams["font.weight"] = "ultralight"
@@ -345,7 +375,7 @@ if __name__ == '__main__':
                 arguments.save_path = os.path.join(root_path, f'{m}_{r}.png')
                 args = configs[arguments.dataset](arguments)
 
-                num = [i for i in range(0, 21, 5)]
+                num = [i for i in range(0, 41, 5)]
 
                 if 'macro' in args.metric_ratio:
                     y_label = f'Macro {args.metric.capitalize()}'
@@ -354,7 +384,7 @@ if __name__ == '__main__':
 
                 dataset_title = {'matek': 'White blood cells', 'jurkat': 'Jurkat cell cycle',
                                  'isic': 'Skin lesions',
-                                 'plasmodium': 'Red blood cells'}
+                                 'plasmodium': 'Red blood cells', 'retinopathy': 'Retina'}
 
                 '''
                 ratio_class_wise_metrics_log = ratio_class_wise_metrics(args.metric, dataset.classes, args.dataset)
@@ -365,7 +395,7 @@ if __name__ == '__main__':
                 ratio_metrics_logs = ratio_metrics(args.metric, args.dataset, cls=args.metric_ratio,
                                                    methods=args.methods_default_results)
 
-                prop = num[:5]
+                prop = num[:9]
                 metric = ratio_metrics_logs
                 label_y = y_label
                 fully_supervised_metric = fully_supervised[args.dataset]
@@ -447,6 +477,8 @@ if __name__ == '__main__':
                         continue
                     if 'FixMatch' in method:
                         linestyle = '-'
+                    elif 'Pseudo' in method:
+                        linestyle = 'dotted'
                     else:
                         linestyle = '--'
 
@@ -456,6 +488,12 @@ if __name__ == '__main__':
                         c = colors[1]
                     elif 'Augmentations Based' in method:
                         c = colors[2]
+                    elif 'Least Confidence' in method:
+                        c = colors[4]
+                    elif 'Margin Confidence' in method:
+                        c = colors[5]
+                    elif 'Learning Loss' in method:
+                        c = colors[6]
                     else:
                         c = colors[0]
 

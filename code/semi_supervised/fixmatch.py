@@ -89,6 +89,7 @@ class FixMatch:
         model, optimizer, _ = create_model_optimizer_scheduler(self.args, dataset_cls)
 
         if self.init == 'pretrained':
+            print("Loading ImageNet pretrained model!")
             model = load_pretrained(model)
         elif self.init == 'autoencoder':
             model, optimizer, _ = create_model_optimizer_autoencoder(self.args, dataset_cls)

@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser(description='Active Learning Basic Medical Imag
 
 parser.add_argument('--name', default='run_0', type=str, help='name of current running experiment')
 
-parser.add_argument('--epochs', default=1000, type=int, help='number of total epochs for AL training')
+parser.add_argument('--epochs', default=10, type=int, help='number of total epochs for AL training')
 
 parser.add_argument('--start-epoch', default=0, type=int, help='starting epoch number (useful when resuming)')
 
@@ -37,10 +37,11 @@ parser.add_argument('--drop-rate', default=0.15, type=float, help='dropout proba
 parser.add_argument('--no-augment', dest='augment', action='store_false',
                     help='whether to use standard augmentations or not')
 
-parser.add_argument('--add-labeled-epochs', default=20, type=int,
+parser.add_argument('--add-labeled-epochs', default=2, type=int,
                     help='if recall doesn\'t improve perform AL cycle')
 
 parser.add_argument('--add-labeled', default=100, type=int,
+
                     help='amount of labeled data to be added during each AL cycle')
 
 parser.add_argument('--start-labeled', default=100, type=int,
@@ -49,7 +50,7 @@ parser.add_argument('--start-labeled', default=100, type=int,
 parser.add_argument('--stop-labeled', default=1020, type=int,
                     help='amount of labeled data to stop the AL training')
 
-parser.add_argument('--labeled-warmup-epochs', default=35, type=int,
+parser.add_argument('--labeled-warmup-epochs', default=0, type=int,
                     help='number of warmup epochs before AL training')
 
 parser.add_argument('--unlabeled-subset', default=0.3, type=float,
@@ -70,7 +71,7 @@ parser.add_argument('--arch', default='resnet',
 parser.add_argument('--loss', default='ce', type=str, choices=['ce', 'fl'],
                     help='the loss to be used. ce = cross entropy and fl = focal loss')
 
-parser.add_argument('--log-path', default='~/med_active_learning/code/logs/', type=str,
+parser.add_argument('--log-path', default=f'{home}/med_active_learning/code/logs/', type=str,
                     help='the directory root for storing/retrieving the logs')
 
 parser.add_argument('--al', '--uncertainty-sampling-method', default='entropy_based', type=str,
@@ -84,7 +85,7 @@ parser.add_argument('--mc-dropout-iterations', default=25, type=int,
 parser.add_argument('--augmentations_based_iterations', default=25, type=int,
                     help='number of iterations for augmentations based AL algorithm')
 
-parser.add_argument('--root', default='~/datasets/thesis/stratified/', type=str,
+parser.add_argument('--root', default=f'{home}/datasets/thesis/stratified/', type=str,
                     help='the root path for the datasets')
 
 parser.add_argument('--weak-supervision-strategy', default='semi_supervised', type=str,
@@ -135,7 +136,7 @@ parser.add_argument('--dataset', default='matek', type=str, choices=['cifar10', 
                                                                      'plasmodium', 'isic', 'retinopathy'],
                     help='the dataset to train on')
 
-parser.add_argument('--checkpoint-path', default=f'~/med_active_learning/code/runs/', type=str,
+parser.add_argument('--checkpoint-path', default=f'{home}/med_active_learning/code/runs/', type=str,
                     help='the directory root for saving/resuming checkpoints from')
 
 parser.add_argument('--seed', default=9999, type=int, choices=[6666, 9999, 2323, 5555],
@@ -159,7 +160,7 @@ parser.add_argument('--fixmatch-threshold', default=0.95, type=float,
 parser.add_argument('--fixmatch-k-img', default=8192, type=int,
                     help='number of labeled examples')
 
-parser.add_argument('--fixmatch-epochs', default=1000, type=int,
+parser.add_argument('--fixmatch-epochs', default=10, type=int,
                     help='epochs for SSL or SSL + AL training')
 
 parser.add_argument('--fixmatch-warmup', default=0, type=int,
