@@ -435,12 +435,13 @@ def perform_sampling(args, uncertainty_sampler, epoch, model, train_loader, unla
                      labeled_indices, unlabeled_indices, labeled_dataset, unlabeled_dataset, test_dataset, kwargs,
                      current_labeled):
     print(args.weak_supervision_strategy)
+    subset_num = dataset_class.unlabeled_subset_num
     if args.weak_supervision_strategy == 'active_learning':
         samples_indices = uncertainty_sampler.get_samples(epoch, args, model,
                                                           train_loader,
                                                           unlabeled_loader,
                                                           num_classes=dataset_class.num_classes,
-                                                          num_unlabeled=dataset_class.unlabeled_subset_num,
+                                                          num_unlabeled=min(subset_num, len(unlabeled_indices)),
                                                           number=dataset_class.add_labeled)
 
         print(f'Uncertainty Sampling\t '
@@ -458,7 +459,7 @@ def perform_sampling(args, uncertainty_sampler, epoch, model, train_loader, unla
                                                           train_loader,
                                                           unlabeled_loader,
                                                           num_classes=dataset_class.num_classes,
-                                                          num_unlabeled=dataset_class.unlabeled_subset_num,
+                                                          num_unlabeled=min(subset_num, len(unlabeled_indices)),
                                                           number=dataset_class.add_labeled)
 
         print(f'Semi Supervised with Active Learning Sampling\t '

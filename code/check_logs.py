@@ -8,7 +8,7 @@ files = os.listdir(root)
 
 
 def main(args):
-    args.dataset = 'isic'
+    args.dataset = 'retinopathy'
     seeds = ['9999', '5555', '2323', '6666']
     name = set_model_name(args)
 
@@ -111,6 +111,18 @@ if __name__ == '__main__':
         ('semi_supervised', None, 'pseudo_label_with_al', 'least_confidence', True, 'autoencoder'),
         ('semi_supervised', None, 'pseudo_label_with_al', 'margin_confidence', True, 'autoencoder'),
         ('semi_supervised', None, 'pseudo_label_with_al', 'learning_loss', True, 'autoencoder'),
+        ('active_learning', 'badge', None, None, False, None),
+        ('semi_supervised', None, 'simclr_with_al', 'badge', False, None),
+        ('semi_supervised', None, 'auto_encoder_with_al', 'badge', False, None),
+        ('semi_supervised', None, 'fixmatch_with_al', 'badge', False, None),
+        ('semi_supervised', None, 'pseudo_label_with_al', 'badge', False, None),
+        ('active_learning', 'badge', None, None, True, None),
+        ('semi_supervised', None, 'fixmatch_with_al', 'badge', True, 'pretrained'),
+        ('semi_supervised', None, 'fixmatch_with_al', 'badge', True, 'simclr'),
+        ('semi_supervised', None, 'fixmatch_with_al', 'badge', True, 'autoencoder'),
+        ('semi_supervised', None, 'pseudo_label_with_al', 'badge', True, 'pretrained'),
+        ('semi_supervised', None, 'pseudo_label_with_al', 'badge', True, 'simclr'),
+        ('semi_supervised', None, 'pseudo_label_with_al', 'badge', True, 'autoencoder'),
     ]
 
     for (m, u, s, us, p, init) in states:

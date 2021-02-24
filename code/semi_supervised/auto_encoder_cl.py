@@ -29,7 +29,7 @@ class AutoEncoderCl:
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
                          'jurkat': JurkatDataset, 'isic': ISICDataset}
         self.model = None
-        self.kwargs = {'num_workers': 16, 'pin_memory': False}
+        self.kwargs = {'num_workers': 4, 'pin_memory': False}
 
     def main(self):
         dataset_class = self.datasets[self.args.dataset](root=self.args.root,

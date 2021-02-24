@@ -34,7 +34,7 @@ class SimCLR:
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
                          'jurkat': JurkatDataset, 'isic': ISICDataset, 'retinopathy': RetinopathyDataset}
         self.model = None
-        self.kwargs = {'num_workers': 16, 'pin_memory': False}
+        self.kwargs = {'num_workers': 4, 'pin_memory': False}
         self.uncertainty_sampling_method = uncertainty_sampling_method
         self.train_feat = train_feat
 

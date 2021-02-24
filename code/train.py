@@ -140,7 +140,7 @@ def main(args):
     base_dataset, labeled_dataset, unlabeled_dataset, labeled_indices, unlabeled_indices, test_dataset = \
         dataset_class.get_dataset()
 
-    kwargs = {'num_workers': 16, 'pin_memory': False}
+    kwargs = {'num_workers': 4, 'pin_memory': False}
     train_loader, unlabeled_loader, val_loader = create_loaders(args, labeled_dataset, unlabeled_dataset, test_dataset,
                                                                 labeled_indices, unlabeled_indices, kwargs,
                                                                 dataset_class.unlabeled_subset_num)

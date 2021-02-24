@@ -61,6 +61,10 @@ def ratio_metrics(metric, dataset, cls, methods):
             df = pd.read_csv(os.path.join(args.log_path, filename), index_col=0)
             dump = df[cls][metric].tolist()
             max_metric = 0
+            try:
+                enumerate(dump)
+            except Exception:
+                dump = np.array([0 for i in range(9)])
             for k, m in enumerate(dump):
                 max_metric = m if m > max_metric else max_metric
                 dump[k] = max_metric
@@ -73,8 +77,13 @@ def ratio_metrics(metric, dataset, cls, methods):
         if len(dump_log[i]) == 0:
             continue
         dump = np.array(dump_log[i])
-        mean = dump.mean(axis=0)
-        std = dump.std(axis=0)
+        try:
+            mean = dump.mean(axis=0)
+            std = dump.std(axis=0)
+        except Exception:
+            mean = np.array([0 for i in range(9)])
+            std = np.array([0 for i in range(9)])
+
         metrics_log[i].append((mean - std))
         metrics_log[i].append(mean)
         metrics_log[i].append((mean + std))

@@ -37,7 +37,7 @@ class FixMatch:
         self.datasets = {'matek': MatekDataset, 'cifar10': Cifar10Dataset, 'plasmodium': PlasmodiumDataset,
                          'jurkat': JurkatDataset, 'isic': ISICDataset, 'retinopathy': RetinopathyDataset}
         self.model = None
-        self.kwargs = {'num_workers': 16, 'pin_memory': False, 'drop_last': True}
+        self.kwargs = {'num_workers': 4, 'pin_memory': False, 'drop_last': True}
         self.uncertainty_sampling_method = uncertainty_sampling_method
         self.init = self.args.semi_supervised_init
 
