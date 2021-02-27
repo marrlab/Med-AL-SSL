@@ -4,6 +4,11 @@ import os
 import pathlib
 import datetime
 import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import matplotlib.style as style
+
+style.use('fivethirtyeight')
 
 root = '/home/ahmad/thesis/med_active_learning/logs_final'
 arguments = get_arguments()
@@ -40,10 +45,69 @@ def main(args):
 
 def find_median():
     global dic_times
+
+    secs = []
+    labels = []
+
     for k, v in dic_times.items():
         if len(v) == 0:
             continue
         print(f"{k} -- {datetime.timedelta(seconds=np.median(v))}")
+        labels.append(k.split('matek@resnet@')[-1])
+        secs.append(np.median(v))
+
+    fig, ax = plt.subplots(figsize=(20, 10))
+
+    # Save the chart so we can loop through the bars below.
+    bars = ax.bar(
+        x=np.arange(len(labels)),
+        height=secs,
+        tick_label=labels
+    )
+
+    # Axis formatting.
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_color('#DDDDDD')
+    ax.tick_params(bottom=False, left=False, labelrotation=90.0)
+    ax.set_axisbelow(True)
+    ax.yaxis.grid(True, color='#EEEEEE')
+    ax.xaxis.grid(False)
+    ax.xaxis.set_visible(False)
+    ax.set_ylim(0, 270000)
+
+    # Add text annotations to the top of the bars.
+    bar_color = bars[0].get_facecolor()
+    for i, bar in enumerate(bars):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            0,
+            round(bar.get_height(), 1),
+            horizontalalignment='center',
+            color=bar_color,
+            weight='bold',
+            rotation=90.0
+        )
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            270000,
+            labels[i],
+            horizontalalignment='center',
+            color=bar_color,
+            weight='bold',
+            rotation=90.0
+        )
+
+    # Add labels and a title.
+    ax.set_xlabel('Methods', labelpad=15, color='#333333')
+    ax.set_ylabel('Seconds', labelpad=15, color='#333333')
+    ax.set_title('Time Elapsed Matek', pad=15, color='#333333',
+                 weight='bold')
+
+    # fig.tight_layout()
+
+    plt.show()
 
 
 if __name__ == '__main__':

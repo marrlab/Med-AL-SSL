@@ -286,7 +286,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-
+    """
     root_vis = '/home/ahmad/thesis/visualization'
     arguments = get_arguments()
     methods_states = {
@@ -683,6 +683,7 @@ if __name__ == '__main__':
     metrics_rep = ['Recall', 'Precision', 'F1-score', 'Accuracy']
 
     rows = []
+    methods = []
     for dataset, dataset_rep in zip(datasets, datasets_rep):
         i = 0
         for training in trainings:
@@ -707,13 +708,13 @@ if __name__ == '__main__':
                     if len(ratio_metrics_logs[0]) == 0:
                         continue
                     else:
+                        methods.append(states[i-1])
                         rows.append(row)
     import pandas as pd
 
     df = pd.DataFrame(rows)
+    df['Method'] = methods
     df.to_csv('results.csv')
-
-"""
 """
 Combinations:
     'random_sampling',

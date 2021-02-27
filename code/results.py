@@ -59,6 +59,7 @@ def ratio_metrics(metric, dataset, cls, methods):
                     or 'class-nums' in filename:
                 continue
             df = pd.read_csv(os.path.join(args.log_path, filename), index_col=0)
+            print(filename)
             dump = df[cls][metric].tolist()
             max_metric = 0
             try:

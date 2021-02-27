@@ -141,6 +141,7 @@ def random_sampling(unlabeled_indices, number):
 
 def postprocess_indices(labeled_indices, unlabeled_indices, samples_indices):
     unlabeled_mask = torch.ones(size=(len(unlabeled_indices),), dtype=torch.bool)
+    samples_indices = samples_indices[samples_indices < len(unlabeled_indices)]
     unlabeled_mask[samples_indices] = 0
     labeled_indices = np.hstack([labeled_indices, unlabeled_indices[~unlabeled_mask]])
     unlabeled_indices = unlabeled_indices[unlabeled_mask]
