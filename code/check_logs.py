@@ -8,7 +8,7 @@ files = os.listdir(root)
 
 
 def main(args):
-    args.dataset = 'retinopathy'
+    args.dataset = 'isic'
     seeds = ['9999', '5555', '2323', '6666']
     name = set_model_name(args)
 
