@@ -574,7 +574,7 @@ if __name__ == '__main__':
 
     fig.savefig(f'Fig 2 - {dataset_rep[dataset]}.png', dpi=fig.dpi)
     """
-    """
+
     states = [
         'random_sampling',
         'mc_dropout',
@@ -716,7 +716,7 @@ if __name__ == '__main__':
     df = pd.DataFrame(rows)
     df['Method'] = methods
     df.to_csv('results.csv')
-    """
+
     """
     root_vis = '/home/ahmad/thesis/visualization'
     arguments = get_arguments()
@@ -1120,7 +1120,7 @@ if __name__ == '__main__':
 
     fig.savefig(f'results/{dataset_rep[dataset]}.png', dpi=fig.dpi)
     """
-
+    """
     root_vis = '/home/ahmad/thesis/visualization'
     arguments = get_arguments()
     methods_states = {
@@ -1507,7 +1507,7 @@ if __name__ == '__main__':
         # lgd4 = fig.legend(handles, ["" for lbl in labels], bbox_to_anchor=(1.25, 0.82))
 
         fig.savefig(f'results/{elements_rep[e]}/{dataset_rep[dataset]}.png', dpi=fig.dpi)
-
+    """
 """
 Combinations:
     'random_sampling',

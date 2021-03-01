@@ -2,8 +2,8 @@ import pandas as pd
 from copy import deepcopy
 import numpy as np
 
-"""
-root = '../results.csv'
+
+root = '../results/results.csv'
 
 results = pd.read_csv(root)
 datasets_rep = ['White blood cells', 'Skin Lesions', 'Jurkat cells cycle', 'Retina']
@@ -30,9 +30,7 @@ for dataset in datasets_rep:
         results.loc[results['Dataset'] == dataset, f'{metric} Avg. Rank'] = result[f'{metric} Avg. Rank']
         results.loc[results['Dataset'] == dataset, f'{metric} AUC'] = result[f'{metric} AUC']
 
-results.to_excel('../results_with_metrics.xlsx')
-"""
-import os
+results.to_excel('../results/results_with_metrics.xlsx')
 
 df = pd.read_excel('../results/results_with_metrics.xlsx')
 
