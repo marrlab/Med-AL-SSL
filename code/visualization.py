@@ -38,12 +38,12 @@ plot_configs = {'matek': (2, 5),
                 }
 
 fully_supervised = {
-    'matek': {'recall': 0.9121, 'f1-score': 0.8348, 'precision': 0.8712, 'accuracy': 0.9669},
-    'jurkat': {'recall': 0.7151, 'f1-score': 0.6338, 'precision': 0.8156, 'accuracy': 0.7445},
+    'matek': {'recall': 0.9121, 'f1-score': 0.8348, 'precision': 0.8712, 'accuracy': 0.9652},
+    'jurkat': {'recall': 0.7151, 'f1-score': 0.6338, 'precision': 0.8156, 'accuracy': 0.8265},
     'plasmodium': 0.9763,
     'cifar10': 0.75,
-    'isic': {'recall': 0.6852, 'f1-score': 0.6802, 'precision': 0.6807, 'accuracy': 0.7452},
-    'retinopathy': {'recall': 0.6752, 'f1-score': 0.6702, 'precision': 0.7507, 'accuracy': 0.7452}
+    'isic': {'recall': 0.6852, 'f1-score': 0.6802, 'precision': 0.6807, 'accuracy': 0.8194},
+    'retinopathy': {'recall': 0.6752, 'f1-score': 0.6702, 'precision': 0.7507, 'accuracy': 0.8255}
 }
 
 fully_supervised_std = {
@@ -52,7 +52,7 @@ fully_supervised_std = {
     'plasmodium': 0.9763,
     'cifar10': 0.75,
     'isic': {'recall': 0.0159, 'f1-score': 0.0165, 'precision': 0.0119, 'accuracy': 0.0356},
-    'retinopathy': {'recall': 0.0159, 'f1-score': 0.0165, 'precision': 0.0119, 'accuracy': 0.0356},
+    'retinopathy': {'recall': 0.0128, 'f1-score': 0.0265, 'precision': 0.0325, 'accuracy': 0.0287},
 }
 
 methods_default = [
@@ -717,7 +717,7 @@ if __name__ == '__main__':
     df['Method'] = methods
     df.to_csv('results.csv')
     """
-
+    """
     root_vis = '/home/ahmad/thesis/visualization'
     arguments = get_arguments()
     methods_states = {
@@ -837,7 +837,7 @@ if __name__ == '__main__':
               'pseudo_label_with_al_badge_pretrained_simclr']
     }
 
-    dataset = 'jurkat'
+    dataset = 'retinopathy'
 
     dataset_title = {'matek': 'White blood cells', 'jurkat': 'Jurkat cells cycle',
                      'isic': 'Skin Lesions',
@@ -851,24 +851,24 @@ if __name__ == '__main__':
 
     top_n_methods = df['Method'][:5].tolist()
 
-    plt.rcParams["font.family"] = "Times New Roman"
+    plt.rcParams["font.family"] = "Arial"
     plt.rcParams["font.weight"] = "ultralight"
     plt.rcParams["axes.labelweight"] = "ultralight"
     plt.rc('xtick', labelsize=30)
     plt.rc('ytick', labelsize=30)
     plt.rcParams['legend.fontsize'] = 25
 
-    fig, ax = plt.subplots(1, 3, figsize=(40, 10))
+    fig, ax = plt.subplots(1, 4, figsize=(50, 10))
     fig.suptitle(dataset_rep[dataset], fontsize=45)
 
     for itera, (k, method_state) in enumerate(methods_states_results.items()):
         # print('**************************' + str(itera))
         if arguments.run_batch:
             states = [
-                # (dataset, 'recall', 'accuracy'),
                 (dataset, 'recall', 'macro avg'),
                 (dataset, 'f1-score', 'macro avg'),
                 (dataset, 'precision', 'macro avg'),
+                (dataset, 'recall', 'accuracy'),
             ]
 
             for j, (d, m, r) in enumerate(states):
@@ -1039,7 +1039,7 @@ if __name__ == '__main__':
 
                     if 'simclr' in method:
                         marker = 's'
-                    elif 'autoencoder' in method:
+                    elif 'autoencoder' in method or 'auto_encoder' in method:
                         marker = 'o'
                     elif '_pretrained' in method:
                         marker = '^'
@@ -1063,34 +1063,46 @@ if __name__ == '__main__':
     ax[0].set_xlabel("Added annotated data (%)", fontsize=30)
     ax[1].set_xlabel("Added annotated data (%)", fontsize=30)
     ax[2].set_xlabel("Added annotated data (%)", fontsize=30)
+    ax[3].set_xlabel("Added annotated data (%)", fontsize=30)
     # ax[2, 2].set_xlabel("Added annotated data (%)", fontsize=30)
     # ax[2, 3].set_xlabel("Added annotated data (%)", fontsize=30)
 
     ax[0].set_title('Macro Recall', fontsize=30)
     ax[1].set_title('Macro F1-Score', fontsize=30)
     ax[2].set_title('Macro Precision', fontsize=30)
+    ax[3].set_title('Accuracy', fontsize=30)
     # ax[0, 2].set_title('Macro Recall', fontsize=30)
     # ax[0, 3].set_title('Macro F1-Score', fontsize=30)
 
     ax[0].set_xticks(ticks=prop)
     ax[1].set_xticks(ticks=prop)
     ax[2].set_xticks(ticks=prop)
+    ax[3].set_xticks(ticks=prop)
     # ax[2, 2].set_xticks(ticks=prop)
     # ax[2, 3].set_xticks(ticks=prop)
 
     ax[0].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
+    ax[1].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
+    ax[2].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
+    ax[3].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
     # ax[1, 0].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
     # ax[2, 0].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
 
     ax[0].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
     ax[1].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
     ax[2].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+    ax[3].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
     # ax[2, 2].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
     # ax[2, 3].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
 
     ax[0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
     # ax[1, 0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
     # ax[2, 0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
+
+    ax[0].set_ylim(0.1, 1.0)
+    ax[1].set_ylim(0.1, 1.0)
+    ax[2].set_ylim(0.1, 1.0)
+    ax[3].set_ylim(0.1, 1.0)
 
     # fig.subplots_adjust(right=0.8, wspace=0.2, hspace=0.2)
 
@@ -1107,8 +1119,8 @@ if __name__ == '__main__':
     # lgd4 = fig.legend(handles, ["" for lbl in labels], bbox_to_anchor=(1.25, 0.82))
 
     fig.savefig(f'results/{dataset_rep[dataset]}.png', dpi=fig.dpi)
-
     """
+
     root_vis = '/home/ahmad/thesis/visualization'
     arguments = get_arguments()
     methods_states = {
@@ -1246,24 +1258,24 @@ if __name__ == '__main__':
                      'isic': 'Skin Lesions',
                      'plasmodium': 'Red blood cells', 'retinopathy': 'Retina'}
     for e, element in enumerate(elements):
-        plt.rcParams["font.family"] = "Times New Roman"
+        plt.rcParams["font.family"] = "Arial"
         plt.rcParams["font.weight"] = "ultralight"
         plt.rcParams["axes.labelweight"] = "ultralight"
         plt.rc('xtick', labelsize=30)
         plt.rc('ytick', labelsize=30)
         plt.rcParams['legend.fontsize'] = 25
 
-        fig, ax = plt.subplots(1, 3, figsize=(40, 10))
+        fig, ax = plt.subplots(1, 4, figsize=(40, 10))
         fig.suptitle(dataset_rep[dataset], fontsize=45)
 
         for itera, (k, method_state) in enumerate(methods_states_results.items()):
             # print('**************************' + str(itera))
             if arguments.run_batch:
                 states = [
-                    # (dataset, 'recall', 'accuracy'),
                     (dataset, 'recall', 'macro avg'),
                     (dataset, 'f1-score', 'macro avg'),
                     (dataset, 'precision', 'macro avg'),
+                    (dataset, 'recall', 'accuracy'),
                 ]
 
                 for j, (d, m, r) in enumerate(states):
@@ -1418,7 +1430,7 @@ if __name__ == '__main__':
 
                         if 'simclr' in method:
                             marker = 's'
-                        elif 'autoencoder' in method:
+                        elif 'autoencoder' in method or 'auto_encoder' in method:
                             marker = 'o'
                         elif '_pretrained' in method:
                             marker = '^'
@@ -1442,18 +1454,21 @@ if __name__ == '__main__':
         ax[0].set_xlabel("Added annotated data (%)", fontsize=30)
         ax[1].set_xlabel("Added annotated data (%)", fontsize=30)
         ax[2].set_xlabel("Added annotated data (%)", fontsize=30)
+        ax[3].set_xlabel("Added annotated data (%)", fontsize=30)
         # ax[2, 2].set_xlabel("Added annotated data (%)", fontsize=30)
         # ax[2, 3].set_xlabel("Added annotated data (%)", fontsize=30)
 
         ax[0].set_title('Macro Recall', fontsize=30)
         ax[1].set_title('Macro F1-Score', fontsize=30)
         ax[2].set_title('Macro Precision', fontsize=30)
+        ax[3].set_title('Accuracy', fontsize=30)
         # ax[0, 2].set_title('Macro Recall', fontsize=30)
         # ax[0, 3].set_title('Macro F1-Score', fontsize=30)
 
         ax[0].set_xticks(ticks=prop)
         ax[1].set_xticks(ticks=prop)
         ax[2].set_xticks(ticks=prop)
+        ax[3].set_xticks(ticks=prop)
         # ax[2, 2].set_xticks(ticks=prop)
         # ax[2, 3].set_xticks(ticks=prop)
 
@@ -1464,12 +1479,18 @@ if __name__ == '__main__':
         ax[0].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
         ax[1].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
         ax[2].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+        ax[3].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
         # ax[2, 2].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
         # ax[2, 3].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
 
         ax[0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
         # ax[1, 0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
         # ax[2, 0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
+
+        ax[0].set_ylim(0.1, 1.0)
+        ax[1].set_ylim(0.1, 1.0)
+        ax[2].set_ylim(0.1, 1.0)
+        ax[3].set_ylim(0.1, 1.0)
 
         # fig.subplots_adjust(right=0.8, wspace=0.2, hspace=0.2)
 
@@ -1486,7 +1507,7 @@ if __name__ == '__main__':
         # lgd4 = fig.legend(handles, ["" for lbl in labels], bbox_to_anchor=(1.25, 0.82))
 
         fig.savefig(f'results/{elements_rep[e]}/{dataset_rep[dataset]}.png', dpi=fig.dpi)
-    """
+
 """
 Combinations:
     'random_sampling',

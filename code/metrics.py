@@ -2,6 +2,7 @@ import pandas as pd
 from copy import deepcopy
 import numpy as np
 
+"""
 root = '../results.csv'
 
 results = pd.read_csv(root)
@@ -30,3 +31,15 @@ for dataset in datasets_rep:
         results.loc[results['Dataset'] == dataset, f'{metric} AUC'] = result[f'{metric} AUC']
 
 results.to_excel('../results_with_metrics.xlsx')
+"""
+import os
+
+df = pd.read_excel('../results/results_with_metrics.xlsx')
+
+methods = df['Method'].unique()
+
+for method in methods:
+    df.loc[df['Method'] == method, 'F1-score Avg. Avg. Rank'] = df[df['Method'] == method]['F1-score Avg. Rank'].median()
+
+
+df.to_excel('../results/results_with_metrics_avg.xlsx')
