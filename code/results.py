@@ -66,9 +66,12 @@ def ratio_metrics(metric, dataset, cls, methods):
                 enumerate(dump)
             except Exception:
                 dump = np.array([0 for i in range(9)])
-            for k, m in enumerate(dump):
-                max_metric = m if m > max_metric else max_metric
-                dump[k] = max_metric
+            for k in range(9):
+                if k >= len(dump):
+                    dump += [max_metric]
+                else:
+                    max_metric = dump[k] if dump[k] > max_metric else max_metric
+                    dump[k] = max_metric
             dump_log[i].append(dump[:9])
 
     metrics_log = []

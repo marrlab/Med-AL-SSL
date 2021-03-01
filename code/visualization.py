@@ -38,12 +38,12 @@ plot_configs = {'matek': (2, 5),
                 }
 
 fully_supervised = {
-    'matek': {'recall': 0.9121, 'f1-score': 0.8348, 'precision': 0.8212, 'accuracy': 0.9669},
-    'jurkat': {'recall': 0.7151, 'f1-score': 0.6138, 'precision': 0.7056, 'accuracy': 0.7445},
+    'matek': {'recall': 0.9121, 'f1-score': 0.8348, 'precision': 0.8712, 'accuracy': 0.9669},
+    'jurkat': {'recall': 0.7151, 'f1-score': 0.6338, 'precision': 0.8156, 'accuracy': 0.7445},
     'plasmodium': 0.9763,
     'cifar10': 0.75,
-    'isic': {'recall': 0.6752, 'f1-score': 0.6702, 'precision': 0.6707, 'accuracy': 0.7452},
-    'retinopathy': {'recall': 0.6752, 'f1-score': 0.6702, 'precision': 0.6707, 'accuracy': 0.7452}
+    'isic': {'recall': 0.6852, 'f1-score': 0.6802, 'precision': 0.6807, 'accuracy': 0.7452},
+    'retinopathy': {'recall': 0.6752, 'f1-score': 0.6702, 'precision': 0.7507, 'accuracy': 0.7452}
 }
 
 fully_supervised_std = {
@@ -573,7 +573,8 @@ if __name__ == '__main__':
     lgd4 = fig.legend(handles, ["" for lbl in labels], bbox_to_anchor=(1.25, 0.82))
 
     fig.savefig(f'Fig 2 - {dataset_rep[dataset]}.png', dpi=fig.dpi)
-"""
+    """
+    """
     states = [
         'random_sampling',
         'mc_dropout',
@@ -715,6 +716,777 @@ if __name__ == '__main__':
     df = pd.DataFrame(rows)
     df['Method'] = methods
     df.to_csv('results.csv')
+    """
+
+    root_vis = '/home/ahmad/thesis/visualization'
+    arguments = get_arguments()
+    methods_states = {
+        'i': ['Augmentations Based + ImageNet + FixMatch',
+              'Augmentations Based + SimCLR + FixMatch',
+              'Augmentations Based + ImageNet + Supervised',
+              'Augmentations Based + SimCLR + Supervised',
+              'Learning Loss + ImageNet + FixMatch',
+              'Learning Loss + SimCLR + FixMatch',
+              'Learning Loss + ImageNet + Supervised',
+              'Learning Loss + SimCLR + Supervised',
+              'Badge + ImageNet + FixMatch',
+              'Badge + SimCLR + FixMatch',
+              'Badge + ImageNet + Supervised',
+              'Badge + SimCLR + Supervised',
+              'Augmentations Based + SimCLR + Pseudo',
+              'Learning Loss + SimCLR + Pseudo',
+              'Badge + SimCLR + Pseudo',
+              'Random Sampling +  Random + Supervised']
+    }
+    methods_states_results = {
+        'i': ['random_sampling',
+              'mc_dropout',
+              'entropy_based',
+              'augmentations_based',
+              'least_confidence',
+              'margin_confidence',
+              'learning_loss',
+              'badge',
+              'random_sampling_pretrained',
+              'mc_dropout_pretrained',
+              'entropy_based_pretrained',
+              'augmentations_based_pretrained',
+              'least_confidence_pretrained',
+              'margin_confidence_pretrained',
+              'learning_loss_pretrained',
+              'badge_pretrained',
+              'auto_encoder',
+              'auto_encoder_with_al_mc_dropout',
+              'auto_encoder_with_al_entropy_based',
+              'auto_encoder_with_al_augmentations_based',
+              'auto_encoder_with_al_least_confidence',
+              'auto_encoder_with_al_margin_confidence',
+              'auto_encoder_with_al_learning_loss',
+              'auto_encoder_with_al_badge',
+              'simclr',
+              'simclr_with_al_mc_dropout',
+              'simclr_with_al_entropy_based',
+              'simclr_with_al_augmentations_based',
+              'simclr_with_al_least_confidence',
+              'simclr_with_al_margin_confidence',
+              'simclr_with_al_learning_loss',
+              'simclr_with_al_badge',
+              'fixmatch',
+              'fixmatch_with_al_mc_dropout',
+              'fixmatch_with_al_entropy_based',
+              'fixmatch_with_al_augmentations_based',
+              'fixmatch_with_al_least_confidence',
+              'fixmatch_with_al_margin_confidence',
+              'fixmatch_with_al_learning_loss',
+              'fixmatch_with_al_badge',
+              'fixmatch_pretrained',
+              'fixmatch_with_al_mc_dropout_pretrained_pretrained',
+              'fixmatch_with_al_entropy_based_pretrained_pretrained',
+              'fixmatch_with_al_augmentations_based_pretrained_pretrained',
+              'fixmatch_with_al_least_confidence_pretrained_pretrained',
+              'fixmatch_with_al_margin_confidence_pretrained_pretrained',
+              'fixmatch_with_al_learning_loss_pretrained_pretrained',
+              'fixmatch_with_al_badge_pretrained_pretrained',
+              'fixmatch_pretrained_autoencoder',
+              'fixmatch_with_al_mc_dropout_pretrained_autoencoder',
+              'fixmatch_with_al_entropy_based_pretrained_autoencoder',
+              'fixmatch_with_al_augmentations_based_pretrained_autoencoder',
+              'fixmatch_with_al_least_confidence_pretrained_autoencoder',
+              'fixmatch_with_al_margin_confidence_pretrained_autoencoder',
+              'fixmatch_with_al_learning_loss_pretrained_autoencoder',
+              'fixmatch_with_al_badge_pretrained_autoencoder',
+              'fixmatch_pretrained_simclr',
+              'fixmatch_with_al_mc_dropout_pretrained_simclr',
+              'fixmatch_with_al_entropy_based_pretrained_simclr',
+              'fixmatch_with_al_augmentations_based_pretrained_simclr',
+              'fixmatch_with_al_least_confidence_pretrained_simclr',
+              'fixmatch_with_al_margin_confidence_pretrained_simclr',
+              'fixmatch_with_al_learning_loss_pretrained_simclr',
+              'fixmatch_with_al_badge_pretrained_simclr',
+              'pseudo_label',
+              'pseudo_label_with_al_mc_dropout',
+              'pseudo_label_with_al_entropy_based',
+              'pseudo_label_with_al_augmentations_based',
+              'pseudo_label_with_al_least_confidence',
+              'pseudo_label_with_al_margin_confidence',
+              'pseudo_label_with_al_learning_loss',
+              'pseudo_label_with_al_badge',
+              'pseudo_label_pretrained',
+              'pseudo_label_with_al_mc_dropout_pretrained_pretrained',
+              'pseudo_label_with_al_entropy_based_pretrained_pretrained',
+              'pseudo_label_with_al_augmentations_based_pretrained_pretrained',
+              'pseudo_label_with_al_least_confidence_pretrained_pretrained',
+              'pseudo_label_with_al_margin_confidence_pretrained_pretrained',
+              'pseudo_label_with_al_learning_loss_pretrained_pretrained',
+              'pseudo_label_with_al_badge_pretrained_pretrained',
+              'pseudo_label_pretrained_autoencoder',
+              'pseudo_label_with_al_mc_dropout_pretrained_autoencoder',
+              'pseudo_label_with_al_entropy_based_pretrained_autoencoder',
+              'pseudo_label_with_al_augmentations_based_pretrained_autoencoder',
+              'pseudo_label_with_al_least_confidence_pretrained_autoencoder',
+              'pseudo_label_with_al_margin_confidence_pretrained_autoencoder',
+              'pseudo_label_with_al_learning_loss_pretrained_autoencoder',
+              'pseudo_label_with_al_badge_pretrained_autoencoder',
+              'pseudo_label_pretrained_simclr',
+              'pseudo_label_with_al_mc_dropout_pretrained_simclr',
+              'pseudo_label_with_al_entropy_based_pretrained_simclr',
+              'pseudo_label_with_al_augmentations_based_pretrained_simclr',
+              'pseudo_label_with_al_least_confidence_pretrained_simclr',
+              'pseudo_label_with_al_margin_confidence_pretrained_simclr',
+              'pseudo_label_with_al_learning_loss_pretrained_simclr',
+              'pseudo_label_with_al_badge_pretrained_simclr']
+    }
+
+    dataset = 'jurkat'
+
+    dataset_title = {'matek': 'White blood cells', 'jurkat': 'Jurkat cells cycle',
+                     'isic': 'Skin Lesions',
+                     'plasmodium': 'Red blood cells', 'retinopathy': 'Retina'}
+
+    import pandas as pd
+
+    df = pd.read_excel('results/results_with_metrics.xlsx')
+    df = df[df['Dataset'] == dataset_title[dataset]]
+    df = df.sort_values(by='F1-score Avg. Rank')
+
+    top_n_methods = df['Method'][:5].tolist()
+
+    plt.rcParams["font.family"] = "Times New Roman"
+    plt.rcParams["font.weight"] = "ultralight"
+    plt.rcParams["axes.labelweight"] = "ultralight"
+    plt.rc('xtick', labelsize=30)
+    plt.rc('ytick', labelsize=30)
+    plt.rcParams['legend.fontsize'] = 25
+
+    fig, ax = plt.subplots(1, 3, figsize=(40, 10))
+    fig.suptitle(dataset_rep[dataset], fontsize=45)
+
+    for itera, (k, method_state) in enumerate(methods_states_results.items()):
+        # print('**************************' + str(itera))
+        if arguments.run_batch:
+            states = [
+                # (dataset, 'recall', 'accuracy'),
+                (dataset, 'recall', 'macro avg'),
+                (dataset, 'f1-score', 'macro avg'),
+                (dataset, 'precision', 'macro avg'),
+            ]
+
+            for j, (d, m, r) in enumerate(states):
+                root_path = os.path.join(root_vis, d, k)
+                if not os.path.exists(root_path):
+                    os.makedirs(root_path)
+                arguments.dataset = d
+                arguments.metric = m
+                arguments.metric_ratio = r
+                # arguments.methods_default = method_state
+                arguments.methods_default_results = method_state
+                arguments.save_path = os.path.join(root_path, f'{m}_{r}.png')
+                args = configs[arguments.dataset](arguments)
+
+                num = [i for i in range(0, 41, 5)]
+
+                if 'macro' in args.metric_ratio:
+                    y_label = f'Macro {args.metric.capitalize()}'
+                else:
+                    y_label = 'Accuracy'
+
+                dataset_title = {'matek': 'White blood cells', 'jurkat': 'Jurkat cell cycle',
+                                 'isic': 'Skin lesions',
+                                 'plasmodium': 'Red blood cells', 'retinopathy': 'Retina'}
+
+                '''
+                ratio_class_wise_metrics_log = ratio_class_wise_metrics(args.metric, dataset.classes, args.dataset)
+                plot_ratio_class_wise_metrics(ratio_class_wise_metrics_log, dataset.classes, y_label, num,
+                                              plot_configs[args.dataset])
+                '''
+
+                ratio_metrics_logs = ratio_metrics(args.metric, args.dataset, cls=args.metric_ratio,
+                                                   methods=args.methods_default_results)
+
+                prop = num[:9]
+                metric = ratio_metrics_logs
+                label_y = y_label
+                fully_supervised_metric = fully_supervised[args.dataset]
+                save_path = args.save_path
+                methods = args.methods_default_results
+                title = dataset_title[args.dataset]
+                fully_supervised_std_metric = fully_supervised_std[args.dataset]
+
+                # plt.figure(figsize=(14, 10))
+                # plt.grid(color='black')
+                style.use(['science', 'no-latex'])
+
+                colors = [[86 / 255, 180 / 255, 233 / 255, 1], [230 / 255, 159 / 255, 0, 1],
+                          [212 / 255, 16 / 255, 16 / 255, 1],
+                          [0, 158 / 255, 115 / 255, 1], [213 / 255, 94 / 255, 0, 1], [0, 114 / 255, 178 / 255, 1],
+                          [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1],
+                          [211 / 255, 95 / 255, 183 / 255, 1],
+                          [238 / 255, 136 / 255, 102 / 255, 1]]
+
+                if 'Recall' in label_y:
+                    ax[j].errorbar(prop, [fully_supervised_metric['recall']] * len(prop),
+                                   yerr=[fully_supervised_std_metric['recall']] * len(prop),
+                                   color=[0, 0, 0, 1], label='Fully Supervised', linewidth=2, linestyle='--',
+                                   marker=',',
+                                   capsize=3)
+                    ax[j].fill_between(prop,
+                                       np.array([fully_supervised_metric['recall']] * len(prop)) -
+                                       fully_supervised_std_metric[
+                                           'recall'],
+                                       np.array([fully_supervised_metric['recall']] * len(prop)) +
+                                       fully_supervised_std_metric[
+                                           'recall'],
+                                       color=[0, 0, 0, 1], alpha=0.05)
+                elif 'Precision' in label_y:
+                    ax[j].errorbar(prop, [fully_supervised_metric['precision']] * len(prop),
+                                   yerr=[fully_supervised_std_metric['precision']] * len(prop),
+                                   color=[0, 0, 0, 1],
+                                   label='Fully Supervised', linewidth=2, linestyle='--', marker=',',
+                                   capsize=3)
+                    ax[j].fill_between(prop,
+                                       np.array([fully_supervised_metric['precision']] * len(prop)) -
+                                       fully_supervised_std_metric[
+                                           'precision'],
+                                       np.array([fully_supervised_metric['precision']] * len(prop)) +
+                                       fully_supervised_std_metric[
+                                           'precision'],
+                                       color=[0, 0, 0, 1], alpha=0.05)
+                elif 'F1-score' in label_y:
+                    ax[j].errorbar(prop, [fully_supervised_metric['f1-score']] * len(prop),
+                                   yerr=[fully_supervised_std_metric['f1-score']] * len(prop),
+                                   color=[0, 0, 0, 1],
+                                   label='Fully Supervised', linewidth=2, linestyle='--', marker=',',
+                                   capsize=3)
+                    ax[j].fill_between(prop,
+                                       np.array([fully_supervised_metric['f1-score']] * len(prop)) -
+                                       fully_supervised_std_metric[
+                                           'f1-score'],
+                                       np.array([fully_supervised_metric['f1-score']] * len(prop)) +
+                                       fully_supervised_std_metric[
+                                           'f1-score'],
+                                       color=[0, 0, 0, 1], alpha=0.05)
+                else:
+                    ax[j].errorbar(prop, [fully_supervised_metric['accuracy']] * len(prop),
+                                   yerr=[fully_supervised_std_metric['accuracy']] * len(prop),
+                                   color=[0, 0, 0, 1],
+                                   label='Fully Supervised', linewidth=2, linestyle='--', marker=',',
+                                   capsize=3)
+                    ax[j].fill_between(prop,
+                                       np.array([fully_supervised_metric['accuracy']] * len(prop)) -
+                                       fully_supervised_std_metric[
+                                           'accuracy'],
+                                       np.array([fully_supervised_metric['accuracy']] * len(prop)) +
+                                       fully_supervised_std_metric[
+                                           'accuracy'],
+                                       color=[0, 0, 0, 1], alpha=0.05)
+
+                top_n_methods_index = []
+
+                for i, method in enumerate(methods):
+                    if len(metric[i]) == 0:
+                        continue
+                    if 'fixmatch' in method:
+                        linestyle = '-'
+                    elif 'pseudo_label' in method:
+                        linestyle = 'dotted'
+                    else:
+                        linestyle = '--'
+
+                    if method in top_n_methods:
+                        top_n_methods_index.append(i)
+                        continue
+                    c = 'lightgrey'
+                    if 'simclr' in method:
+                        marker = 's'
+                    elif 'autoencoder' in method:
+                        marker = 'o'
+                    elif '_pretrained' in method:
+                        marker = '^'
+                    else:
+                        marker = ','
+                    ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
+                                   markersize=10,
+                                   label=method, linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
+                    ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05)
+
+                for i in top_n_methods_index:
+                    method = methods[i]
+                    if len(metric[i]) == 0:
+                        continue
+                    if 'fixmatch' in method:
+                        linestyle = '-'
+                    elif 'pseudo_label' in method:
+                        linestyle = 'dotted'
+                    else:
+                        linestyle = '--'
+
+                    if 'entropy_based' in method:
+                        c = colors[3]
+                    elif 'mc_dropout' in method:
+                        c = colors[1]
+                    elif 'augmentations_based' in method:
+                        c = colors[2]
+                    elif 'least_confidence' in method:
+                        c = colors[4]
+                    elif 'margin_confidence' in method:
+                        c = colors[5]
+                    elif 'learning_loss' in method:
+                        c = colors[6]
+                    elif 'badge' in method:
+                        c = colors[7]
+                    else:
+                        c = colors[0]
+
+                    if 'simclr' in method:
+                        marker = 's'
+                    elif 'autoencoder' in method:
+                        marker = 'o'
+                    elif '_pretrained' in method:
+                        marker = '^'
+                    else:
+                        marker = ','
+                    ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
+                                   markersize=10,
+                                   label=method, linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
+                    ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05)
+
+                # ax[itera, j].set_legend(loc='lower right', fontsize=18)
+                # plt.title(title, fontsize=30, weight='bold', alpha=.75)
+                ax[j].set_xticks(ticks=prop)
+                ax[j].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
+                ax[j].xaxis.set_ticklabels([])
+                ax[j].yaxis.set_ticklabels([])
+                # ax[itera, j].savefig(save_path)
+        else:
+            main(args=arguments)
+
+    ax[0].set_xlabel("Added annotated data (%)", fontsize=30)
+    ax[1].set_xlabel("Added annotated data (%)", fontsize=30)
+    ax[2].set_xlabel("Added annotated data (%)", fontsize=30)
+    # ax[2, 2].set_xlabel("Added annotated data (%)", fontsize=30)
+    # ax[2, 3].set_xlabel("Added annotated data (%)", fontsize=30)
+
+    ax[0].set_title('Macro Recall', fontsize=30)
+    ax[1].set_title('Macro F1-Score', fontsize=30)
+    ax[2].set_title('Macro Precision', fontsize=30)
+    # ax[0, 2].set_title('Macro Recall', fontsize=30)
+    # ax[0, 3].set_title('Macro F1-Score', fontsize=30)
+
+    ax[0].set_xticks(ticks=prop)
+    ax[1].set_xticks(ticks=prop)
+    ax[2].set_xticks(ticks=prop)
+    # ax[2, 2].set_xticks(ticks=prop)
+    # ax[2, 3].set_xticks(ticks=prop)
+
+    ax[0].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
+    # ax[1, 0].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
+    # ax[2, 0].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
+
+    ax[0].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+    ax[1].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+    ax[2].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+    # ax[2, 2].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+    # ax[2, 3].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+
+    ax[0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
+    # ax[1, 0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
+    # ax[2, 0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
+
+    # fig.subplots_adjust(right=0.8, wspace=0.2, hspace=0.2)
+
+    # handles, labels = ax[2, 1].get_legend_handles_labels()
+    # lgd1 = fig.legend(handles, labels, bbox_to_anchor=(1.141, 0.27))
+
+    # handles, labels = ax[1, 1].get_legend_handles_labels()
+    # lgd2 = fig.legend(handles, labels, bbox_to_anchor=(1.164, 0.55))
+
+    # handles, labels = ax[1].get_legend_handles_labels()
+    # lgd3 = fig.legend(handles, labels, bbox_to_anchor=(1.138, 0.82))
+
+    # handles, labels = ax[1, 1].get_legend_handles_labels()
+    # lgd4 = fig.legend(handles, ["" for lbl in labels], bbox_to_anchor=(1.25, 0.82))
+
+    fig.savefig(f'results/{dataset_rep[dataset]}.png', dpi=fig.dpi)
+
+    """
+    root_vis = '/home/ahmad/thesis/visualization'
+    arguments = get_arguments()
+    methods_states = {
+        'i': ['Augmentations Based + ImageNet + FixMatch',
+              'Augmentations Based + SimCLR + FixMatch',
+              'Augmentations Based + ImageNet + Supervised',
+              'Augmentations Based + SimCLR + Supervised',
+              'Learning Loss + ImageNet + FixMatch',
+              'Learning Loss + SimCLR + FixMatch',
+              'Learning Loss + ImageNet + Supervised',
+              'Learning Loss + SimCLR + Supervised',
+              'Badge + ImageNet + FixMatch',
+              'Badge + SimCLR + FixMatch',
+              'Badge + ImageNet + Supervised',
+              'Badge + SimCLR + Supervised',
+              'Augmentations Based + SimCLR + Pseudo',
+              'Learning Loss + SimCLR + Pseudo',
+              'Badge + SimCLR + Pseudo',
+              'Random Sampling +  Random + Supervised']
+    }
+    methods_states_results = {
+        'i': ['random_sampling',
+              'mc_dropout',
+              'entropy_based',
+              'augmentations_based',
+              'least_confidence',
+              'margin_confidence',
+              'learning_loss',
+              'badge',
+              'random_sampling_pretrained',
+              'mc_dropout_pretrained',
+              'entropy_based_pretrained',
+              'augmentations_based_pretrained',
+              'least_confidence_pretrained',
+              'margin_confidence_pretrained',
+              'learning_loss_pretrained',
+              'badge_pretrained',
+              'auto_encoder',
+              'auto_encoder_with_al_mc_dropout',
+              'auto_encoder_with_al_entropy_based',
+              'auto_encoder_with_al_augmentations_based',
+              'auto_encoder_with_al_least_confidence',
+              'auto_encoder_with_al_margin_confidence',
+              'auto_encoder_with_al_learning_loss',
+              'auto_encoder_with_al_badge',
+              'simclr',
+              'simclr_with_al_mc_dropout',
+              'simclr_with_al_entropy_based',
+              'simclr_with_al_augmentations_based',
+              'simclr_with_al_least_confidence',
+              'simclr_with_al_margin_confidence',
+              'simclr_with_al_learning_loss',
+              'simclr_with_al_badge',
+              'fixmatch',
+              'fixmatch_with_al_mc_dropout',
+              'fixmatch_with_al_entropy_based',
+              'fixmatch_with_al_augmentations_based',
+              'fixmatch_with_al_least_confidence',
+              'fixmatch_with_al_margin_confidence',
+              'fixmatch_with_al_learning_loss',
+              'fixmatch_with_al_badge',
+              'fixmatch_pretrained',
+              'fixmatch_with_al_mc_dropout_pretrained_pretrained',
+              'fixmatch_with_al_entropy_based_pretrained_pretrained',
+              'fixmatch_with_al_augmentations_based_pretrained_pretrained',
+              'fixmatch_with_al_least_confidence_pretrained_pretrained',
+              'fixmatch_with_al_margin_confidence_pretrained_pretrained',
+              'fixmatch_with_al_learning_loss_pretrained_pretrained',
+              'fixmatch_with_al_badge_pretrained_pretrained',
+              'fixmatch_pretrained_autoencoder',
+              'fixmatch_with_al_mc_dropout_pretrained_autoencoder',
+              'fixmatch_with_al_entropy_based_pretrained_autoencoder',
+              'fixmatch_with_al_augmentations_based_pretrained_autoencoder',
+              'fixmatch_with_al_least_confidence_pretrained_autoencoder',
+              'fixmatch_with_al_margin_confidence_pretrained_autoencoder',
+              'fixmatch_with_al_learning_loss_pretrained_autoencoder',
+              'fixmatch_with_al_badge_pretrained_autoencoder',
+              'fixmatch_pretrained_simclr',
+              'fixmatch_with_al_mc_dropout_pretrained_simclr',
+              'fixmatch_with_al_entropy_based_pretrained_simclr',
+              'fixmatch_with_al_augmentations_based_pretrained_simclr',
+              'fixmatch_with_al_least_confidence_pretrained_simclr',
+              'fixmatch_with_al_margin_confidence_pretrained_simclr',
+              'fixmatch_with_al_learning_loss_pretrained_simclr',
+              'fixmatch_with_al_badge_pretrained_simclr',
+              'pseudo_label',
+              'pseudo_label_with_al_mc_dropout',
+              'pseudo_label_with_al_entropy_based',
+              'pseudo_label_with_al_augmentations_based',
+              'pseudo_label_with_al_least_confidence',
+              'pseudo_label_with_al_margin_confidence',
+              'pseudo_label_with_al_learning_loss',
+              'pseudo_label_with_al_badge',
+              'pseudo_label_pretrained',
+              'pseudo_label_with_al_mc_dropout_pretrained_pretrained',
+              'pseudo_label_with_al_entropy_based_pretrained_pretrained',
+              'pseudo_label_with_al_augmentations_based_pretrained_pretrained',
+              'pseudo_label_with_al_least_confidence_pretrained_pretrained',
+              'pseudo_label_with_al_margin_confidence_pretrained_pretrained',
+              'pseudo_label_with_al_learning_loss_pretrained_pretrained',
+              'pseudo_label_with_al_badge_pretrained_pretrained',
+              'pseudo_label_pretrained_autoencoder',
+              'pseudo_label_with_al_mc_dropout_pretrained_autoencoder',
+              'pseudo_label_with_al_entropy_based_pretrained_autoencoder',
+              'pseudo_label_with_al_augmentations_based_pretrained_autoencoder',
+              'pseudo_label_with_al_least_confidence_pretrained_autoencoder',
+              'pseudo_label_with_al_margin_confidence_pretrained_autoencoder',
+              'pseudo_label_with_al_learning_loss_pretrained_autoencoder',
+              'pseudo_label_with_al_badge_pretrained_autoencoder',
+              'pseudo_label_pretrained_simclr',
+              'pseudo_label_with_al_mc_dropout_pretrained_simclr',
+              'pseudo_label_with_al_entropy_based_pretrained_simclr',
+              'pseudo_label_with_al_augmentations_based_pretrained_simclr',
+              'pseudo_label_with_al_least_confidence_pretrained_simclr',
+              'pseudo_label_with_al_margin_confidence_pretrained_simclr',
+              'pseudo_label_with_al_learning_loss_pretrained_simclr',
+              'pseudo_label_with_al_badge_pretrained_simclr']
+    }
+
+    elements = ['pseudo_label', 'fixmatch', 'auto_encoder', 'simclr', 'random_sampling', 'mc_dropout',
+                'entropy_based', 'augmentations_based', 'least_confidence', 'margin_confidence', 'learning_loss',
+                'badge', 'pretrained']
+
+    elements_rep = ['Pseudo Label', 'FixMatch', 'Autoencoder', 'SimCLR', 'Random Sampling', 'MC Dropout',
+                    'Entropy Based', 'Augmentations Based', 'Least Confidence', 'Margin Confidence', 'Learning Loss',
+                    'Badge', 'ImageNet']
+
+    for element_rep in elements_rep:
+        if not os.path.exists(f'results/{element_rep}'):
+            os.mkdir(f'results/{element_rep}')
+
+    dataset = 'retinopathy'
+
+    dataset_title = {'matek': 'White blood cells', 'jurkat': 'Jurkat cells cycle',
+                     'isic': 'Skin Lesions',
+                     'plasmodium': 'Red blood cells', 'retinopathy': 'Retina'}
+    for e, element in enumerate(elements):
+        plt.rcParams["font.family"] = "Times New Roman"
+        plt.rcParams["font.weight"] = "ultralight"
+        plt.rcParams["axes.labelweight"] = "ultralight"
+        plt.rc('xtick', labelsize=30)
+        plt.rc('ytick', labelsize=30)
+        plt.rcParams['legend.fontsize'] = 25
+
+        fig, ax = plt.subplots(1, 3, figsize=(40, 10))
+        fig.suptitle(dataset_rep[dataset], fontsize=45)
+
+        for itera, (k, method_state) in enumerate(methods_states_results.items()):
+            # print('**************************' + str(itera))
+            if arguments.run_batch:
+                states = [
+                    # (dataset, 'recall', 'accuracy'),
+                    (dataset, 'recall', 'macro avg'),
+                    (dataset, 'f1-score', 'macro avg'),
+                    (dataset, 'precision', 'macro avg'),
+                ]
+
+                for j, (d, m, r) in enumerate(states):
+                    root_path = os.path.join(root_vis, d, k)
+                    if not os.path.exists(root_path):
+                        os.makedirs(root_path)
+                    arguments.dataset = d
+                    arguments.metric = m
+                    arguments.metric_ratio = r
+                    # arguments.methods_default = method_state
+                    arguments.methods_default_results = method_state
+                    arguments.save_path = os.path.join(root_path, f'{m}_{r}.png')
+                    args = configs[arguments.dataset](arguments)
+
+                    num = [i for i in range(0, 41, 5)]
+
+                    if 'macro' in args.metric_ratio:
+                        y_label = f'Macro {args.metric.capitalize()}'
+                    else:
+                        y_label = 'Accuracy'
+
+                    dataset_title = {'matek': 'White blood cells', 'jurkat': 'Jurkat cell cycle',
+                                     'isic': 'Skin lesions',
+                                     'plasmodium': 'Red blood cells', 'retinopathy': 'Retina'}
+
+                    '''
+                    ratio_class_wise_metrics_log = ratio_class_wise_metrics(args.metric, dataset.classes, args.dataset)
+                    plot_ratio_class_wise_metrics(ratio_class_wise_metrics_log, dataset.classes, y_label, num,
+                                                  plot_configs[args.dataset])
+                    '''
+
+                    ratio_metrics_logs = ratio_metrics(args.metric, args.dataset, cls=args.metric_ratio,
+                                                       methods=args.methods_default_results)
+
+                    prop = num[:9]
+                    metric = ratio_metrics_logs
+                    label_y = y_label
+                    fully_supervised_metric = fully_supervised[args.dataset]
+                    save_path = args.save_path
+                    methods = args.methods_default_results
+                    title = dataset_title[args.dataset]
+                    fully_supervised_std_metric = fully_supervised_std[args.dataset]
+
+                    # plt.figure(figsize=(14, 10))
+                    # plt.grid(color='black')
+                    style.use(['science', 'no-latex'])
+
+                    colors = [[86 / 255, 180 / 255, 233 / 255, 1], [230 / 255, 159 / 255, 0, 1],
+                              [212 / 255, 16 / 255, 16 / 255, 1],
+                              [0, 158 / 255, 115 / 255, 1], [213 / 255, 94 / 255, 0, 1], [0, 114 / 255, 178 / 255, 1],
+                              [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1],
+                              [211 / 255, 95 / 255, 183 / 255, 1],
+                              [238 / 255, 136 / 255, 102 / 255, 1]]
+
+                    if 'Recall' in label_y:
+                        ax[j].errorbar(prop, [fully_supervised_metric['recall']] * len(prop),
+                                       yerr=[fully_supervised_std_metric['recall']] * len(prop),
+                                       color=[0, 0, 0, 1], label='Fully Supervised', linewidth=2, linestyle='--',
+                                       marker=',',
+                                       capsize=3)
+                        ax[j].fill_between(prop,
+                                           np.array([fully_supervised_metric['recall']] * len(prop)) -
+                                           fully_supervised_std_metric[
+                                               'recall'],
+                                           np.array([fully_supervised_metric['recall']] * len(prop)) +
+                                           fully_supervised_std_metric[
+                                               'recall'],
+                                           color=[0, 0, 0, 1], alpha=0.05)
+                    elif 'Precision' in label_y:
+                        ax[j].errorbar(prop, [fully_supervised_metric['precision']] * len(prop),
+                                       yerr=[fully_supervised_std_metric['precision']] * len(prop),
+                                       color=[0, 0, 0, 1],
+                                       label='Fully Supervised', linewidth=2, linestyle='--', marker=',',
+                                       capsize=3)
+                        ax[j].fill_between(prop,
+                                           np.array([fully_supervised_metric['precision']] * len(prop)) -
+                                           fully_supervised_std_metric[
+                                               'precision'],
+                                           np.array([fully_supervised_metric['precision']] * len(prop)) +
+                                           fully_supervised_std_metric[
+                                               'precision'],
+                                           color=[0, 0, 0, 1], alpha=0.05)
+                    elif 'F1-score' in label_y:
+                        ax[j].errorbar(prop, [fully_supervised_metric['f1-score']] * len(prop),
+                                       yerr=[fully_supervised_std_metric['f1-score']] * len(prop),
+                                       color=[0, 0, 0, 1],
+                                       label='Fully Supervised', linewidth=2, linestyle='--', marker=',',
+                                       capsize=3)
+                        ax[j].fill_between(prop,
+                                           np.array([fully_supervised_metric['f1-score']] * len(prop)) -
+                                           fully_supervised_std_metric[
+                                               'f1-score'],
+                                           np.array([fully_supervised_metric['f1-score']] * len(prop)) +
+                                           fully_supervised_std_metric[
+                                               'f1-score'],
+                                           color=[0, 0, 0, 1], alpha=0.05)
+                    else:
+                        ax[j].errorbar(prop, [fully_supervised_metric['accuracy']] * len(prop),
+                                       yerr=[fully_supervised_std_metric['accuracy']] * len(prop),
+                                       color=[0, 0, 0, 1],
+                                       label='Fully Supervised', linewidth=2, linestyle='--', marker=',',
+                                       capsize=3)
+                        ax[j].fill_between(prop,
+                                           np.array([fully_supervised_metric['accuracy']] * len(prop)) -
+                                           fully_supervised_std_metric[
+                                               'accuracy'],
+                                           np.array([fully_supervised_metric['accuracy']] * len(prop)) +
+                                           fully_supervised_std_metric[
+                                               'accuracy'],
+                                           color=[0, 0, 0, 1], alpha=0.05)
+
+                    for i, method in enumerate(methods):
+
+                        if ('fixmatch' in method or 'pseudo_label' in method) and 'auto_encoder' == element:
+                            element = 'autoencoder'
+                        elif ('fixmatch' not in method and 'pseudo_label' not in method) and 'auto' in element:
+                            element = 'auto_encoder'
+
+                        if ('fixmatch' in method or 'pseudo_label' in method) and 'pretrained' == element:
+                            element = 'pretrained_pretrained'
+                        elif ('fixmatch' not in method and 'pseudo_label' not in method) and 'pretrained' in element:
+                            element = 'pretrained'
+
+                        if element not in method:
+                            continue
+
+                        if len(metric[i]) == 0:
+                            continue
+                        if 'fixmatch' in method:
+                            linestyle = '-'
+                        elif 'pseudo_label' in method:
+                            linestyle = 'dotted'
+                        else:
+                            linestyle = '--'
+
+                        if 'entropy_based' in method:
+                            c = colors[3]
+                        elif 'mc_dropout' in method:
+                            c = colors[1]
+                        elif 'augmentations_based' in method:
+                            c = colors[2]
+                        elif 'least_confidence' in method:
+                            c = colors[4]
+                        elif 'margin_confidence' in method:
+                            c = colors[5]
+                        elif 'learning_loss' in method:
+                            c = colors[6]
+                        elif 'badge' in method:
+                            c = colors[7]
+                        else:
+                            c = colors[0]
+
+                        if 'simclr' in method:
+                            marker = 's'
+                        elif 'autoencoder' in method:
+                            marker = 'o'
+                        elif '_pretrained' in method:
+                            marker = '^'
+                        else:
+                            marker = ','
+                        ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
+                                       markersize=10,
+                                       label=method, linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
+                        ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05)
+
+                    # ax[itera, j].set_legend(loc='lower right', fontsize=18)
+                    # plt.title(title, fontsize=30, weight='bold', alpha=.75)
+                    ax[j].set_xticks(ticks=prop)
+                    ax[j].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
+                    ax[j].xaxis.set_ticklabels([])
+                    ax[j].yaxis.set_ticklabels([])
+                    # ax[itera, j].savefig(save_path)
+            else:
+                main(args=arguments)
+
+        ax[0].set_xlabel("Added annotated data (%)", fontsize=30)
+        ax[1].set_xlabel("Added annotated data (%)", fontsize=30)
+        ax[2].set_xlabel("Added annotated data (%)", fontsize=30)
+        # ax[2, 2].set_xlabel("Added annotated data (%)", fontsize=30)
+        # ax[2, 3].set_xlabel("Added annotated data (%)", fontsize=30)
+
+        ax[0].set_title('Macro Recall', fontsize=30)
+        ax[1].set_title('Macro F1-Score', fontsize=30)
+        ax[2].set_title('Macro Precision', fontsize=30)
+        # ax[0, 2].set_title('Macro Recall', fontsize=30)
+        # ax[0, 3].set_title('Macro F1-Score', fontsize=30)
+
+        ax[0].set_xticks(ticks=prop)
+        ax[1].set_xticks(ticks=prop)
+        ax[2].set_xticks(ticks=prop)
+        # ax[2, 2].set_xticks(ticks=prop)
+        # ax[2, 3].set_xticks(ticks=prop)
+
+        ax[0].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
+        # ax[1, 0].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
+        # ax[2, 0].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
+
+        ax[0].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+        ax[1].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+        ax[2].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+        # ax[2, 2].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+        # ax[2, 3].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+
+        ax[0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
+        # ax[1, 0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
+        # ax[2, 0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
+
+        # fig.subplots_adjust(right=0.8, wspace=0.2, hspace=0.2)
+
+        # handles, labels = ax[2, 1].get_legend_handles_labels()
+        # lgd1 = fig.legend(handles, labels, bbox_to_anchor=(1.141, 0.27))
+
+        # handles, labels = ax[1, 1].get_legend_handles_labels()
+        # lgd2 = fig.legend(handles, labels, bbox_to_anchor=(1.164, 0.55))
+
+        # handles, labels = ax[1].get_legend_handles_labels()
+        # lgd3 = fig.legend(handles, labels, bbox_to_anchor=(1.138, 0.82))
+
+        # handles, labels = ax[1, 1].get_legend_handles_labels()
+        # lgd4 = fig.legend(handles, ["" for lbl in labels], bbox_to_anchor=(1.25, 0.82))
+
+        fig.savefig(f'results/{elements_rep[e]}/{dataset_rep[dataset]}.png', dpi=fig.dpi)
+    """
 """
 Combinations:
     'random_sampling',
