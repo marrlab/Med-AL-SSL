@@ -717,7 +717,7 @@ if __name__ == '__main__':
     df['Method'] = methods
     df.to_csv('results.csv')
     """
-
+    """
     root_vis = '/home/ahmad/thesis/visualization'
     arguments = get_arguments()
     methods_states = {
@@ -837,7 +837,7 @@ if __name__ == '__main__':
               'pseudo_label_with_al_badge_pretrained_simclr']
     }
 
-    dataset = 'jurkat'
+    dataset = 'isic'
 
     dataset_title = {'matek': 'White blood cells', 'jurkat': 'Jurkat cells cycle',
                      'isic': 'Skin Lesions',
@@ -849,7 +849,7 @@ if __name__ == '__main__':
     df = df[df['Dataset'] == dataset_title[dataset]]
     df = df.sort_values(by='F1-score Avg. Rank')
 
-    top_n_methods = df['Method'][:5].tolist()
+    top_n_methods = df['Method'][:5].tolist() + ['random_sampling']
 
     plt.rcParams["font.family"] = "Arial"
     plt.rcParams["font.weight"] = "ultralight"
@@ -860,13 +860,14 @@ if __name__ == '__main__':
 
     fig, ax = plt.subplots(1, 4, figsize=(50, 10))
     fig.suptitle(dataset_rep[dataset], fontsize=45)
+    fig.subplots_adjust(top=0.8)
 
     for itera, (k, method_state) in enumerate(methods_states_results.items()):
         # print('**************************' + str(itera))
         if arguments.run_batch:
             states = [
-                (dataset, 'recall', 'macro avg'),
                 (dataset, 'f1-score', 'macro avg'),
+                (dataset, 'recall', 'macro avg'),
                 (dataset, 'precision', 'macro avg'),
                 (dataset, 'recall', 'accuracy'),
             ]
@@ -922,6 +923,76 @@ if __name__ == '__main__':
                           [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1],
                           [211 / 255, 95 / 255, 183 / 255, 1],
                           [238 / 255, 136 / 255, 102 / 255, 1]]
+
+                top_n_methods_index = []
+
+                for i, method in enumerate(methods):
+                    if len(metric[i]) == 0:
+                        continue
+                    if 'fixmatch' in method:
+                        linestyle = '-'
+                    elif 'pseudo_label' in method:
+                        linestyle = 'dotted'
+                    else:
+                        linestyle = '--'
+
+                    if method in top_n_methods:
+                        top_n_methods_index.append(i)
+                        continue
+                    c = 'lightgrey'
+                    if 'simclr' in method:
+                        marker = 's'
+                    elif 'autoencoder' in method:
+                        marker = 'o'
+                    elif '_pretrained' in method:
+                        marker = '^'
+                    else:
+                        marker = ','
+                    ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
+                                   markersize=10,
+                                   label=method, linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
+                    ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05)
+
+                for i in top_n_methods_index:
+                    method = methods[i]
+                    if len(metric[i]) == 0:
+                        continue
+                    if 'fixmatch' in method:
+                        linestyle = '-'
+                    elif 'pseudo_label' in method:
+                        linestyle = '--'
+                    else:
+                        linestyle = 'dotted'
+
+                    if 'entropy_based' in method:
+                        c = colors[3]
+                    elif 'mc_dropout' in method:
+                        c = colors[1]
+                    elif 'augmentations_based' in method:
+                        c = colors[2]
+                    elif 'least_confidence' in method:
+                        c = colors[4]
+                    elif 'margin_confidence' in method:
+                        c = colors[5]
+                    elif 'learning_loss' in method:
+                        c = colors[6]
+                    elif 'badge' in method:
+                        c = colors[7]
+                    else:
+                        c = colors[0]
+
+                    if 'simclr' in method:
+                        marker = 's'
+                    elif 'autoencoder' in method or 'auto_encoder' in method:
+                        marker = 'o'
+                    elif '_pretrained' in method:
+                        marker = '^'
+                    else:
+                        marker = ','
+                    ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
+                                   markersize=10,
+                                   label=method, linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
+                    ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05, zorder=300)
 
                 if 'Recall' in label_y:
                     ax[j].errorbar(prop, [fully_supervised_metric['recall']] * len(prop),
@@ -980,76 +1051,6 @@ if __name__ == '__main__':
                                            'accuracy'],
                                        color=[0, 0, 0, 1], alpha=0.05)
 
-                top_n_methods_index = []
-
-                for i, method in enumerate(methods):
-                    if len(metric[i]) == 0:
-                        continue
-                    if 'fixmatch' in method:
-                        linestyle = '-'
-                    elif 'pseudo_label' in method:
-                        linestyle = 'dotted'
-                    else:
-                        linestyle = '--'
-
-                    if method in top_n_methods:
-                        top_n_methods_index.append(i)
-                        continue
-                    c = 'lightgrey'
-                    if 'simclr' in method:
-                        marker = 's'
-                    elif 'autoencoder' in method:
-                        marker = 'o'
-                    elif '_pretrained' in method:
-                        marker = '^'
-                    else:
-                        marker = ','
-                    ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
-                                   markersize=10,
-                                   label=method, linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
-                    ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05)
-
-                for i in top_n_methods_index:
-                    method = methods[i]
-                    if len(metric[i]) == 0:
-                        continue
-                    if 'fixmatch' in method:
-                        linestyle = '-'
-                    elif 'pseudo_label' in method:
-                        linestyle = 'dotted'
-                    else:
-                        linestyle = '--'
-
-                    if 'entropy_based' in method:
-                        c = colors[3]
-                    elif 'mc_dropout' in method:
-                        c = colors[1]
-                    elif 'augmentations_based' in method:
-                        c = colors[2]
-                    elif 'least_confidence' in method:
-                        c = colors[4]
-                    elif 'margin_confidence' in method:
-                        c = colors[5]
-                    elif 'learning_loss' in method:
-                        c = colors[6]
-                    elif 'badge' in method:
-                        c = colors[7]
-                    else:
-                        c = colors[0]
-
-                    if 'simclr' in method:
-                        marker = 's'
-                    elif 'autoencoder' in method or 'auto_encoder' in method:
-                        marker = 'o'
-                    elif '_pretrained' in method:
-                        marker = '^'
-                    else:
-                        marker = ','
-                    ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
-                                   markersize=10,
-                                   label=method, linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
-                    ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05)
-
                 # ax[itera, j].set_legend(loc='lower right', fontsize=18)
                 # plt.title(title, fontsize=30, weight='bold', alpha=.75)
                 ax[j].set_xticks(ticks=prop)
@@ -1067,8 +1068,8 @@ if __name__ == '__main__':
     # ax[2, 2].set_xlabel("Added annotated data (%)", fontsize=30)
     # ax[2, 3].set_xlabel("Added annotated data (%)", fontsize=30)
 
-    ax[0].set_title('Macro Recall', fontsize=30)
-    ax[1].set_title('Macro F1-Score', fontsize=30)
+    ax[0].set_title('Macro F1-Score', fontsize=30)
+    ax[1].set_title('Macro Recall', fontsize=30)
     ax[2].set_title('Macro Precision', fontsize=30)
     ax[3].set_title('Accuracy', fontsize=30)
     # ax[0, 2].set_title('Macro Recall', fontsize=30)
@@ -1119,8 +1120,8 @@ if __name__ == '__main__':
     # lgd4 = fig.legend(handles, ["" for lbl in labels], bbox_to_anchor=(1.25, 0.82))
 
     fig.savefig(f'results/{dataset_rep[dataset]}.png', dpi=fig.dpi)
-
     """
+
     root_vis = '/home/ahmad/thesis/visualization'
     arguments = get_arguments()
     methods_states = {
@@ -1270,13 +1271,14 @@ if __name__ == '__main__':
 
             fig, ax = plt.subplots(1, 4, figsize=(40, 10))
             fig.suptitle(dataset_rep[dataset], fontsize=45)
-
+            fig.subplots_adjust(top=0.8)
+            
             for itera, (k, method_state) in enumerate(methods_states_results.items()):
                 # print('**************************' + str(itera))
                 if arguments.run_batch:
                     states = [
-                        (dataset, 'recall', 'macro avg'),
                         (dataset, 'f1-score', 'macro avg'),
+                        (dataset, 'recall', 'macro avg'),
                         (dataset, 'precision', 'macro avg'),
                         (dataset, 'recall', 'accuracy'),
                     ]
@@ -1332,6 +1334,66 @@ if __name__ == '__main__':
                                   [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1],
                                   [211 / 255, 95 / 255, 183 / 255, 1],
                                   [238 / 255, 136 / 255, 102 / 255, 1]]
+
+                        for i, method in enumerate(methods):
+
+                            random = False
+
+                            if ('fixmatch' in method or 'pseudo_label' in method) and 'auto_encoder' == element:
+                                element = 'autoencoder'
+                            elif ('fixmatch' not in method and 'pseudo_label' not in method) and 'auto' in element:
+                                element = 'auto_encoder'
+                            if ('fixmatch' in method or 'pseudo_label' in method) and 'pretrained' == element \
+                                    and 'with_al' in method:
+                                element = 'pretrained_pretrained'
+                            elif ('fixmatch' not in method and 'pseudo_label' not in method) and 'pretrained' in element:
+                                element = 'pretrained'
+
+                            if ('fixmatch' in method or 'pseudo_label' in method or 'simclr' in method
+                               or 'auto_encoder' in method) and 'with_al' not in method and 'random_sampling' == element:
+                                random = True
+
+                            if element not in method and not random:
+                                continue
+
+                            if len(metric[i]) == 0:
+                                continue
+                            if 'fixmatch' in method:
+                                linestyle = '-'
+                            elif 'pseudo_label' in method:
+                                linestyle = '--'
+                            else:
+                                linestyle = 'dotted'
+
+                            if 'entropy_based' in method:
+                                c = colors[3]
+                            elif 'mc_dropout' in method:
+                                c = colors[1]
+                            elif 'augmentations_based' in method:
+                                c = colors[2]
+                            elif 'least_confidence' in method:
+                                c = colors[4]
+                            elif 'margin_confidence' in method:
+                                c = colors[5]
+                            elif 'learning_loss' in method:
+                                c = colors[6]
+                            elif 'badge' in method:
+                                c = colors[7]
+                            else:
+                                c = colors[0]
+
+                            if 'simclr' in method:
+                                marker = 's'
+                            elif 'autoencoder' in method or 'auto_encoder' in method:
+                                marker = 'o'
+                            elif '_pretrained' in method:
+                                marker = '^'
+                            else:
+                                marker = ','
+                            ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
+                                           markersize=10,
+                                           label=method, linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
+                            ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05)
 
                         if 'Recall' in label_y:
                             ax[j].errorbar(prop, [fully_supervised_metric['recall']] * len(prop),
@@ -1390,66 +1452,6 @@ if __name__ == '__main__':
                                                    'accuracy'],
                                                color=[0, 0, 0, 1], alpha=0.05)
 
-                        for i, method in enumerate(methods):
-
-                            random = False
-
-                            if ('fixmatch' in method or 'pseudo_label' in method) and 'auto_encoder' == element:
-                                element = 'autoencoder'
-                            elif ('fixmatch' not in method and 'pseudo_label' not in method) and 'auto' in element:
-                                element = 'auto_encoder'
-                            if ('fixmatch' in method or 'pseudo_label' in method) and 'pretrained' == element \
-                                    and 'with_al' in method:
-                                element = 'pretrained_pretrained'
-                            elif ('fixmatch' not in method and 'pseudo_label' not in method) and 'pretrained' in element:
-                                element = 'pretrained'
-
-                            if ('fixmatch' in method or 'pseudo_label' in method or 'simclr' in method
-                               or 'auto_encoder' in method) and 'with_al' not in method and 'random_sampling' == element:
-                                random = True
-
-                            if element not in method and not random:
-                                continue
-
-                            if len(metric[i]) == 0:
-                                continue
-                            if 'fixmatch' in method:
-                                linestyle = '-'
-                            elif 'pseudo_label' in method:
-                                linestyle = 'dotted'
-                            else:
-                                linestyle = '--'
-
-                            if 'entropy_based' in method:
-                                c = colors[3]
-                            elif 'mc_dropout' in method:
-                                c = colors[1]
-                            elif 'augmentations_based' in method:
-                                c = colors[2]
-                            elif 'least_confidence' in method:
-                                c = colors[4]
-                            elif 'margin_confidence' in method:
-                                c = colors[5]
-                            elif 'learning_loss' in method:
-                                c = colors[6]
-                            elif 'badge' in method:
-                                c = colors[7]
-                            else:
-                                c = colors[0]
-
-                            if 'simclr' in method:
-                                marker = 's'
-                            elif 'autoencoder' in method or 'auto_encoder' in method:
-                                marker = 'o'
-                            elif '_pretrained' in method:
-                                marker = '^'
-                            else:
-                                marker = ','
-                            ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
-                                           markersize=10,
-                                           label=method, linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
-                            ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05)
-
                         # ax[itera, j].set_legend(loc='lower right', fontsize=18)
                         # plt.title(title, fontsize=30, weight='bold', alpha=.75)
                         ax[j].set_xticks(ticks=prop)
@@ -1467,8 +1469,8 @@ if __name__ == '__main__':
             # ax[2, 2].set_xlabel("Added annotated data (%)", fontsize=30)
             # ax[2, 3].set_xlabel("Added annotated data (%)", fontsize=30)
 
-            ax[0].set_title('Macro Recall', fontsize=30)
-            ax[1].set_title('Macro F1-Score', fontsize=30)
+            ax[0].set_title('Macro F1-Score', fontsize=30)
+            ax[1].set_title('Macro Recall', fontsize=30)
             ax[2].set_title('Macro Precision', fontsize=30)
             ax[3].set_title('Accuracy', fontsize=30)
             # ax[0, 2].set_title('Macro Recall', fontsize=30)
@@ -1516,7 +1518,7 @@ if __name__ == '__main__':
             # lgd4 = fig.legend(handles, ["" for lbl in labels], bbox_to_anchor=(1.25, 0.82))
 
             fig.savefig(f'results/{elements_rep[e]}/{dataset_rep[dataset]}.png', dpi=fig.dpi)
-    """
+
 """
 Combinations:
     'random_sampling',
