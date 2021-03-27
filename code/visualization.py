@@ -717,127 +717,211 @@ if __name__ == '__main__':
     df['Method'] = methods
     df.to_csv('results.csv')
     """
-    """
+
     root_vis = '/home/ahmad/thesis/visualization'
     arguments = get_arguments()
     methods_states = {
-        'i': ['Augmentations Based + ImageNet + FixMatch',
-              'Augmentations Based + SimCLR + FixMatch',
-              'Augmentations Based + ImageNet + Supervised',
-              'Augmentations Based + SimCLR + Supervised',
-              'Learning Loss + ImageNet + FixMatch',
-              'Learning Loss + SimCLR + FixMatch',
-              'Learning Loss + ImageNet + Supervised',
-              'Learning Loss + SimCLR + Supervised',
-              'Badge + ImageNet + FixMatch',
-              'Badge + SimCLR + FixMatch',
-              'Badge + ImageNet + Supervised',
-              'Badge + SimCLR + Supervised',
-              'Augmentations Based + SimCLR + Pseudo',
-              'Learning Loss + SimCLR + Pseudo',
-              'Badge + SimCLR + Pseudo',
-              'Random Sampling +  Random + Supervised']
+        'i': [
+                'Supervised + Random Sampling + Random Initialization',
+                'Supervised + MC Dropout + Random Initialization',
+                'Supervised + Entropy Based + Random Initialization',
+                'Supervised + Augmentations Based + Random Initialization',
+                'Supervised + Least Confidence + Random Initialization',
+                'Supervised + Margin Confidence + Random Initialization',
+                'Supervised + Learning Loss + Random Initialization',
+                'Supervised + Badge + Random Initialization',
+                'Supervised + Random Sampling + ImageNet',
+                'Supervised + MC Dropout + ImageNet',
+                'Supervised + Entropy Based + ImageNet',
+                'Supervised + Augmentations Based + ImageNet',
+                'Supervised + Least Confidence + ImageNet',
+                'Supervised + Margin Confidence + ImageNet',
+                'Supervised + Learning Loss + ImageNet',
+                'Supervised + Badge + ImageNet',
+                'Supervised + Random Sampling + Autoencoder',
+                'Supervised + MC Dropout + Autoencoder',
+                'Supervised + Entropy Based + Autoencoder',
+                'Supervised + Augmentations Based + Autoencoder',
+                'Supervised + Least Confidence + Autoencoder',
+                'Supervised + Margin Confidence + Autoencoder',
+                'Supervised + Learning Loss + Autoencoder',
+                'Supervised + Badge + Autoencoder',
+                'Supervised + Random Sampling + SimCLR',
+                'Supervised + MC Dropout + SimCLR',
+                'Supervised + Entropy Based + SimCLR',
+                'Supervised + Augmentations Based + SimCLR',
+                'Supervised + Least Confidence + SimCLR',
+                'Supervised + Margin Confidence + SimCLR',
+                'Supervised + Learning Loss + SimCLR',
+                'Supervised + Badge + SimCLR',
+                'FixMatch + Random Sampling + Random Initialization',
+                'FixMatch + MC Dropout + Random Initialization',
+                'FixMatch + Entropy Based + Random Initialization',
+                'FixMatch + Augmentations Based + Random Initialization',
+                'FixMatch + Least Confidence + Random Initialization',
+                'FixMatch + Margin Confidence + Random Initialization',
+                'FixMatch + Learning Loss + Random Initialization',
+                'FixMatch + Badge + Random Initialization',
+                'FixMatch + Random Sampling + ImageNet',
+                'FixMatch + MC Dropout + ImageNet',
+                'FixMatch + Entropy Based + ImageNet',
+                'FixMatch + Augmentations Based + ImageNet',
+                'FixMatch + Least Confidence + ImageNet',
+                'FixMatch + Margin Confidence + ImageNet',
+                'FixMatch + Learning Loss + ImageNet',
+                'FixMatch + Badge + ImageNet',
+                'FixMatch + Random Sampling + Autoencoder',
+                'FixMatch + MC Dropout + Autoencoder',
+                'FixMatch + Entropy Based + Autoencoder',
+                'FixMatch + Augmentations Based + Autoencoder',
+                'FixMatch + Least Confidence + Autoencoder',
+                'FixMatch + Margin Confidence + Autoencoder',
+                'FixMatch + Learning Loss + Autoencoder',
+                'FixMatch + Badge + Autoencoder',
+                'FixMatch + Random Sampling + SimCLR',
+                'FixMatch + MC Dropout + SimCLR',
+                'FixMatch + Entropy Based + SimCLR',
+                'FixMatch + Augmentations Based + SimCLR',
+                'FixMatch + Least Confidence + SimCLR',
+                'FixMatch + Margin Confidence + SimCLR',
+                'FixMatch + Learning Loss + SimCLR',
+                'FixMatch + Badge + SimCLR',
+                'Pseudo Labeling + Random Sampling + Random Initialization',
+                'Pseudo Labeling + MC Dropout + Random Initialization',
+                'Pseudo Labeling + Entropy Based + Random Initialization',
+                'Pseudo Labeling + Augmentations Based + Random Initialization',
+                'Pseudo Labeling + Least Confidence + Random Initialization',
+                'Pseudo Labeling + Margin Confidence + Random Initialization',
+                'Pseudo Labeling + Learning Loss + Random Initialization',
+                'Pseudo Labeling + Badge + Random Initialization',
+                'Pseudo Labeling + Random Sampling + ImageNet',
+                'Pseudo Labeling + MC Dropout + ImageNet',
+                'Pseudo Labeling + Entropy Based + ImageNet',
+                'Pseudo Labeling + Augmentations Based + ImageNet',
+                'Pseudo Labeling + Least Confidence + ImageNet',
+                'Pseudo Labeling + Margin Confidence + ImageNet',
+                'Pseudo Labeling + Learning Loss + ImageNet',
+                'Pseudo Labeling + Badge + ImageNet',
+                'Pseudo Labeling + Random Sampling + Autoencoder',
+                'Pseudo Labeling + MC Dropout + Autoencoder',
+                'Pseudo Labeling + Entropy Based + Autoencoder',
+                'Pseudo Labeling + Augmentations Based + Autoencoder',
+                'Pseudo Labeling + Least Confidence + Autoencoder',
+                'Pseudo Labeling + Margin Confidence + Autoencoder',
+                'Pseudo Labeling + Learning Loss + Autoencoder',
+                'Pseudo Labeling + Badge + Autoencoder',
+                'Pseudo Labeling + Random Sampling + SimCLR',
+                'Pseudo Labeling + MC Dropout + SimCLR',
+                'Pseudo Labeling + Entropy Based + SimCLR',
+                'Pseudo Labeling + Augmentations Based + SimCLR',
+                'Pseudo Labeling + Least Confidence + SimCLR',
+                'Pseudo Labeling + Margin Confidence + SimCLR',
+                'Pseudo Labeling + Learning Loss + SimCLR',
+                'Pseudo Labeling + Badge + SimCLR'
+              ]
     }
     methods_states_results = {
-        'i': ['random_sampling',
-              'mc_dropout',
-              'entropy_based',
-              'augmentations_based',
-              'least_confidence',
-              'margin_confidence',
-              'learning_loss',
-              'badge',
-              'random_sampling_pretrained',
-              'mc_dropout_pretrained',
-              'entropy_based_pretrained',
-              'augmentations_based_pretrained',
-              'least_confidence_pretrained',
-              'margin_confidence_pretrained',
-              'learning_loss_pretrained',
-              'badge_pretrained',
-              'auto_encoder',
-              'auto_encoder_with_al_mc_dropout',
-              'auto_encoder_with_al_entropy_based',
-              'auto_encoder_with_al_augmentations_based',
-              'auto_encoder_with_al_least_confidence',
-              'auto_encoder_with_al_margin_confidence',
-              'auto_encoder_with_al_learning_loss',
-              'auto_encoder_with_al_badge',
-              'simclr',
-              'simclr_with_al_mc_dropout',
-              'simclr_with_al_entropy_based',
-              'simclr_with_al_augmentations_based',
-              'simclr_with_al_least_confidence',
-              'simclr_with_al_margin_confidence',
-              'simclr_with_al_learning_loss',
-              'simclr_with_al_badge',
-              'fixmatch',
-              'fixmatch_with_al_mc_dropout',
-              'fixmatch_with_al_entropy_based',
-              'fixmatch_with_al_augmentations_based',
-              'fixmatch_with_al_least_confidence',
-              'fixmatch_with_al_margin_confidence',
-              'fixmatch_with_al_learning_loss',
-              'fixmatch_with_al_badge',
-              'fixmatch_pretrained',
-              'fixmatch_with_al_mc_dropout_pretrained_pretrained',
-              'fixmatch_with_al_entropy_based_pretrained_pretrained',
-              'fixmatch_with_al_augmentations_based_pretrained_pretrained',
-              'fixmatch_with_al_least_confidence_pretrained_pretrained',
-              'fixmatch_with_al_margin_confidence_pretrained_pretrained',
-              'fixmatch_with_al_learning_loss_pretrained_pretrained',
-              'fixmatch_with_al_badge_pretrained_pretrained',
-              'fixmatch_pretrained_autoencoder',
-              'fixmatch_with_al_mc_dropout_pretrained_autoencoder',
-              'fixmatch_with_al_entropy_based_pretrained_autoencoder',
-              'fixmatch_with_al_augmentations_based_pretrained_autoencoder',
-              'fixmatch_with_al_least_confidence_pretrained_autoencoder',
-              'fixmatch_with_al_margin_confidence_pretrained_autoencoder',
-              'fixmatch_with_al_learning_loss_pretrained_autoencoder',
-              'fixmatch_with_al_badge_pretrained_autoencoder',
-              'fixmatch_pretrained_simclr',
-              'fixmatch_with_al_mc_dropout_pretrained_simclr',
-              'fixmatch_with_al_entropy_based_pretrained_simclr',
-              'fixmatch_with_al_augmentations_based_pretrained_simclr',
-              'fixmatch_with_al_least_confidence_pretrained_simclr',
-              'fixmatch_with_al_margin_confidence_pretrained_simclr',
-              'fixmatch_with_al_learning_loss_pretrained_simclr',
-              'fixmatch_with_al_badge_pretrained_simclr',
-              'pseudo_label',
-              'pseudo_label_with_al_mc_dropout',
-              'pseudo_label_with_al_entropy_based',
-              'pseudo_label_with_al_augmentations_based',
-              'pseudo_label_with_al_least_confidence',
-              'pseudo_label_with_al_margin_confidence',
-              'pseudo_label_with_al_learning_loss',
-              'pseudo_label_with_al_badge',
-              'pseudo_label_pretrained',
-              'pseudo_label_with_al_mc_dropout_pretrained_pretrained',
-              'pseudo_label_with_al_entropy_based_pretrained_pretrained',
-              'pseudo_label_with_al_augmentations_based_pretrained_pretrained',
-              'pseudo_label_with_al_least_confidence_pretrained_pretrained',
-              'pseudo_label_with_al_margin_confidence_pretrained_pretrained',
-              'pseudo_label_with_al_learning_loss_pretrained_pretrained',
-              'pseudo_label_with_al_badge_pretrained_pretrained',
-              'pseudo_label_pretrained_autoencoder',
-              'pseudo_label_with_al_mc_dropout_pretrained_autoencoder',
-              'pseudo_label_with_al_entropy_based_pretrained_autoencoder',
-              'pseudo_label_with_al_augmentations_based_pretrained_autoencoder',
-              'pseudo_label_with_al_least_confidence_pretrained_autoencoder',
-              'pseudo_label_with_al_margin_confidence_pretrained_autoencoder',
-              'pseudo_label_with_al_learning_loss_pretrained_autoencoder',
-              'pseudo_label_with_al_badge_pretrained_autoencoder',
-              'pseudo_label_pretrained_simclr',
-              'pseudo_label_with_al_mc_dropout_pretrained_simclr',
-              'pseudo_label_with_al_entropy_based_pretrained_simclr',
-              'pseudo_label_with_al_augmentations_based_pretrained_simclr',
-              'pseudo_label_with_al_least_confidence_pretrained_simclr',
-              'pseudo_label_with_al_margin_confidence_pretrained_simclr',
-              'pseudo_label_with_al_learning_loss_pretrained_simclr',
-              'pseudo_label_with_al_badge_pretrained_simclr']
+        'i': [
+                'random_sampling',
+                'mc_dropout',
+                'entropy_based',
+                'augmentations_based',
+                'least_confidence',
+                'margin_confidence',
+                'learning_loss',
+                'badge',
+                'random_sampling_pretrained',
+                'mc_dropout_pretrained',
+                'entropy_based_pretrained',
+                'augmentations_based_pretrained',
+                'least_confidence_pretrained',
+                'margin_confidence_pretrained',
+                'learning_loss_pretrained',
+                'badge_pretrained',
+                'auto_encoder',
+                'auto_encoder_with_al_mc_dropout',
+                'auto_encoder_with_al_entropy_based',
+                'auto_encoder_with_al_augmentations_based',
+                'auto_encoder_with_al_least_confidence',
+                'auto_encoder_with_al_margin_confidence',
+                'auto_encoder_with_al_learning_loss',
+                'auto_encoder_with_al_badge',
+                'simclr',
+                'simclr_with_al_mc_dropout',
+                'simclr_with_al_entropy_based',
+                'simclr_with_al_augmentations_based',
+                'simclr_with_al_least_confidence',
+                'simclr_with_al_margin_confidence',
+                'simclr_with_al_learning_loss',
+                'simclr_with_al_badge',
+                'fixmatch',
+                'fixmatch_with_al_mc_dropout',
+                'fixmatch_with_al_entropy_based',
+                'fixmatch_with_al_augmentations_based',
+                'fixmatch_with_al_least_confidence',
+                'fixmatch_with_al_margin_confidence',
+                'fixmatch_with_al_learning_loss',
+                'fixmatch_with_al_badge',
+                'fixmatch_pretrained',
+                'fixmatch_with_al_mc_dropout_pretrained_pretrained',
+                'fixmatch_with_al_entropy_based_pretrained_pretrained',
+                'fixmatch_with_al_augmentations_based_pretrained_pretrained',
+                'fixmatch_with_al_least_confidence_pretrained_pretrained',
+                'fixmatch_with_al_margin_confidence_pretrained_pretrained',
+                'fixmatch_with_al_learning_loss_pretrained_pretrained',
+                'fixmatch_with_al_badge_pretrained_pretrained',
+                'fixmatch_pretrained_autoencoder',
+                'fixmatch_with_al_mc_dropout_pretrained_autoencoder',
+                'fixmatch_with_al_entropy_based_pretrained_autoencoder',
+                'fixmatch_with_al_augmentations_based_pretrained_autoencoder',
+                'fixmatch_with_al_least_confidence_pretrained_autoencoder',
+                'fixmatch_with_al_margin_confidence_pretrained_autoencoder',
+                'fixmatch_with_al_learning_loss_pretrained_autoencoder',
+                'fixmatch_with_al_badge_pretrained_autoencoder',
+                'fixmatch_pretrained_simclr',
+                'fixmatch_with_al_mc_dropout_pretrained_simclr',
+                'fixmatch_with_al_entropy_based_pretrained_simclr',
+                'fixmatch_with_al_augmentations_based_pretrained_simclr',
+                'fixmatch_with_al_least_confidence_pretrained_simclr',
+                'fixmatch_with_al_margin_confidence_pretrained_simclr',
+                'fixmatch_with_al_learning_loss_pretrained_simclr',
+                'fixmatch_with_al_badge_pretrained_simclr',
+                'pseudo_label',
+                'pseudo_label_with_al_mc_dropout',
+                'pseudo_label_with_al_entropy_based',
+                'pseudo_label_with_al_augmentations_based',
+                'pseudo_label_with_al_least_confidence',
+                'pseudo_label_with_al_margin_confidence',
+                'pseudo_label_with_al_learning_loss',
+                'pseudo_label_with_al_badge',
+                'pseudo_label_pretrained',
+                'pseudo_label_with_al_mc_dropout_pretrained_pretrained',
+                'pseudo_label_with_al_entropy_based_pretrained_pretrained',
+                'pseudo_label_with_al_augmentations_based_pretrained_pretrained',
+                'pseudo_label_with_al_least_confidence_pretrained_pretrained',
+                'pseudo_label_with_al_margin_confidence_pretrained_pretrained',
+                'pseudo_label_with_al_learning_loss_pretrained_pretrained',
+                'pseudo_label_with_al_badge_pretrained_pretrained',
+                'pseudo_label_pretrained_autoencoder',
+                'pseudo_label_with_al_mc_dropout_pretrained_autoencoder',
+                'pseudo_label_with_al_entropy_based_pretrained_autoencoder',
+                'pseudo_label_with_al_augmentations_based_pretrained_autoencoder',
+                'pseudo_label_with_al_least_confidence_pretrained_autoencoder',
+                'pseudo_label_with_al_margin_confidence_pretrained_autoencoder',
+                'pseudo_label_with_al_learning_loss_pretrained_autoencoder',
+                'pseudo_label_with_al_badge_pretrained_autoencoder',
+                'pseudo_label_pretrained_simclr',
+                'pseudo_label_with_al_mc_dropout_pretrained_simclr',
+                'pseudo_label_with_al_entropy_based_pretrained_simclr',
+                'pseudo_label_with_al_augmentations_based_pretrained_simclr',
+                'pseudo_label_with_al_least_confidence_pretrained_simclr',
+                'pseudo_label_with_al_margin_confidence_pretrained_simclr',
+                'pseudo_label_with_al_learning_loss_pretrained_simclr',
+                'pseudo_label_with_al_badge_pretrained_simclr'
+              ]
     }
 
-    dataset = 'isic'
+    dataset = 'retinopathy'
 
     dataset_title = {'matek': 'White blood cells', 'jurkat': 'Jurkat cells cycle',
                      'isic': 'Skin Lesions',
@@ -859,7 +943,7 @@ if __name__ == '__main__':
     plt.rcParams['legend.fontsize'] = 25
 
     fig, ax = plt.subplots(1, 4, figsize=(50, 10))
-    fig.suptitle(dataset_rep[dataset], fontsize=45)
+    # fig.suptitle(dataset_rep[dataset], fontsize=45)
     fig.subplots_adjust(top=0.8)
 
     for itera, (k, method_state) in enumerate(methods_states_results.items()):
@@ -949,8 +1033,7 @@ if __name__ == '__main__':
                     else:
                         marker = ','
                     ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
-                                   markersize=10,
-                                   label=method, linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
+                                   markersize=10, linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
                     ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05)
 
                 for i in top_n_methods_index:
@@ -991,7 +1074,8 @@ if __name__ == '__main__':
                         marker = ','
                     ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
                                    markersize=10,
-                                   label=method, linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
+                                   label=methods_states['i'][i],
+                                   linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
                     ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05, zorder=300)
 
                 if 'Recall' in label_y:
@@ -1068,10 +1152,10 @@ if __name__ == '__main__':
     # ax[2, 2].set_xlabel("Added annotated data (%)", fontsize=30)
     # ax[2, 3].set_xlabel("Added annotated data (%)", fontsize=30)
 
-    ax[0].set_title('Macro F1-Score', fontsize=30)
-    ax[1].set_title('Macro Recall', fontsize=30)
-    ax[2].set_title('Macro Precision', fontsize=30)
-    ax[3].set_title('Accuracy', fontsize=30)
+    ax[0].set_title(f'{dataset_rep[dataset]} \nMacro F1-Score', fontsize=30)
+    ax[1].set_title(f'{dataset_rep[dataset]} \nMacro Recall', fontsize=30)
+    ax[2].set_title(f'{dataset_rep[dataset]} \nMacro Precision', fontsize=30)
+    ax[3].set_title(f'{dataset_rep[dataset]} \nAccuracy', fontsize=30)
     # ax[0, 2].set_title('Macro Recall', fontsize=30)
     # ax[0, 3].set_title('Macro F1-Score', fontsize=30)
 
@@ -1097,18 +1181,25 @@ if __name__ == '__main__':
     # ax[2, 3].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
 
     ax[0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
-    # ax[1, 0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
-    # ax[2, 0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
+    ax[1].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
+    ax[2].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
 
     ax[0].set_ylim(0.1, 1.0)
     ax[1].set_ylim(0.1, 1.0)
     ax[2].set_ylim(0.1, 1.0)
     ax[3].set_ylim(0.1, 1.0)
 
-    # fig.subplots_adjust(right=0.8, wspace=0.2, hspace=0.2)
+    import matplotlib.font_manager as font_manager
 
-    # handles, labels = ax[2, 1].get_legend_handles_labels()
-    # lgd1 = fig.legend(handles, labels, bbox_to_anchor=(1.141, 0.27))
+    font = font_manager.FontProperties(family='Arial',
+                                       weight='ultralight',
+                                       style='normal', size=30)
+
+    # fig.subplots_adjust(right=0.8, wspace=0.5, hspace=0.5)
+    # fig.tight_layout()
+    handles, labels = ax[0].get_legend_handles_labels()
+    lgd1 = ax[0].legend(handles, labels, bbox_to_anchor=(0.5, -0.2), prop=font)
+    # lgd = fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, -0.01), fancybox=True)
 
     # handles, labels = ax[1, 1].get_legend_handles_labels()
     # lgd2 = fig.legend(handles, labels, bbox_to_anchor=(1.164, 0.55))
@@ -1119,9 +1210,10 @@ if __name__ == '__main__':
     # handles, labels = ax[1, 1].get_legend_handles_labels()
     # lgd4 = fig.legend(handles, ["" for lbl in labels], bbox_to_anchor=(1.25, 0.82))
 
-    fig.savefig(f'results/{dataset_rep[dataset]}.png', dpi=fig.dpi)
-    """
+    fig.savefig(f'results/{dataset_rep[dataset]}.png', dpi=150, bbox_extra_artists=(lgd1,), bbox_inches='tight')
 
+
+    """
     root_vis = '/home/ahmad/thesis/visualization'
     arguments = get_arguments()
     methods_states = {
@@ -1199,7 +1291,7 @@ if __name__ == '__main__':
               'fixmatch_with_al_margin_confidence_pretrained_autoencoder',
               'fixmatch_with_al_learning_loss_pretrained_autoencoder',
               'fixmatch_with_al_badge_pretrained_autoencoder',
-              'fixmatch_pretrained_simclr',
+              'fixmatch_pretrained_simclr',Remote Python 3.6.10 (sftp://qasima@131.159.10.232:22/home/qasima/.simclr_venv/bin/python3.6)
               'fixmatch_with_al_mc_dropout_pretrained_simclr',
               'fixmatch_with_al_entropy_based_pretrained_simclr',
               'fixmatch_with_al_augmentations_based_pretrained_simclr',
@@ -1518,7 +1610,7 @@ if __name__ == '__main__':
             # lgd4 = fig.legend(handles, ["" for lbl in labels], bbox_to_anchor=(1.25, 0.82))
 
             fig.savefig(f'results/{elements_rep[e]}/{dataset_rep[dataset]}.png', dpi=fig.dpi)
-
+    """
 """
 Combinations:
     'random_sampling',
