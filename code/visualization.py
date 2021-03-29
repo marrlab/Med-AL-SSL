@@ -921,7 +921,7 @@ if __name__ == '__main__':
               ]
     }
 
-    dataset = 'retinopathy'
+    dataset = 'jurkat'
 
     dataset_title = {'matek': 'White blood cells', 'jurkat': 'Jurkat cells cycle',
                      'isic': 'Skin Lesions',
@@ -1198,6 +1198,23 @@ if __name__ == '__main__':
     # fig.subplots_adjust(right=0.8, wspace=0.5, hspace=0.5)
     # fig.tight_layout()
     handles, labels = ax[0].get_legend_handles_labels()
+    labels_index = []
+
+    sorted_indexes = []
+
+    for method in top_n_methods:
+        for i, method_res in enumerate(methods_states_results['i']):
+            if method == method_res:
+                sorted_indexes.append(i)
+                break
+    labels_index.append(6)
+    for i in sorted_indexes:
+        for j, label in enumerate(labels):
+            if methods_states['i'][i] == label:
+                labels_index.append(j)
+                break
+    handles = [handles[i] for i in labels_index]
+    labels = [labels[i] for i in labels_index]
     lgd1 = ax[0].legend(handles, labels, bbox_to_anchor=(0.5, -0.2), prop=font)
     # lgd = fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, -0.01), fancybox=True)
 
