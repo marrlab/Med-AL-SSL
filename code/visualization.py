@@ -63,10 +63,10 @@ methods_default = [
 ]
 
 dataset_rep = {
-    'matek': 'White Blood Cell Dataset',
-    'isic': 'Skin Lesion Dataset',
-    'jurkat': 'Cell Cycle Dataset',
-    'retinopathy': 'Retinopathy Dataset',
+    'matek': 'White blood cell dataset',
+    'isic': 'Skin lesion dataset',
+    'jurkat': 'Cell cycle dataset',
+    'retinopathy': 'Retinopathy dataset',
 }
 
 
@@ -75,7 +75,7 @@ def plot_ratio_class_wise_metrics(metric, classes, label_y, prop, plot_config):
     style.use('fivethirtyeight')
 
     colors = [[0, 0, 0, 1], [230 / 255, 159 / 255, 0, 1], [86 / 255, 180 / 255, 233 / 255, 1],
-              [0, 158 / 255, 115 / 255, 1], [213 / 255, 94 / 255, 0, 1], [0, 114 / 255, 178 / 255, 1],
+              [0, 158 / 255, 115 / 255, 1], [213 / 255, 94 / 255, 0, 1], [238 / 255, 136 / 255, 102 / 255, 1],
               [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1], [211 / 255, 95 / 255, 183 / 255, 1],
               [238 / 255, 136 / 255, 102 / 255, 1]]
     ax_main = fig.add_subplot(111)
@@ -115,7 +115,7 @@ def plot_ratio_metrics(prop, metric, label_y, fully_supervised_metric, save_path
     style.use(['science', 'no-latex'])
 
     colors = [[86 / 255, 180 / 255, 233 / 255, 1], [230 / 255, 159 / 255, 0, 1], [212 / 255, 16 / 255, 16 / 255, 1],
-              [0, 158 / 255, 115 / 255, 1], [213 / 255, 94 / 255, 0, 1], [0, 114 / 255, 178 / 255, 1],
+              [0, 158 / 255, 115 / 255, 1], [213 / 255, 94 / 255, 0, 1], [238 / 255, 136 / 255, 102 / 255, 1],
               [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1], [211 / 255, 95 / 255, 183 / 255, 1],
               [238 / 255, 136 / 255, 102 / 255, 1]]
 
@@ -648,7 +648,7 @@ if __name__ == '__main__':
         'pseudo_label_with_al_margin_confidence',
         'pseudo_label_with_al_learning_loss',
         'pseudo_label_with_al_badge',
-        'pseudo_label_pretrained',
+        'pseudo_label_pretrained_pretrained',
         'pseudo_label_with_al_mc_dropout_pretrained_pretrained',
         'pseudo_label_with_al_entropy_based_pretrained_pretrained',
         'pseudo_label_with_al_augmentations_based_pretrained_pretrained',
@@ -722,102 +722,102 @@ if __name__ == '__main__':
     arguments = get_arguments()
     methods_states = {
         'i': [
-                'Supervised + Random Sampling + Random Initialization',
-                'Supervised + MC Dropout + Random Initialization',
-                'Supervised + Entropy Based + Random Initialization',
-                'Supervised + Augmentations Based + Random Initialization',
-                'Supervised + Least Confidence + Random Initialization',
-                'Supervised + Margin Confidence + Random Initialization',
-                'Supervised + Learning Loss + Random Initialization',
-                'Supervised + Badge + Random Initialization',
-                'Supervised + Random Sampling + ImageNet',
-                'Supervised + MC Dropout + ImageNet',
-                'Supervised + Entropy Based + ImageNet',
-                'Supervised + Augmentations Based + ImageNet',
-                'Supervised + Least Confidence + ImageNet',
-                'Supervised + Margin Confidence + ImageNet',
-                'Supervised + Learning Loss + ImageNet',
-                'Supervised + Badge + ImageNet',
-                'Supervised + Random Sampling + Autoencoder',
-                'Supervised + MC Dropout + Autoencoder',
-                'Supervised + Entropy Based + Autoencoder',
-                'Supervised + Augmentations Based + Autoencoder',
-                'Supervised + Least Confidence + Autoencoder',
-                'Supervised + Margin Confidence + Autoencoder',
-                'Supervised + Learning Loss + Autoencoder',
-                'Supervised + Badge + Autoencoder',
-                'Supervised + Random Sampling + SimCLR',
-                'Supervised + MC Dropout + SimCLR',
-                'Supervised + Entropy Based + SimCLR',
-                'Supervised + Augmentations Based + SimCLR',
-                'Supervised + Least Confidence + SimCLR',
-                'Supervised + Margin Confidence + SimCLR',
-                'Supervised + Learning Loss + SimCLR',
-                'Supervised + Badge + SimCLR',
-                'FixMatch + Random Sampling + Random Initialization',
-                'FixMatch + MC Dropout + Random Initialization',
-                'FixMatch + Entropy Based + Random Initialization',
-                'FixMatch + Augmentations Based + Random Initialization',
-                'FixMatch + Least Confidence + Random Initialization',
-                'FixMatch + Margin Confidence + Random Initialization',
-                'FixMatch + Learning Loss + Random Initialization',
-                'FixMatch + Badge + Random Initialization',
-                'FixMatch + Random Sampling + ImageNet',
-                'FixMatch + MC Dropout + ImageNet',
-                'FixMatch + Entropy Based + ImageNet',
-                'FixMatch + Augmentations Based + ImageNet',
-                'FixMatch + Least Confidence + ImageNet',
-                'FixMatch + Margin Confidence + ImageNet',
-                'FixMatch + Learning Loss + ImageNet',
-                'FixMatch + Badge + ImageNet',
-                'FixMatch + Random Sampling + Autoencoder',
-                'FixMatch + MC Dropout + Autoencoder',
-                'FixMatch + Entropy Based + Autoencoder',
-                'FixMatch + Augmentations Based + Autoencoder',
-                'FixMatch + Least Confidence + Autoencoder',
-                'FixMatch + Margin Confidence + Autoencoder',
-                'FixMatch + Learning Loss + Autoencoder',
-                'FixMatch + Badge + Autoencoder',
-                'FixMatch + Random Sampling + SimCLR',
-                'FixMatch + MC Dropout + SimCLR',
-                'FixMatch + Entropy Based + SimCLR',
-                'FixMatch + Augmentations Based + SimCLR',
-                'FixMatch + Least Confidence + SimCLR',
-                'FixMatch + Margin Confidence + SimCLR',
-                'FixMatch + Learning Loss + SimCLR',
-                'FixMatch + Badge + SimCLR',
-                'Pseudo Labeling + Random Sampling + Random Initialization',
-                'Pseudo Labeling + MC Dropout + Random Initialization',
-                'Pseudo Labeling + Entropy Based + Random Initialization',
-                'Pseudo Labeling + Augmentations Based + Random Initialization',
-                'Pseudo Labeling + Least Confidence + Random Initialization',
-                'Pseudo Labeling + Margin Confidence + Random Initialization',
-                'Pseudo Labeling + Learning Loss + Random Initialization',
-                'Pseudo Labeling + Badge + Random Initialization',
-                'Pseudo Labeling + Random Sampling + ImageNet',
-                'Pseudo Labeling + MC Dropout + ImageNet',
-                'Pseudo Labeling + Entropy Based + ImageNet',
-                'Pseudo Labeling + Augmentations Based + ImageNet',
-                'Pseudo Labeling + Least Confidence + ImageNet',
-                'Pseudo Labeling + Margin Confidence + ImageNet',
-                'Pseudo Labeling + Learning Loss + ImageNet',
-                'Pseudo Labeling + Badge + ImageNet',
-                'Pseudo Labeling + Random Sampling + Autoencoder',
-                'Pseudo Labeling + MC Dropout + Autoencoder',
-                'Pseudo Labeling + Entropy Based + Autoencoder',
-                'Pseudo Labeling + Augmentations Based + Autoencoder',
-                'Pseudo Labeling + Least Confidence + Autoencoder',
-                'Pseudo Labeling + Margin Confidence + Autoencoder',
-                'Pseudo Labeling + Learning Loss + Autoencoder',
-                'Pseudo Labeling + Badge + Autoencoder',
-                'Pseudo Labeling + Random Sampling + SimCLR',
-                'Pseudo Labeling + MC Dropout + SimCLR',
-                'Pseudo Labeling + Entropy Based + SimCLR',
-                'Pseudo Labeling + Augmentations Based + SimCLR',
-                'Pseudo Labeling + Least Confidence + SimCLR',
-                'Pseudo Labeling + Margin Confidence + SimCLR',
-                'Pseudo Labeling + Learning Loss + SimCLR',
-                'Pseudo Labeling + Badge + SimCLR'
+                'Supervised + Random sampling + Random initialization',
+                'Supervised + MC-dropout + Random initialization',
+                'Supervised + Entropy-based + Random initialization',
+                'Supervised + Augmentation-based + Random initialization',
+                'Supervised + Least confidence + Random initialization',
+                'Supervised + Margin confidence + Random initialization',
+                'Supervised + Learning loss + Random initialization',
+                'Supervised + BADGE + Random initialization',
+                'Supervised + Random sampling + ImageNet',
+                'Supervised + MC-dropout + ImageNet',
+                'Supervised + Entropy-based + ImageNet',
+                'Supervised + Augmentation-based + ImageNet',
+                'Supervised + Least confidence + ImageNet',
+                'Supervised + Margin confidence + ImageNet',
+                'Supervised + Learning loss + ImageNet',
+                'Supervised + BADGE + ImageNet',
+                'Supervised + Random sampling + Autoencoder',
+                'Supervised + MC-dropout + Autoencoder',
+                'Supervised + Entropy-based + Autoencoder',
+                'Supervised + Augmentation-based + Autoencoder',
+                'Supervised + Least confidence + Autoencoder',
+                'Supervised + Margin confidence + Autoencoder',
+                'Supervised + Learning loss + Autoencoder',
+                'Supervised + BADGE + Autoencoder',
+                'Supervised + Random sampling + SimCLR',
+                'Supervised + MC-dropout + SimCLR',
+                'Supervised + Entropy-based + SimCLR',
+                'Supervised + Augmentation-based + SimCLR',
+                'Supervised + Least confidence + SimCLR',
+                'Supervised + Margin confidence + SimCLR',
+                'Supervised + Learning loss + SimCLR',
+                'Supervised + BADGE + SimCLR',
+                'FixMatch + Random sampling + Random initialization',
+                'FixMatch + MC-dropout + Random initialization',
+                'FixMatch + Entropy-based + Random initialization',
+                'FixMatch + Augmentation-based + Random initialization',
+                'FixMatch + Least confidence + Random initialization',
+                'FixMatch + Margin confidence + Random initialization',
+                'FixMatch + Learning loss + Random initialization',
+                'FixMatch + BADGE + Random initialization',
+                'FixMatch + Random sampling + ImageNet',
+                'FixMatch + MC-dropout + ImageNet',
+                'FixMatch + Entropy-based + ImageNet',
+                'FixMatch + Augmentation-based + ImageNet',
+                'FixMatch + Least confidence + ImageNet',
+                'FixMatch + Margin confidence + ImageNet',
+                'FixMatch + Learning loss + ImageNet',
+                'FixMatch + BADGE + ImageNet',
+                'FixMatch + Random sampling + Autoencoder',
+                'FixMatch + MC-dropout + Autoencoder',
+                'FixMatch + Entropy-based + Autoencoder',
+                'FixMatch + Augmentation-based + Autoencoder',
+                'FixMatch + Least confidence + Autoencoder',
+                'FixMatch + Margin confidence + Autoencoder',
+                'FixMatch + Learning loss + Autoencoder',
+                'FixMatch + BADGE + Autoencoder',
+                'FixMatch + Random sampling + SimCLR',
+                'FixMatch + MC-dropout + SimCLR',
+                'FixMatch + Entropy-based + SimCLR',
+                'FixMatch + Augmentation-based + SimCLR',
+                'FixMatch + Least confidence + SimCLR',
+                'FixMatch + Margin confidence + SimCLR',
+                'FixMatch + Learning loss + SimCLR',
+                'FixMatch + BADGE + SimCLR',
+                'Pseudo labeling + Random sampling + Random initialization',
+                'Pseudo labeling + MC-dropout + Random initialization',
+                'Pseudo labeling + Entropy-based + Random initialization',
+                'Pseudo labeling + Augmentation-based + Random initialization',
+                'Pseudo labeling + Least confidence + Random initialization',
+                'Pseudo labeling + Margin confidence + Random initialization',
+                'Pseudo labeling + Learning loss + Random initialization',
+                'Pseudo labeling + BADGE + Random initialization',
+                'Pseudo labeling + Random sampling + ImageNet',
+                'Pseudo labeling + MC-dropout + ImageNet',
+                'Pseudo labeling + Entropy-based + ImageNet',
+                'Pseudo labeling + Augmentation-based + ImageNet',
+                'Pseudo labeling + Least confidence + ImageNet',
+                'Pseudo labeling + Margin confidence + ImageNet',
+                'Pseudo labeling + Learning loss + ImageNet',
+                'Pseudo labeling + BADGE + ImageNet',
+                'Pseudo labeling + Random sampling + Autoencoder',
+                'Pseudo labeling + MC-dropout + Autoencoder',
+                'Pseudo labeling + Entropy-based + Autoencoder',
+                'Pseudo labeling + Augmentation-based + Autoencoder',
+                'Pseudo labeling + Least confidence + Autoencoder',
+                'Pseudo labeling + Margin confidence + Autoencoder',
+                'Pseudo labeling + Learning loss + Autoencoder',
+                'Pseudo labeling + BADGE + Autoencoder',
+                'Pseudo labeling + Random sampling + SimCLR',
+                'Pseudo labeling + MC-dropout + SimCLR',
+                'Pseudo labeling + Entropy-based + SimCLR',
+                'Pseudo labeling + Augmentation-based + SimCLR',
+                'Pseudo labeling + Least confidence + SimCLR',
+                'Pseudo labeling + Margin confidence + SimCLR',
+                'Pseudo labeling + Learning loss + SimCLR',
+                'Pseudo labeling + BADGE + SimCLR'
               ]
     }
     methods_states_results = {
@@ -921,17 +921,21 @@ if __name__ == '__main__':
               ]
     }
 
-    dataset = 'jurkat'
+    dataset = 'retinopathy'
 
     dataset_title = {'matek': 'White blood cells', 'jurkat': 'Jurkat cells cycle',
                      'isic': 'Skin Lesions',
                      'plasmodium': 'Red blood cells', 'retinopathy': 'Retina'}
 
+    limits = {'matek': [0.1, 0.9], 'jurkat': [0.1, 0.7],
+              'isic': [0.15, 0.75],
+              'plasmodium': 'Red blood cells', 'retinopathy': [0.0, 0.7]}
+
     import pandas as pd
 
-    df = pd.read_excel('results/results_with_metrics.xlsx')
+    df = pd.read_excel('results/results_with_metrics_avg.xlsx')
     df = df[df['Dataset'] == dataset_title[dataset]]
-    df = df.sort_values(by='F1-score Avg. Rank')
+    df = df.sort_values(by='F1-score Avg.', ascending=False)
 
     top_n_methods = df['Method'][:5].tolist() + ['random_sampling']
 
@@ -1003,7 +1007,8 @@ if __name__ == '__main__':
 
                 colors = [[86 / 255, 180 / 255, 233 / 255, 1], [230 / 255, 159 / 255, 0, 1],
                           [212 / 255, 16 / 255, 16 / 255, 1],
-                          [0, 158 / 255, 115 / 255, 1], [213 / 255, 94 / 255, 0, 1], [0, 114 / 255, 178 / 255, 1],
+                          [0, 158 / 255, 115 / 255, 1], [213 / 255, 94 / 255, 0, 1],
+                          [238 / 255, 136 / 255, 102 / 255, 1],
                           [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1],
                           [211 / 255, 95 / 255, 183 / 255, 1],
                           [238 / 255, 136 / 255, 102 / 255, 1]]
@@ -1033,8 +1038,10 @@ if __name__ == '__main__':
                     else:
                         marker = ','
                     ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
-                                   markersize=10, linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
-                    ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05)
+                                   markersize=10,
+                                   label=methods_states['i'][i],
+                                   linewidth=2, linestyle=linestyle, marker=marker, capsize=3, zorder=-300)
+                    ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05, zorder=-300)
 
                 for i in top_n_methods_index:
                     method = methods[i]
@@ -1072,18 +1079,21 @@ if __name__ == '__main__':
                         marker = '^'
                     else:
                         marker = ','
+
+                    if method == 'random_sampling':
+                        linewidth = 3
+                    else:
+                        linewidth = 2
                     ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
                                    markersize=10,
                                    label=methods_states['i'][i],
-                                   linewidth=2, linestyle=linestyle, marker=marker, capsize=3)
+                                   linewidth=linewidth, linestyle=linestyle, marker=marker, capsize=3, zorder=300)
                     ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05, zorder=300)
 
                 if 'Recall' in label_y:
-                    ax[j].errorbar(prop, [fully_supervised_metric['recall']] * len(prop),
-                                   yerr=[fully_supervised_std_metric['recall']] * len(prop),
-                                   color=[0, 0, 0, 1], label='Fully Supervised', linewidth=2, linestyle='--',
-                                   marker=',',
-                                   capsize=3)
+                    ax[j].plot(prop, [fully_supervised_metric['recall']] * len(prop),
+                               color=[0, 0, 0, 1], label='Fully Supervised', linewidth=2, linestyle='dotted',
+                               marker=',')
                     ax[j].fill_between(prop,
                                        np.array([fully_supervised_metric['recall']] * len(prop)) -
                                        fully_supervised_std_metric[
@@ -1093,11 +1103,9 @@ if __name__ == '__main__':
                                            'recall'],
                                        color=[0, 0, 0, 1], alpha=0.05)
                 elif 'Precision' in label_y:
-                    ax[j].errorbar(prop, [fully_supervised_metric['precision']] * len(prop),
-                                   yerr=[fully_supervised_std_metric['precision']] * len(prop),
-                                   color=[0, 0, 0, 1],
-                                   label='Fully Supervised', linewidth=2, linestyle='--', marker=',',
-                                   capsize=3)
+                    ax[j].plot(prop, [fully_supervised_metric['precision']] * len(prop),
+                               color=[0, 0, 0, 1],
+                               label='Fully Supervised', linewidth=2, linestyle='dotted', marker=',')
                     ax[j].fill_between(prop,
                                        np.array([fully_supervised_metric['precision']] * len(prop)) -
                                        fully_supervised_std_metric[
@@ -1107,11 +1115,9 @@ if __name__ == '__main__':
                                            'precision'],
                                        color=[0, 0, 0, 1], alpha=0.05)
                 elif 'F1-score' in label_y:
-                    ax[j].errorbar(prop, [fully_supervised_metric['f1-score']] * len(prop),
-                                   yerr=[fully_supervised_std_metric['f1-score']] * len(prop),
-                                   color=[0, 0, 0, 1],
-                                   label='Fully Supervised', linewidth=2, linestyle='--', marker=',',
-                                   capsize=3)
+                    ax[j].plot(prop, [fully_supervised_metric['f1-score']] * len(prop),
+                               color=[0, 0, 0, 1],
+                               label='Fully Supervised', linewidth=2, linestyle='dotted', marker=',')
                     ax[j].fill_between(prop,
                                        np.array([fully_supervised_metric['f1-score']] * len(prop)) -
                                        fully_supervised_std_metric[
@@ -1121,11 +1127,9 @@ if __name__ == '__main__':
                                            'f1-score'],
                                        color=[0, 0, 0, 1], alpha=0.05)
                 else:
-                    ax[j].errorbar(prop, [fully_supervised_metric['accuracy']] * len(prop),
-                                   yerr=[fully_supervised_std_metric['accuracy']] * len(prop),
-                                   color=[0, 0, 0, 1],
-                                   label='Fully Supervised', linewidth=2, linestyle='--', marker=',',
-                                   capsize=3)
+                    ax[j].plot(prop, [fully_supervised_metric['accuracy']] * len(prop),
+                               color=[0, 0, 0, 1],
+                               label='Fully Supervised', linewidth=2, linestyle='dotted', marker=',')
                     ax[j].fill_between(prop,
                                        np.array([fully_supervised_metric['accuracy']] * len(prop)) -
                                        fully_supervised_std_metric[
@@ -1152,10 +1156,15 @@ if __name__ == '__main__':
     # ax[2, 2].set_xlabel("Added annotated data (%)", fontsize=30)
     # ax[2, 3].set_xlabel("Added annotated data (%)", fontsize=30)
 
-    ax[0].set_title(f'{dataset_rep[dataset]} \nMacro F1-Score', fontsize=30)
-    ax[1].set_title(f'{dataset_rep[dataset]} \nMacro Recall', fontsize=30)
-    ax[2].set_title(f'{dataset_rep[dataset]} \nMacro Precision', fontsize=30)
-    ax[3].set_title(f'{dataset_rep[dataset]} \nAccuracy', fontsize=30)
+    ax[0].set_ylabel("Macro F1-score", fontsize=30)
+    ax[1].set_ylabel("Macro Recall", fontsize=30)
+    ax[2].set_ylabel("Macro Precision", fontsize=30)
+    ax[3].set_ylabel("Accuracy", fontsize=30)
+
+    ax[0].set_title(f'{dataset_rep[dataset]}', fontsize=30)
+    ax[1].set_title(f'{dataset_rep[dataset]}', fontsize=30)
+    ax[2].set_title(f'{dataset_rep[dataset]}', fontsize=30)
+    ax[3].set_title(f'{dataset_rep[dataset]}', fontsize=30)
     # ax[0, 2].set_title('Macro Recall', fontsize=30)
     # ax[0, 3].set_title('Macro F1-Score', fontsize=30)
 
@@ -1166,12 +1175,12 @@ if __name__ == '__main__':
     # ax[2, 2].set_xticks(ticks=prop)
     # ax[2, 3].set_xticks(ticks=prop)
 
-    ax[0].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
-    ax[1].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
-    ax[2].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
-    ax[3].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
-    # ax[1, 0].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
-    # ax[2, 0].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
+    ax[0].set_yticks(ticks=np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1))
+    ax[1].set_yticks(ticks=np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1))
+    ax[2].set_yticks(ticks=np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1))
+    ax[3].set_yticks(ticks=np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1))
+    # ax[1, 0].set_yticks(ticks=np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1))
+    # ax[2, 0].set_yticks(ticks=np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1))
 
     ax[0].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
     ax[1].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
@@ -1180,14 +1189,15 @@ if __name__ == '__main__':
     # ax[2, 2].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
     # ax[2, 3].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
 
-    ax[0].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
-    ax[1].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
-    ax[2].yaxis.set_ticklabels(np.round(np.arange(0.10, 1.0, step=0.10), decimals=1))
+    ax[0].yaxis.set_ticklabels(np.round(np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1), decimals=2))
+    ax[1].yaxis.set_ticklabels(np.round(np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1), decimals=2))
+    ax[2].yaxis.set_ticklabels(np.round(np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1), decimals=2))
+    ax[3].yaxis.set_ticklabels(np.round(np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1), decimals=2))
 
-    ax[0].set_ylim(0.1, 1.0)
-    ax[1].set_ylim(0.1, 1.0)
-    ax[2].set_ylim(0.1, 1.0)
-    ax[3].set_ylim(0.1, 1.0)
+    ax[0].set_ylim(limits[dataset][0], limits[dataset][1])
+    ax[1].set_ylim(limits[dataset][0], limits[dataset][1])
+    ax[2].set_ylim(limits[dataset][0], limits[dataset][1])
+    ax[3].set_ylim(limits[dataset][0], limits[dataset][1])
 
     import matplotlib.font_manager as font_manager
 
@@ -1202,12 +1212,16 @@ if __name__ == '__main__':
 
     sorted_indexes = []
 
+    for i, label in enumerate(labels):
+        if label == "Fully Supervised":
+            fully_supervised_index = i
+
     for method in top_n_methods:
         for i, method_res in enumerate(methods_states_results['i']):
             if method == method_res:
                 sorted_indexes.append(i)
                 break
-    labels_index.append(6)
+    labels_index.append(fully_supervised_index)
     for i in sorted_indexes:
         for j, label in enumerate(labels):
             if methods_states['i'][i] == label:
@@ -1228,7 +1242,6 @@ if __name__ == '__main__':
     # lgd4 = fig.legend(handles, ["" for lbl in labels], bbox_to_anchor=(1.25, 0.82))
 
     fig.savefig(f'results/{dataset_rep[dataset]}.png', dpi=150, bbox_extra_artists=(lgd1,), bbox_inches='tight')
-
 
     """
     root_vis = '/home/ahmad/thesis/visualization'
