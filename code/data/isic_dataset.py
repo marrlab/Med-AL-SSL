@@ -11,7 +11,7 @@ class ISICDataset:
     def __init__(self, root, add_labeled=0, advanced_transforms=True, remove_classes=False,
                  expand_labeled=0, expand_unlabeled=0, unlabeled_subset_ratio=1, oversampling=True, stratified=False,
                  merged=True, unlabeled_augmentations=False, seed=9999, k_medoids=False, k_medoids_model=None,
-                 k_medoids_n_clusters=10, start_labeled=300):
+                 k_medoids_n_clusters=10, start_labeled=300, benchmark_mode=True):
         self.root = root
         self.train_path = os.path.join(self.root, "isic", "train")
         self.test_path = os.path.join(self.root, "isic", "test")
@@ -76,6 +76,7 @@ class ISICDataset:
         self.k_medoids_model = k_medoids_model
         self.k_medoids_n_clusters = k_medoids_n_clusters
         self.start_labeled = start_labeled
+        self.benchmark_mode = benchmark_mode
 
     def get_dataset(self):
         base_dataset = torchvision.datasets.ImageFolder(
@@ -93,24 +94,28 @@ class ISICDataset:
         test_dataset = WeaklySupervisedDataset(test_dataset, range(len(test_dataset)),
                                                transform=self.transform_test,
                                                mean=self.isic_mean, std=self.isic_std)
-
-        if self.stratified:
-            labeled_indices, unlabeled_indices = train_test_split(
-                np.arange(len(base_dataset)),
-                test_size=(len(base_dataset) - self.start_labeled) / len(base_dataset),
-                shuffle=True,
-                stratify=base_dataset.targets)
+        if self.benchmark_mode:
+            idx = base_dataset.class_to_idx['unlabeled']
+            imgs = np.array(base_dataset.imgs)
+            unlabeled_indices = (imgs[:, 1] == str(idx)).nonzero()[0]
+            labeled_indices = (~(imgs[:, 1] == str(idx))).nonzero()[0]
         else:
-            # labeled_indices, unlabeled_indices = class_wise_random_sample(base_dataset.targets, n=1, seed=self.seed)
-            if self.k_medoids:
-                labeled_indices, unlabeled_indices = k_medoids_init(base_dataset, self.k_medoids_model,
-                                                                    self.transform_test, self.isic_mean,
-                                                                    self.isic_std, self.seed, self.start_labeled,
-                                                                    self.k_medoids_n_clusters)
+            if self.stratified:
+                labeled_indices, unlabeled_indices = train_test_split(
+                    np.arange(len(base_dataset)),
+                    test_size=(len(base_dataset) - self.start_labeled) / len(base_dataset),
+                    shuffle=True,
+                    stratify=base_dataset.targets)
             else:
-                indices = np.arange(len(base_dataset))
-                np.random.shuffle(indices)
-                labeled_indices, unlabeled_indices = indices[:self.start_labeled], indices[self.start_labeled:]
+                if self.k_medoids:
+                    labeled_indices, unlabeled_indices = k_medoids_init(base_dataset, self.k_medoids_model,
+                                                                        self.transform_test, self.isic_mean,
+                                                                        self.isic_std, self.seed, self.start_labeled,
+                                                                        self.k_medoids_n_clusters)
+                else:
+                    indices = np.arange(len(base_dataset))
+                    np.random.shuffle(indices)
+                    labeled_indices, unlabeled_indices = indices[:self.start_labeled], indices[self.start_labeled:]
 
         self.unlabeled_subset_num = int(len(unlabeled_indices) * self.unlabeled_subset_ratio)
 

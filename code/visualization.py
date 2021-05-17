@@ -717,6 +717,70 @@ if __name__ == '__main__':
     df['Method'] = methods
     df.to_csv('results.csv')
     """
+    """
+    datasets = ['matek', 'isic', 'jurkat', 'retinopathy']
+
+    dataset_title = {'matek': 'White blood cell', 'jurkat': 'Cell cycle',
+                     'isic': 'Skin lesion',
+                     'plasmodium': 'Red blood cells', 'retinopathy': 'Retinopathy'}
+
+    limits = {'matek': [0.1, 0.9], 'jurkat': [0.1, 0.7],
+              'isic': [0.15, 0.75],
+              'plasmodium': 'Red blood cells', 'retinopathy': [0.0, 0.7]}
+
+    plt.rcParams["font.family"] = "Arial"
+    plt.rcParams["font.weight"] = "ultralight"
+    plt.rcParams["axes.labelweight"] = "ultralight"
+    plt.rc('xtick', labelsize=30)
+    plt.rc('ytick', labelsize=30)
+    plt.rcParams['legend.fontsize'] = 25
+
+    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+    # fig.suptitle(dataset_rep[dataset], fontsize=45)
+    # fig.subplots_adjust(top=0.8)
+    plt.subplots_adjust(wspace=0.02, hspace=0.07)
+
+    import pandas as pd
+    cm = plt.get_cmap('Dark2')
+
+    df = pd.read_csv('./results/mean.csv')
+    data_rows = []
+    data_rows_std = []
+
+    for i in range(4):
+        data_rows.append(df.iloc[:, i+1].values)
+
+    for i in range(4):
+        data_rows_std.append(df.iloc[:, i+5].values)
+
+    prop = df.iloc[:, 0].values
+
+    for i, row in enumerate(data_rows):
+        ax.errorbar(prop, row, yerr=data_rows_std[i], color=cm([i])[0].tolist(), label=dataset_title[datasets[i]])
+        ax.fill_between(prop, row - data_rows_std[i], row + data_rows_std[i], alpha=0.05, zorder=-300, color=cm([i])[0].tolist())
+
+    ax.plot([25 for x in range(11)], np.arange(0, 110, step=10), linestyle="dotted", color=[0, 0, 0, 1])
+    ax.plot(prop, [80 for x in prop], linestyle="dotted", color=[0, 0, 0, 1])
+    ax.plot(prop, [90 for x in prop], linestyle="dotted", color=[0, 0, 0, 1])
+
+    ax.set_xticks(ticks=prop)
+    ax.set_yticks(ticks=np.arange(0, 110, step=10))
+    ax.xaxis.set_ticklabels([])
+    ax.yaxis.set_ticklabels([])
+
+    ax.set_xlabel("Added annotated data (%)", fontsize=30)
+    ax.set_ylabel("Macro F1-score ratio to fully supervised", fontsize=30)
+    ax.set_xticks(ticks=prop)
+    ax.xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+    ax.yaxis.set_ticklabels([str(round(x, 1)) for x in np.arange(0.0, 1.1, step=0.10)])
+    ax.legend(loc="lower right", prop={'size': 18})
+
+    ax.set_title(f'Our recommended strategy', fontsize=30)
+
+    
+    # fig.savefig(f'results/{dataset_rep[dataset]}.png', dpi=150, bbox_extra_artists=(lgd1,), bbox_inches='tight')
+    fig.savefig(f'results/fig7.png', dpi=150, bbox_inches='tight')
+    """
 
     root_vis = '/home/ahmad/thesis/visualization'
     arguments = get_arguments()
@@ -921,23 +985,15 @@ if __name__ == '__main__':
               ]
     }
 
-    dataset = 'retinopathy'
+    datasets = ['matek', 'isic', 'jurkat', 'retinopathy']
 
-    dataset_title = {'matek': 'White blood cells', 'jurkat': 'Jurkat cells cycle',
+    dataset_title_1 = {'matek': 'White blood cells', 'jurkat': 'Jurkat cells cycle',
                      'isic': 'Skin Lesions',
                      'plasmodium': 'Red blood cells', 'retinopathy': 'Retina'}
 
-    limits = {'matek': [0.1, 0.9], 'jurkat': [0.1, 0.7],
-              'isic': [0.15, 0.75],
+    limits = {'matek': [0.0, 0.9], 'jurkat': [0.0, 0.7],
+              'isic': [0.0, 0.8],
               'plasmodium': 'Red blood cells', 'retinopathy': [0.0, 0.7]}
-
-    import pandas as pd
-
-    df = pd.read_excel('results/results_with_metrics_avg.xlsx')
-    df = df[df['Dataset'] == dataset_title[dataset]]
-    df = df.sort_values(by='F1-score Avg.', ascending=False)
-
-    top_n_methods = df['Method'][:5].tolist() + ['random_sampling']
 
     plt.rcParams["font.family"] = "Arial"
     plt.rcParams["font.weight"] = "ultralight"
@@ -946,302 +1002,306 @@ if __name__ == '__main__':
     plt.rc('ytick', labelsize=30)
     plt.rcParams['legend.fontsize'] = 25
 
-    fig, ax = plt.subplots(1, 4, figsize=(50, 10))
+    fig, ax = plt.subplots(4, 1, figsize=(10, 40))
     # fig.suptitle(dataset_rep[dataset], fontsize=45)
-    fig.subplots_adjust(top=0.8)
+    # fig.subplots_adjust(top=0.8)
+    plt.subplots_adjust(wspace=0.02, hspace=0.1)
 
-    for itera, (k, method_state) in enumerate(methods_states_results.items()):
-        # print('**************************' + str(itera))
-        if arguments.run_batch:
-            states = [
-                (dataset, 'f1-score', 'macro avg'),
-                (dataset, 'recall', 'macro avg'),
-                (dataset, 'precision', 'macro avg'),
-                (dataset, 'recall', 'accuracy'),
-            ]
+    for data_i, dataset in enumerate(datasets):
 
-            for j, (d, m, r) in enumerate(states):
-                root_path = os.path.join(root_vis, d, k)
-                if not os.path.exists(root_path):
-                    os.makedirs(root_path)
-                arguments.dataset = d
-                arguments.metric = m
-                arguments.metric_ratio = r
-                # arguments.methods_default = method_state
-                arguments.methods_default_results = method_state
-                arguments.save_path = os.path.join(root_path, f'{m}_{r}.png')
-                args = configs[arguments.dataset](arguments)
+        import pandas as pd
 
-                num = [i for i in range(0, 41, 5)]
+        df = pd.read_excel('results/results_with_metrics_avg.xlsx')
+        df = df[df['Dataset'] == dataset_title_1[dataset]]
+        df = df.sort_values(by='F1-score Avg.', ascending=False)
 
-                if 'macro' in args.metric_ratio:
-                    y_label = f'Macro {args.metric.capitalize()}'
-                else:
-                    y_label = 'Accuracy'
+        top_n_methods = df['Method'][:5].tolist() + ['random_sampling']
 
-                dataset_title = {'matek': 'White blood cells', 'jurkat': 'Jurkat cell cycle',
-                                 'isic': 'Skin lesions',
-                                 'plasmodium': 'Red blood cells', 'retinopathy': 'Retina'}
+        for itera, (k, method_state) in enumerate(methods_states_results.items()):
+            # print('**************************' + str(itera))
+            if arguments.run_batch:
+                states = [
+                    (dataset, 'f1-score', 'macro avg'),
+                    # (dataset, 'recall', 'macro avg'),
+                    # (dataset, 'precision', 'macro avg'),
+                    # (dataset, 'recall', 'accuracy'),
+                ]
 
-                '''
-                ratio_class_wise_metrics_log = ratio_class_wise_metrics(args.metric, dataset.classes, args.dataset)
-                plot_ratio_class_wise_metrics(ratio_class_wise_metrics_log, dataset.classes, y_label, num,
-                                              plot_configs[args.dataset])
-                '''
+                for j, (d, m, r) in enumerate(states):
+                    root_path = os.path.join(root_vis, d, k)
+                    if not os.path.exists(root_path):
+                        os.makedirs(root_path)
+                    arguments.dataset = d
+                    arguments.metric = m
+                    arguments.metric_ratio = r
+                    # arguments.methods_default = method_state
+                    arguments.methods_default_results = method_state
+                    arguments.save_path = os.path.join(root_path, f'{m}_{r}.png')
+                    args = configs[arguments.dataset](arguments)
 
-                ratio_metrics_logs = ratio_metrics(args.metric, args.dataset, cls=args.metric_ratio,
-                                                   methods=args.methods_default_results)
+                    num = [i for i in range(0, 41, 5)]
 
-                prop = num[:9]
-                metric = ratio_metrics_logs
-                label_y = y_label
-                fully_supervised_metric = fully_supervised[args.dataset]
-                save_path = args.save_path
-                methods = args.methods_default_results
-                title = dataset_title[args.dataset]
-                fully_supervised_std_metric = fully_supervised_std[args.dataset]
-
-                # plt.figure(figsize=(14, 10))
-                # plt.grid(color='black')
-                style.use(['science', 'no-latex'])
-
-                colors = [[86 / 255, 180 / 255, 233 / 255, 1], [230 / 255, 159 / 255, 0, 1],
-                          [212 / 255, 16 / 255, 16 / 255, 1],
-                          [0, 158 / 255, 115 / 255, 1], [213 / 255, 94 / 255, 0, 1],
-                          [238 / 255, 136 / 255, 102 / 255, 1],
-                          [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1],
-                          [211 / 255, 95 / 255, 183 / 255, 1],
-                          [238 / 255, 136 / 255, 102 / 255, 1]]
-
-                top_n_methods_index = []
-
-                for i, method in enumerate(methods):
-                    if len(metric[i]) == 0:
-                        continue
-                    if 'fixmatch' in method:
-                        linestyle = '-'
-                    elif 'pseudo_label' in method:
-                        linestyle = 'dotted'
+                    if 'macro' in args.metric_ratio:
+                        y_label = f'Macro {args.metric.capitalize()}'
                     else:
-                        linestyle = '--'
+                        y_label = 'Accuracy'
 
-                    if method in top_n_methods:
-                        top_n_methods_index.append(i)
-                        continue
-                    c = 'lightgrey'
-                    if 'simclr' in method:
-                        marker = 's'
-                    elif 'autoencoder' in method:
-                        marker = 'o'
-                    elif '_pretrained' in method:
-                        marker = '^'
+                    dataset_title = {'matek': 'White blood cells', 'jurkat': 'Jurkat cell cycle',
+                                     'isic': 'Skin lesions',
+                                     'plasmodium': 'Red blood cells', 'retinopathy': 'Retina'}
+
+                    '''
+                    ratio_class_wise_metrics_log = ratio_class_wise_metrics(args.metric, dataset.classes, args.dataset)
+                    plot_ratio_class_wise_metrics(ratio_class_wise_metrics_log, dataset.classes, y_label, num,
+                                                  plot_configs[args.dataset])
+                    '''
+
+                    ratio_metrics_logs = ratio_metrics(args.metric, args.dataset, cls=args.metric_ratio,
+                                                       methods=args.methods_default_results)
+
+                    prop = num[:9]
+                    metric = ratio_metrics_logs
+                    label_y = y_label
+                    fully_supervised_metric = fully_supervised[args.dataset]
+                    save_path = args.save_path
+                    methods = args.methods_default_results
+                    title = dataset_title[args.dataset]
+                    fully_supervised_std_metric = fully_supervised_std[args.dataset]
+
+                    # plt.figure(figsize=(14, 10))
+                    # plt.grid(color='black')
+                    style.use(['science', 'no-latex'])
+
+                    colors = [[86 / 255, 180 / 255, 233 / 255, 1], [230 / 255, 159 / 255, 0, 1],
+                              [212 / 255, 16 / 255, 16 / 255, 1],
+                              [0, 158 / 255, 115 / 255, 1], [213 / 255, 94 / 255, 0, 1],
+                              [238 / 255, 136 / 255, 102 / 255, 1],
+                              [93 / 255, 58 / 255, 155 / 255, 1], [153 / 255, 79 / 255, 0, 1],
+                              [211 / 255, 95 / 255, 183 / 255, 1],
+                              [238 / 255, 136 / 255, 102 / 255, 1]]
+
+                    top_n_methods_index = []
+
+                    for i, method in enumerate(methods):
+                        if len(metric[i]) == 0:
+                            continue
+                        if 'fixmatch' in method:
+                            linestyle = '-'
+                        elif 'pseudo_label' in method:
+                            linestyle = 'dotted'
+                        else:
+                            linestyle = '--'
+
+                        if method in top_n_methods:
+                            top_n_methods_index.append(i)
+                            continue
+                        c = 'lightgrey'
+                        if 'simclr' in method:
+                            marker = 's'
+                        elif 'autoencoder' in method:
+                            marker = 'o'
+                        elif '_pretrained' in method:
+                            marker = '^'
+                        else:
+                            marker = ','
+                        ax[data_i].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
+                                               markersize=10,
+                                               label=methods_states['i'][i],
+                                               linewidth=2, linestyle=linestyle, marker=marker, capsize=3, zorder=-300)
+                        # ax[data_i].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05, zorder=-300)
+
+                    for i in top_n_methods_index:
+                        method = methods[i]
+                        if len(metric[i]) == 0:
+                            continue
+                        if 'fixmatch' in method:
+                            linestyle = '-'
+                        elif 'pseudo_label' in method:
+                            linestyle = '--'
+                        else:
+                            linestyle = 'dotted'
+
+                        if 'entropy_based' in method:
+                            c = colors[3]
+                        elif 'mc_dropout' in method:
+                            c = colors[1]
+                        elif 'augmentations_based' in method:
+                            c = colors[2]
+                        elif 'least_confidence' in method:
+                            c = colors[4]
+                        elif 'margin_confidence' in method:
+                            c = colors[5]
+                        elif 'learning_loss' in method:
+                            c = colors[6]
+                        elif 'badge' in method:
+                            c = colors[7]
+                        else:
+                            c = colors[0]
+
+                        if 'simclr' in method:
+                            marker = 's'
+                        elif 'autoencoder' in method or 'auto_encoder' in method:
+                            marker = 'o'
+                        elif '_pretrained' in method:
+                            marker = '^'
+                        else:
+                            marker = ','
+
+                        if method == 'random_sampling':
+                            linewidth = 3
+                        else:
+                            linewidth = 2
+                        ax[data_i].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
+                                       markersize=10,
+                                       label=methods_states['i'][i],
+                                       linewidth=linewidth, linestyle=linestyle, marker=marker, capsize=3, zorder=300)
+                        ax[data_i].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05, zorder=300)
+
+                    if 'Recall' in label_y:
+                        ax[data_i].plot(prop, [fully_supervised_metric['recall']] * len(prop),
+                                   color=[0, 0, 0, 1], label='Fully Supervised', linewidth=2, linestyle='dotted',
+                                   marker=',')
+                        ax[data_i].fill_between(prop,
+                                           np.array([fully_supervised_metric['recall']] * len(prop)) -
+                                           fully_supervised_std_metric[
+                                               'recall'],
+                                           np.array([fully_supervised_metric['recall']] * len(prop)) +
+                                           fully_supervised_std_metric[
+                                               'recall'],
+                                           color=[0, 0, 0, 1], alpha=0.05)
+                    elif 'Precision' in label_y:
+                        ax[data_i].plot(prop, [fully_supervised_metric['precision']] * len(prop),
+                                   color=[0, 0, 0, 1],
+                                   label='Fully Supervised', linewidth=2, linestyle='dotted', marker=',')
+                        ax[data_i].fill_between(prop,
+                                           np.array([fully_supervised_metric['precision']] * len(prop)) -
+                                           fully_supervised_std_metric[
+                                               'precision'],
+                                           np.array([fully_supervised_metric['precision']] * len(prop)) +
+                                           fully_supervised_std_metric[
+                                               'precision'],
+                                           color=[0, 0, 0, 1], alpha=0.05)
+                    elif 'F1-score' in label_y:
+                        ax[data_i].plot(prop, [fully_supervised_metric['f1-score']] * len(prop),
+                                   color=[0, 0, 0, 1],
+                                   label='Fully Supervised', linewidth=2, linestyle='dotted', marker=',')
+                        ax[data_i].fill_between(prop,
+                                           np.array([fully_supervised_metric['f1-score']] * len(prop)) -
+                                           fully_supervised_std_metric[
+                                               'f1-score'],
+                                           np.array([fully_supervised_metric['f1-score']] * len(prop)) +
+                                           fully_supervised_std_metric[
+                                               'f1-score'],
+                                           color=[0, 0, 0, 1], alpha=0.05)
                     else:
-                        marker = ','
-                    ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
-                                   markersize=10,
-                                   label=methods_states['i'][i],
-                                   linewidth=2, linestyle=linestyle, marker=marker, capsize=3, zorder=-300)
-                    ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05, zorder=-300)
+                        ax[data_i].plot(prop, [fully_supervised_metric['accuracy']] * len(prop),
+                                   color=[0, 0, 0, 1],
+                                   label='Fully Supervised', linewidth=2, linestyle='dotted', marker=',')
+                        ax[data_i].fill_between(prop,
+                                           np.array([fully_supervised_metric['accuracy']] * len(prop)) -
+                                           fully_supervised_std_metric[
+                                               'accuracy'],
+                                           np.array([fully_supervised_metric['accuracy']] * len(prop)) +
+                                           fully_supervised_std_metric[
+                                               'accuracy'],
+                                           color=[0, 0, 0, 1], alpha=0.05)
 
-                for i in top_n_methods_index:
-                    method = methods[i]
-                    if len(metric[i]) == 0:
-                        continue
-                    if 'fixmatch' in method:
-                        linestyle = '-'
-                    elif 'pseudo_label' in method:
-                        linestyle = '--'
-                    else:
-                        linestyle = 'dotted'
+                    # ax[itera, j].set_legend(loc='lower right', fontsize=18)
+                    # plt.title(title, fontsize=30, weight='bold', alpha=.75)
+                    ax[data_i].set_xticks(ticks=prop)
+                    ax[data_i].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
+                    ax[data_i].xaxis.set_ticklabels([])
+                    ax[data_i].yaxis.set_ticklabels([])
+                    # ax[itera, j].savefig(save_path)
 
-                    if 'entropy_based' in method:
-                        c = colors[3]
-                    elif 'mc_dropout' in method:
-                        c = colors[1]
-                    elif 'augmentations_based' in method:
-                        c = colors[2]
-                    elif 'least_confidence' in method:
-                        c = colors[4]
-                    elif 'margin_confidence' in method:
-                        c = colors[5]
-                    elif 'learning_loss' in method:
-                        c = colors[6]
-                    elif 'badge' in method:
-                        c = colors[7]
-                    else:
-                        c = colors[0]
+                    """import matplotlib.font_manager as font_manager
 
-                    if 'simclr' in method:
-                        marker = 's'
-                    elif 'autoencoder' in method or 'auto_encoder' in method:
-                        marker = 'o'
-                    elif '_pretrained' in method:
-                        marker = '^'
-                    else:
-                        marker = ','
+                    font = font_manager.FontProperties(family='Arial',
+                                                       weight='ultralight',
+                                                       style='normal', size=30)
 
-                    if method == 'random_sampling':
-                        linewidth = 3
-                    else:
-                        linewidth = 2
-                    ax[j].errorbar(prop, metric[i][1], yerr=(metric[i][0] - metric[i][2]) / 2, color=c,
-                                   markersize=10,
-                                   label=methods_states['i'][i],
-                                   linewidth=linewidth, linestyle=linestyle, marker=marker, capsize=3, zorder=300)
-                    ax[j].fill_between(prop, metric[i][0], metric[i][2], color=c, alpha=0.05, zorder=300)
+                    # fig.subplots_adjust(right=0.8, wspace=0.5, hspace=0.5)
+                    # fig.tight_layout()
+                    handles, labels = ax[data_i].get_legend_handles_labels()
+                    labels_index = []
 
-                if 'Recall' in label_y:
-                    ax[j].plot(prop, [fully_supervised_metric['recall']] * len(prop),
-                               color=[0, 0, 0, 1], label='Fully Supervised', linewidth=2, linestyle='dotted',
-                               marker=',')
-                    ax[j].fill_between(prop,
-                                       np.array([fully_supervised_metric['recall']] * len(prop)) -
-                                       fully_supervised_std_metric[
-                                           'recall'],
-                                       np.array([fully_supervised_metric['recall']] * len(prop)) +
-                                       fully_supervised_std_metric[
-                                           'recall'],
-                                       color=[0, 0, 0, 1], alpha=0.05)
-                elif 'Precision' in label_y:
-                    ax[j].plot(prop, [fully_supervised_metric['precision']] * len(prop),
-                               color=[0, 0, 0, 1],
-                               label='Fully Supervised', linewidth=2, linestyle='dotted', marker=',')
-                    ax[j].fill_between(prop,
-                                       np.array([fully_supervised_metric['precision']] * len(prop)) -
-                                       fully_supervised_std_metric[
-                                           'precision'],
-                                       np.array([fully_supervised_metric['precision']] * len(prop)) +
-                                       fully_supervised_std_metric[
-                                           'precision'],
-                                       color=[0, 0, 0, 1], alpha=0.05)
-                elif 'F1-score' in label_y:
-                    ax[j].plot(prop, [fully_supervised_metric['f1-score']] * len(prop),
-                               color=[0, 0, 0, 1],
-                               label='Fully Supervised', linewidth=2, linestyle='dotted', marker=',')
-                    ax[j].fill_between(prop,
-                                       np.array([fully_supervised_metric['f1-score']] * len(prop)) -
-                                       fully_supervised_std_metric[
-                                           'f1-score'],
-                                       np.array([fully_supervised_metric['f1-score']] * len(prop)) +
-                                       fully_supervised_std_metric[
-                                           'f1-score'],
-                                       color=[0, 0, 0, 1], alpha=0.05)
-                else:
-                    ax[j].plot(prop, [fully_supervised_metric['accuracy']] * len(prop),
-                               color=[0, 0, 0, 1],
-                               label='Fully Supervised', linewidth=2, linestyle='dotted', marker=',')
-                    ax[j].fill_between(prop,
-                                       np.array([fully_supervised_metric['accuracy']] * len(prop)) -
-                                       fully_supervised_std_metric[
-                                           'accuracy'],
-                                       np.array([fully_supervised_metric['accuracy']] * len(prop)) +
-                                       fully_supervised_std_metric[
-                                           'accuracy'],
-                                       color=[0, 0, 0, 1], alpha=0.05)
+                    sorted_indexes = []
 
-                # ax[itera, j].set_legend(loc='lower right', fontsize=18)
-                # plt.title(title, fontsize=30, weight='bold', alpha=.75)
-                ax[j].set_xticks(ticks=prop)
-                ax[j].set_yticks(ticks=np.arange(0.10, 1.0, step=0.10))
-                ax[j].xaxis.set_ticklabels([])
-                ax[j].yaxis.set_ticklabels([])
-                # ax[itera, j].savefig(save_path)
-        else:
-            main(args=arguments)
+                    for i, label in enumerate(labels):
+                        if label == "Fully Supervised":
+                            fully_supervised_index = i
 
-    ax[0].set_xlabel("Added annotated data (%)", fontsize=30)
-    ax[1].set_xlabel("Added annotated data (%)", fontsize=30)
-    ax[2].set_xlabel("Added annotated data (%)", fontsize=30)
+                    for method in top_n_methods:
+                        for i, method_res in enumerate(methods_states_results['i']):
+                            if method == method_res:
+                                sorted_indexes.append(i)
+                                break
+                    labels_index.append(fully_supervised_index)
+                    for i in sorted_indexes:
+                        for j, label in enumerate(labels):
+                            if methods_states['i'][i] == label:
+                                labels_index.append(j)
+                                break
+                    handles = [handles[i] for i in labels_index]
+                    labels = [labels[i] for i in labels_index]
+                    lgd1 = ax[data_i].legend(handles, labels, bbox_to_anchor=(-0.2, -0.4), prop=font)"""
+            else:
+                main(args=arguments)
+
     ax[3].set_xlabel("Added annotated data (%)", fontsize=30)
-    # ax[2, 2].set_xlabel("Added annotated data (%)", fontsize=30)
-    # ax[2, 3].set_xlabel("Added annotated data (%)", fontsize=30)
+    # ax[3, 0].set_xlabel("Added annotated data (%)", fontsize=30)
+    # ax[3, 1].set_xlabel("Added annotated data (%)", fontsize=30)
+    # ax[3, 2].set_xlabel("Added annotated data (%)", fontsize=30)
+    # ax[3, 3].set_xlabel("Added annotated data (%)", fontsize=30)
 
     ax[0].set_ylabel("Macro F1-score", fontsize=30)
-    ax[1].set_ylabel("Macro Recall", fontsize=30)
-    ax[2].set_ylabel("Macro Precision", fontsize=30)
-    ax[3].set_ylabel("Accuracy", fontsize=30)
+    ax[1].set_ylabel("Macro F1-score", fontsize=30)
+    ax[2].set_ylabel("Macro F1-score", fontsize=30)
+    ax[3].set_ylabel("Macro F1-score", fontsize=30)
 
-    ax[0].set_title(f'{dataset_rep[dataset]}', fontsize=30)
-    ax[1].set_title(f'{dataset_rep[dataset]}', fontsize=30)
-    ax[2].set_title(f'{dataset_rep[dataset]}', fontsize=30)
-    ax[3].set_title(f'{dataset_rep[dataset]}', fontsize=30)
-    # ax[0, 2].set_title('Macro Recall', fontsize=30)
-    # ax[0, 3].set_title('Macro F1-Score', fontsize=30)
+    # ax[0, 0].set_ylabel("Macro F1-score", fontsize=30)
+    # ax[0, 1].set_title("Macro Recall", fontsize=30)
+    # ax[0, 2].set_title("Macro Precision", fontsize=30)
+    # ax[0, 3].set_title("Accuracy", fontsize=30)
+
+    for data_i, dataset in enumerate(datasets):
+        # ax[data_i, 0].set_title(f'{dataset_rep[dataset]}', fontsize=30)
+        ax[data_i].set_title(f'{dataset_rep[dataset]}', fontsize=30)
 
     ax[0].set_xticks(ticks=prop)
     ax[1].set_xticks(ticks=prop)
     ax[2].set_xticks(ticks=prop)
     ax[3].set_xticks(ticks=prop)
-    # ax[2, 2].set_xticks(ticks=prop)
-    # ax[2, 3].set_xticks(ticks=prop)
 
-    ax[0].set_yticks(ticks=np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1))
-    ax[1].set_yticks(ticks=np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1))
-    ax[2].set_yticks(ticks=np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1))
-    ax[3].set_yticks(ticks=np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1))
+    # ax[0, 0].set_xticks(ticks=prop)
+    # ax[1, 0].set_xticks(ticks=prop)
+    # ax[2, 0].set_xticks(ticks=prop)
+    # ax[3, 0].set_xticks(ticks=prop)
+
+    for data_i, dataset in enumerate(datasets):
+        for j, state in enumerate(states):
+            ax[data_i].set_yticks(ticks=np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1))
+
     # ax[1, 0].set_yticks(ticks=np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1))
     # ax[2, 0].set_yticks(ticks=np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1))
 
-    ax[0].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
-    ax[1].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
-    ax[2].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
     ax[3].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
-    # ax[2, 2].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
-    # ax[2, 3].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+    # ax[3, 0].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+    # ax[3, 1].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+    # ax[3, 2].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
+    # ax[3, 3].xaxis.set_ticklabels([str(pr)[:3] for pr in prop])
 
-    ax[0].yaxis.set_ticklabels(np.round(np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1), decimals=2))
-    ax[1].yaxis.set_ticklabels(np.round(np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1), decimals=2))
-    ax[2].yaxis.set_ticklabels(np.round(np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1), decimals=2))
-    ax[3].yaxis.set_ticklabels(np.round(np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1), decimals=2))
+    for data_i, dataset in enumerate(datasets):
+        # ax[data_i, 0].yaxis.set_ticklabels(np.round(np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1), decimals=2))
+        ax[data_i].yaxis.set_ticklabels(
+            np.round(np.arange(limits[dataset][0], limits[dataset][1] + 0.1, step=0.1), decimals=2))
 
-    ax[0].set_ylim(limits[dataset][0], limits[dataset][1])
-    ax[1].set_ylim(limits[dataset][0], limits[dataset][1])
-    ax[2].set_ylim(limits[dataset][0], limits[dataset][1])
-    ax[3].set_ylim(limits[dataset][0], limits[dataset][1])
+    for data_i, dataset in enumerate(datasets):
+        for j, state in enumerate(states):
+            ax[data_i].set_ylim(limits[dataset][0], limits[dataset][1])
 
-    import matplotlib.font_manager as font_manager
-
-    font = font_manager.FontProperties(family='Arial',
-                                       weight='ultralight',
-                                       style='normal', size=30)
-
-    # fig.subplots_adjust(right=0.8, wspace=0.5, hspace=0.5)
-    # fig.tight_layout()
-    handles, labels = ax[0].get_legend_handles_labels()
-    labels_index = []
-
-    sorted_indexes = []
-
-    for i, label in enumerate(labels):
-        if label == "Fully Supervised":
-            fully_supervised_index = i
-
-    for method in top_n_methods:
-        for i, method_res in enumerate(methods_states_results['i']):
-            if method == method_res:
-                sorted_indexes.append(i)
-                break
-    labels_index.append(fully_supervised_index)
-    for i in sorted_indexes:
-        for j, label in enumerate(labels):
-            if methods_states['i'][i] == label:
-                labels_index.append(j)
-                break
-    handles = [handles[i] for i in labels_index]
-    labels = [labels[i] for i in labels_index]
-    lgd1 = ax[0].legend(handles, labels, bbox_to_anchor=(0.5, -0.2), prop=font)
-    # lgd = fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, -0.01), fancybox=True)
-
-    # handles, labels = ax[1, 1].get_legend_handles_labels()
-    # lgd2 = fig.legend(handles, labels, bbox_to_anchor=(1.164, 0.55))
-
-    # handles, labels = ax[1].get_legend_handles_labels()
-    # lgd3 = fig.legend(handles, labels, bbox_to_anchor=(1.138, 0.82))
-
-    # handles, labels = ax[1, 1].get_legend_handles_labels()
-    # lgd4 = fig.legend(handles, ["" for lbl in labels], bbox_to_anchor=(1.25, 0.82))
-
-    fig.savefig(f'results/{dataset_rep[dataset]}.png', dpi=150, bbox_extra_artists=(lgd1,), bbox_inches='tight')
+    # fig.savefig(f'results/plot.png', dpi=150, bbox_inches='tight')
+    fig.savefig(f'results/plot.png', dpi=150, bbox_inches='tight')
 
     """
     root_vis = '/home/ahmad/thesis/visualization'
